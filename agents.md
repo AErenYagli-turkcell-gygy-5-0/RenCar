@@ -1,5 +1,5 @@
-# RenCar - Online Araç Kiralama Uygulaması
-> Bu repository RenCar adında bir online araç kiralama uygulamasının kaynak kodlarını içermektedir. Bu agents.md dosyası bu projede çalışan insan/ai herkesin uyması ZORUNDA olduğu genel kuralları içerir.
+# RenCar - Araç Paylaşım Uygulaması
+> Bu repository RenCar adında bir araç paylaşım uygulamasının kaynak kodlarını içermektedir. Bu agents.md dosyası bu projede çalışan insan/ai herkesin uyması ZORUNDA olduğu genel kuralları içerir.
 ---
 
 ## 1) TEKNOLOJİ YIĞINI 
