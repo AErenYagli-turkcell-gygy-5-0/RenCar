@@ -2,6 +2,7 @@ package com.turkcell.rencar.presentation.screen.auth.otp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,12 +35,39 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 
 @Composable
-fun OtpVerificationScreen(modifier: Modifier = Modifier) {
+fun OtpRoute(
+    onNavigateBack: () -> Unit,
+    onVerified: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: OtpViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                OtpEffect.NavigateBack -> onNavigateBack()
+                OtpEffect.VerificationCompleted -> onVerified()
+            }
+        }
+    }
+
+    OtpVerificationScreen(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+@Composable
+fun OtpVerificationScreen(
+    state: OtpState,
+    onIntent: (OtpIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val backgroundColor = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.background
     } else {
@@ -59,7 +89,8 @@ fun OtpVerificationScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .size(42.dp)
                     .clip(RoundedCornerShape(13.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { onIntent(OtpIntent.BackClicked) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -96,7 +127,7 @@ fun OtpVerificationScreen(modifier: Modifier = Modifier) {
             Text(
                 text = buildAnnotatedString {
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
-                        append("+90 532 000 00 00")
+                        append(state.phoneNumber)
                     }
                     append(" numarasına gönderdiğimiz 6 haneli kodu gir.")
                 },
@@ -106,66 +137,53 @@ fun OtpVerificationScreen(modifier: Modifier = Modifier) {
             )
 
             Row(modifier = Modifier.padding(top = 30.dp)) {
-                val filledDigits = listOf("4", "8", "2")
+                repeat(OTP_LENGTH) { index ->
+                    val digit = state.digits.getOrNull(index)
+                    val isActive = digit == null && index == state.digits.length
 
-                filledDigits.forEachIndexed { index, digit ->
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .padding(start = if (index == 0) 0.dp else 9.dp)
                             .height(62.dp)
-                            .border(
-                                width = 1.5.dp,
-                                color = MaterialTheme.colorScheme.outline,
-                                shape = RoundedCornerShape(15.dp)
+                            .then(
+                                if (isActive) {
+                                    Modifier
+                                        .border(
+                                            width = 2.dp,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = RoundedCornerShape(15.dp)
+                                        )
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primaryContainer,
+                                            shape = RoundedCornerShape(15.dp)
+                                        )
+                                } else {
+                                    Modifier.border(
+                                        width = 1.5.dp,
+                                        color = MaterialTheme.colorScheme.outline,
+                                        shape = RoundedCornerShape(15.dp)
+                                    )
+                                }
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = digit,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 9.dp)
-                        .height(62.dp)
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(15.dp)
-                        )
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(15.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .width(2.dp)
-                            .height(26.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                    )
-                }
-
-                repeat(2) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 9.dp)
-                            .height(62.dp)
-                            .border(
-                                width = 1.5.dp,
-                                color = MaterialTheme.colorScheme.outline,
-                                shape = RoundedCornerShape(15.dp)
+                        when {
+                            digit != null -> Text(
+                                text = digit.toString(),
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                    )
+
+                            isActive -> Box(
+                                modifier = Modifier
+                                    .width(2.dp)
+                                    .height(26.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -183,7 +201,9 @@ fun OtpVerificationScreen(modifier: Modifier = Modifier) {
                     text = buildAnnotatedString {
                         append("Kodu tekrar gönder · ")
                         withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                            append("0:42")
+                            val minutes = state.remainingSeconds / 60
+                            val seconds = (state.remainingSeconds % 60).toString().padStart(2, '0')
+                            append("$minutes:$seconds")
                         }
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -204,7 +224,8 @@ fun OtpVerificationScreen(modifier: Modifier = Modifier) {
                         spotColor = RenCarPrimaryLight
                     )
                     .clip(RoundedCornerShape(18.dp))
-                    .background(RenCarPrimaryLight),
+                    .background(RenCarPrimaryLight)
+                    .clickable { onIntent(OtpIntent.VerifyClicked) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -227,6 +248,7 @@ fun OtpVerificationScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 18.dp)
+                    .clickable { onIntent(OtpIntent.ChangeNumberClicked) }
             )
         }
     }
@@ -236,7 +258,7 @@ fun OtpVerificationScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun OtpVerificationScreenLightPreview() {
     RenCarTheme(darkTheme = false) {
-        OtpVerificationScreen()
+        OtpVerificationScreen(state = OtpState(), onIntent = {})
     }
 }
 
@@ -244,6 +266,6 @@ private fun OtpVerificationScreenLightPreview() {
 @Composable
 private fun OtpVerificationScreenDarkPreview() {
     RenCarTheme(darkTheme = true) {
-        OtpVerificationScreen()
+        OtpVerificationScreen(state = OtpState(), onIntent = {})
     }
 }

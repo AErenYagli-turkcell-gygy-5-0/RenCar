@@ -1,6 +1,7 @@
 package com.turkcell.rencar.presentation.screen.splash
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,17 +34,47 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 import androidx.compose.material3.Icon
 import androidx.compose.ui.res.painterResource
+import androidx.compose.runtime.LaunchedEffect
 
 private val IconGradientStartLight = Color(0xFF1E7FE0)
 private val IconGradientStartDark = Color(0xFF3B8EF0)
 
 @Composable
-fun SplashOnboardingScreen(modifier: Modifier = Modifier) {
+fun SplashRoute(
+    onNavigateToLogin: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SplashViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                SplashEffect.NavigateToLogin -> onNavigateToLogin()
+            }
+        }
+    }
+
+    SplashOnboardingScreen(
+        state = state,
+        onIntent = viewModel::onIntent,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun SplashOnboardingScreen(
+    state: SplashState,
+    onIntent: (SplashIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val isDark = isSystemInDarkTheme()
 
     Box(
@@ -161,7 +193,8 @@ fun SplashOnboardingScreen(modifier: Modifier = Modifier) {
                             spotColor = RenCarPrimaryLight
                         )
                         .clip(RoundedCornerShape(18.dp))
-                        .background(RenCarPrimaryLight),
+                        .background(RenCarPrimaryLight)
+                        .clickable { onIntent(SplashIntent.GetStartedClicked) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -180,7 +213,9 @@ fun SplashOnboardingScreen(modifier: Modifier = Modifier) {
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 18.dp)
+                    modifier = Modifier
+                        .padding(top = 18.dp)
+                        .clickable { onIntent(SplashIntent.LoginClicked) }
                 )
             }
         }
@@ -191,7 +226,7 @@ fun SplashOnboardingScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun SplashOnboardingScreenLightPreview() {
     RenCarTheme(darkTheme = false) {
-        SplashOnboardingScreen()
+        SplashOnboardingScreen(state = SplashState, onIntent = {})
     }
 }
 
@@ -199,6 +234,6 @@ private fun SplashOnboardingScreenLightPreview() {
 @Composable
 private fun SplashOnboardingScreenDarkPreview() {
     RenCarTheme(darkTheme = true) {
-        SplashOnboardingScreen()
+        SplashOnboardingScreen(state = SplashState, onIntent = {})
     }
 }

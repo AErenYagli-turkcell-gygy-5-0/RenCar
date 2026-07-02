@@ -2,6 +2,7 @@ package com.turkcell.rencar.presentation.screen.auth.login
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,12 +37,39 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier) {
+fun LoginRoute(
+    onNavigateBack: () -> Unit,
+    onNavigateToOtp: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: LoginViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                LoginEffect.NavigateBack -> onNavigateBack()
+                is LoginEffect.NavigateToOtp -> onNavigateToOtp(effect.phoneNumber)
+            }
+        }
+    }
+
+    LoginScreen(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+@Composable
+fun LoginScreen(
+    state: LoginState,
+    onIntent: (LoginIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val backgroundColor = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.background
     } else {
@@ -63,7 +93,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(13.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { onIntent(LoginIntent.BackClicked) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -132,7 +163,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
-                            text = "532 000 00 00",
+                            text = state.phoneNumber,
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = 0.5.sp
@@ -169,7 +200,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                             spotColor = RenCarPrimaryLight
                         )
                         .clip(RoundedCornerShape(18.dp))
-                        .background(RenCarPrimaryLight),
+                        .background(RenCarPrimaryLight)
+                        .clickable { onIntent(LoginIntent.SendCodeClicked) },
                     contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -211,7 +243,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun LoginScreenLightPreview() {
     RenCarTheme(darkTheme = false) {
-        LoginScreen()
+        LoginScreen(state = LoginState(), onIntent = {})
     }
 }
 
@@ -219,6 +251,6 @@ private fun LoginScreenLightPreview() {
 @Composable
 private fun LoginScreenDarkPreview() {
     RenCarTheme(darkTheme = true) {
-        LoginScreen()
+        LoginScreen(state = LoginState(), onIntent = {})
     }
 }

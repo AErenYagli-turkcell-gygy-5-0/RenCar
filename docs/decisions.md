@@ -44,3 +44,35 @@ Bu dosya RenCar projesinde alınan mimari/teknik kararların kaydını tutar (bk
 - `app/src/main/java/com/turkcell/rencar/presentation/theme/Type.kt`
 
 **Bilinen risk:** Google Play Services yüklü olmayan/eski cihazlarda veya ilk açılışta internet bağlantısı yoksa font indirmesi başarısız olabilir; bu durumda Compose sistem varsayılan fontuna geri döner. Bu davranış test edilmemiştir, gerçek cihazda doğrulanması önerilir.
+
+---
+
+## 2026-07-02 — Sunum Katmanı: MVI Kontratının Tanımlanması ve Hilt ile DI
+
+**Karar:** `agents.md` §2.4'te bağlayıcı referans olarak belirtilen `docs/architecture/mvi-overview.md`, `docs/architecture/mvi-contracts.md` ve `docs/architecture/mvi-viewmodel-rules.md` dosyaları o ana kadar boştu; bu kararla ilk kez içerik kazanmıştır. MVI, `UiState`/`UiIntent`/`UiEffect` marker interface'leri ve tek bir `MviViewModel<S, I, E>` taban sınıfı üzerine kurulu en sade haliyle tanımlanmıştır. Ekranlar arası bağımlılık enjeksiyonu için **Hilt** (`hilt-android`, `hilt-navigation-compose`) seçilmiştir. Ekranlar arası geçiş için `androidx.navigation:navigation-compose` ile bir `NavHost` (`presentation/navigation/RenCarNavHost.kt`) kurulmuştur. Splash, Login ve Otp ekranları bu kontratın ilk referans implementasyonlarıdır.
+
+**Gerekçe:**
+- Projede daha önce hiç ViewModel/State yönetimi, DI çözümü veya navigasyon kütüphanesi bulunmuyordu; `LoginScreen`, `SplashOnboardingScreen` ve `OtpVerificationScreen` tamamen stateless, statik veri gösteren composable'lardı. `agents.md`'nin "referans implementasyon Login ekranıdır" ifadesi bu haliyle karşılanamıyordu; bu karar bu boşluğu kapatmaktadır.
+- MVI kontratının şekli (`docs/architecture/*.md` boş olduğundan) uydurulmadan önce kullanıcıya sunulmuş, taslak onaylandıktan sonra bu dosyalara yazılmıştır (bkz. `agents.md` §2.2).
+- Hilt, Google'ın resmi Android DI çözümü olması ve Jetpack Compose ile `hiltViewModel()` üzerinden birebir entegre olması nedeniyle manuel DI ve Koin'e tercih edilmiştir (kullanıcı onayı ile).
+- State/Intent/Effect için ayrı sealed hiyerarşiler yerine tek bir `data class` State ve `sealed interface` Intent/Effect tercih edilmiştir; bu, "en sade haliyle MVI" hedefiyle uyumludur ve gereksiz soyutlama eklemez.
+- Ekranlardaki telefon numarası ve OTP hane alanları şu an gerçek bir `TextField` girişi değil, statik `Box`'lardır; bu kapsamda yalnızca State'ten okunacak şekilde bağlanmış, gerçek klavye/giriş davranışının eklenmesi ayrı bir karara bırakılmıştır. Backend/API entegrasyonu ve domain/data katmanları da bu kararın kapsamı dışındadır.
+
+**Etkilenen dosyalar:**
+- `docs/architecture/mvi-overview.md`, `docs/architecture/mvi-contracts.md`, `docs/architecture/mvi-viewmodel-rules.md` (ilk kez dolduruldu)
+- `gradle/libs.versions.toml`, `app/build.gradle.kts`, `build.gradle.kts` (Hilt, KSP, Navigation Compose, Hilt Navigation Compose, Lifecycle Compose bağımlılıkları)
+- `app/src/main/java/com/turkcell/rencar/RenCarApplication.kt` (yeni), `app/src/main/AndroidManifest.xml`
+- `app/src/main/java/com/turkcell/rencar/presentation/core/mvi/` (yeni: `UiState.kt`, `UiIntent.kt`, `UiEffect.kt`, `MviViewModel.kt`)
+- `app/src/main/java/com/turkcell/rencar/presentation/navigation/` (yeni: `RenCarDestination.kt`, `RenCarNavHost.kt`)
+- `app/src/main/java/com/turkcell/rencar/MainActivity.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/splash/` (`SplashContract.kt`, `SplashViewModel.kt` yeni; `SplashScreen.kt` güncellendi)
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/login/` (`LoginContract.kt`, `LoginViewModel.kt` yeni; `LoginScreen.kt` güncellendi)
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/otp/` (`OtpContract.kt`, `OtpViewModel.kt` yeni; `OtpScreen.kt` güncellendi)
+
+**Nasıl kullanılır:** Yeni bir ekran eklenirken `docs/architecture/mvi-overview.md`, `mvi-contracts.md` ve `mvi-viewmodel-rules.md` bağlayıcı referans olarak izlenir; Route/Screen ayrımı ve `hiltViewModel()` kalıbı birebir uygulanır.
+
+**Bilinen risk:** AGP 9.2.1'in varsayılan olarak etkin "built-in Kotlin" derleme modeli, KSP'nin (Hilt annotation processing) üretilen kaynakları `kotlin.sourceSets` DSL'i üzerinden eklemesiyle çakışıyor ve `compileDebugKotlin` sırasında "Using kotlin.sourceSets DSL to add Kotlin sources is not allowed with built-in Kotlin" hatası veriyordu (bkz. yukarı akış `google/ksp` deposu #2729, #2615 — AGP 9.2.1 / KSP 2.2.10-2.0.2 kombinasyonunda araştırma sırasında net biçimde çözülmüş bulunamadı). Kullanıcı onayıyla `gradle.properties` içine `android.disallowKotlinSourceSets=false` eklenerek bu hata dar kapsamlı olarak bastırılmıştır; bu ayar Gradle tarafından "experimental" olarak işaretlenmektedir ve resmi Android dokümantasyonu bunun kalıcı kullanımını önermemektedir. KSP/AGP tarafında bu uyumsuzluk resmi olarak giderildiğinde bu satır `gradle.properties`'ten kaldırılmalıdır.
+
+**Ek etkilenen dosya:** `gradle.properties`
+
+**Ek not — compileSdk 36 → 37:** `./gradlew :app:assembleDebug` sırasında `checkDebugAarMetadata` görevi başarısız oldu; hem bu kararla eklenen `androidx.lifecycle:lifecycle-runtime-compose`/`lifecycle-viewmodel-compose:2.11.0` hem de bu kararla ilgisiz, projede önceden mevcut olan `androidx.core:core-ktx:1.19.0` bağımlılığı `compileSdk 37` talep ediyordu (proje `compileSdk 36` idi). Kullanıcı onayıyla `app/build.gradle.kts`'te yalnızca `compileSdk` `37`'ye çıkarılmıştır (`targetSdk`/`minSdk` değişmemiştir, çalışma zamanı davranışında değişiklik yoktur). Bu değişiklik olmadan proje zaten APK üretemiyordu; bu nedenle MVI kararının bir parçası olarak kayda geçirilmiştir. **Ek etkilenen dosya:** `app/build.gradle.kts` (`compileSdk` bloğu).
