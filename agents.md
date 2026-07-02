@@ -2,7 +2,7 @@
 > Bu repository RenCar adında bir online araç kiralama uygulamasının kaynak kodlarını içermektedir. Bu agents.md dosyası bu projede çalışan insan/ai herkesin uyması ZORUNDA olduğu genel kuralları içerir.
 ---
 
-## 1) TEKNOLOJİ YIĞINI
+## 1) TEKNOLOJİ YIĞINI 
 
 - Mobil: Android Jetpack Compose KOTLIN
 
