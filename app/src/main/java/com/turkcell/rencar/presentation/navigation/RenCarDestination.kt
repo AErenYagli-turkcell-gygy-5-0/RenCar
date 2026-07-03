@@ -1,5 +1,7 @@
 package com.turkcell.rencar.presentation.navigation
 
+import android.net.Uri
+
 sealed class RenCarDestination(val route: String) {
 
     data object Splash : RenCarDestination("splash")
@@ -7,7 +9,7 @@ sealed class RenCarDestination(val route: String) {
     data object Login : RenCarDestination("login")
 
     data object Otp : RenCarDestination("otp/{$ARG_PHONE_NUMBER}") {
-        fun createRoute(phoneNumber: String) = "otp/$phoneNumber"
+        fun createRoute(phoneNumber: String) = "otp/${Uri.encode(phoneNumber)}"
     }
 
     companion object {
