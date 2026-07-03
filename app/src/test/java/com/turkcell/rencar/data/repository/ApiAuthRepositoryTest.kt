@@ -1,0 +1,176 @@
+package com.turkcell.rencar.data.repository
+
+import com.turkcell.rencar.data.remote.AuthApiService
+import com.turkcell.rencar.domain.auth.AuthError
+import com.turkcell.rencar.domain.auth.AuthResult
+import com.turkcell.rencar.domain.auth.LoginChallenge
+import com.turkcell.rencar.domain.auth.RegisterRequest
+import com.turkcell.rencar.domain.auth.RegisteredUser
+import kotlinx.coroutines.test.runTest
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+class ApiAuthRepositoryTest {
+
+    private lateinit var server: MockWebServer
+    private lateinit var repository: ApiAuthRepository
+
+    @Before
+    fun setUp() {
+        server = MockWebServer()
+        server.start()
+        repository = createRepository(server)
+    }
+
+    @After
+    fun tearDown() {
+        server.shutdown()
+    }
+
+    @Test
+    fun `register sends swagger body and exposes user without tokens`() = runTest {
+        server.enqueue(
+            jsonResponse(
+                code = 201,
+                body = """
+                    {
+                      "accessToken": "access-secret",
+                      "refreshToken": "refresh-secret",
+                      "user": {
+                        "id": "user-1",
+                        "email": "ahmet@example.com",
+                        "phone": "+905551112233",
+                        "fullName": "Ahmet Yılmaz",
+                        "role": "PENDING",
+                        "createdAt": "2026-07-03T10:00:00.000Z",
+                        "updatedAt": "2026-07-03T10:00:00.000Z"
+                      }
+                    }
+                """.trimIndent()
+            )
+        )
+
+        val result = repository.register(
+            RegisterRequest(
+                email = "ahmet@example.com",
+                password = "Sifre123!",
+                fullName = "Ahmet Yılmaz",
+                phone = "+905551112233"
+            )
+        )
+
+        val request = server.takeRequest()
+        assertEquals("/auth/register", request.path)
+        assertEquals(
+            """{"email":"ahmet@example.com","password":"Sifre123!","fullName":"Ahmet Yılmaz","phone":"+905551112233"}""",
+            request.body.readUtf8()
+        )
+        assertEquals(
+            AuthResult.Success(
+                RegisteredUser(
+                    id = "user-1",
+                    email = "ahmet@example.com",
+                    phone = "+905551112233",
+                    fullName = "Ahmet Yılmaz",
+                    role = "PENDING",
+                    createdAt = "2026-07-03T10:00:00.000Z",
+                    updatedAt = "2026-07-03T10:00:00.000Z"
+                )
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `register maps conflict response`() = runTest {
+        server.enqueue(jsonResponse(code = 409, body = "{}"))
+
+        val result = repository.register(
+            RegisterRequest(
+                email = "ahmet@example.com",
+                password = "Sifre123!",
+                fullName = "Ahmet Yılmaz",
+                phone = "+905551112233"
+            )
+        )
+
+        assertEquals(
+            AuthResult.Failure(AuthError.EmailAlreadyRegistered),
+            result
+        )
+    }
+
+    @Test
+    fun `login sends normalized phone and maps challenge`() = runTest {
+        server.enqueue(
+            jsonResponse(
+                code = 200,
+                body = """
+                    {
+                      "message": "Doğrulama kodu SMS ile gönderildi.",
+                      "phone": "+905320000000",
+                      "expiresAt": "2026-07-03T12:05:00.000Z"
+                    }
+                """.trimIndent()
+            )
+        )
+
+        val result = repository.requestLogin("+905320000000")
+
+        val request = server.takeRequest()
+        assertEquals("/auth/login", request.path)
+        assertEquals("""{"phone":"+905320000000"}""", request.body.readUtf8())
+        assertEquals(
+            AuthResult.Success(
+                LoginChallenge(
+                    message = "Doğrulama kodu SMS ile gönderildi.",
+                    phone = "+905320000000",
+                    expiresAt = "2026-07-03T12:05:00.000Z"
+                )
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `login maps unauthorized response`() = runTest {
+        server.enqueue(jsonResponse(code = 401, body = "{}"))
+
+        val result = repository.requestLogin("+905320000000")
+
+        assertEquals(AuthResult.Failure(AuthError.UserNotFound), result)
+    }
+
+    @Test
+    fun `connection failure maps network error`() = runTest {
+        val offlineServer = MockWebServer()
+        offlineServer.start()
+        val offlineRepository = createRepository(offlineServer)
+        offlineServer.shutdown()
+
+        val result = offlineRepository.requestLogin("+905320000000")
+
+        assertEquals(AuthResult.Failure(AuthError.Network), result)
+    }
+
+    private fun createRepository(mockWebServer: MockWebServer): ApiAuthRepository {
+        val apiService = Retrofit.Builder()
+            .baseUrl(mockWebServer.url("/"))
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(AuthApiService::class.java)
+        return ApiAuthRepository(apiService)
+    }
+
+    private fun jsonResponse(code: Int, body: String) = MockResponse()
+        .setResponseCode(code)
+        .setHeader("Content-Type", "application/json")
+        .setBody(body)
+}
