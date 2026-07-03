@@ -10,6 +10,41 @@ Bu dosya RenCar projesinde alınan mimari/teknik kararların kaydını tutar (bk
 
 ---
 
+## 2026-07-03 — MVI Kontrat Dosyalarının State / Intent / Effect Olarak Ayrılması
+
+**Karar:** Ekran bazlı MVI kontrat tanımları artık tek `<Feature>Contract.kt` dosyasında değil,
+ayrı `<Feature>State.kt`, `<Feature>Intent.kt` ve `<Feature>Effect.kt` dosyalarında tutulacaktır.
+Splash, Login ve Otp referans ekranları bu yapıya taşınmıştır.
+
+**Gerekçe:**
+- State, Intent ve Effect tiplerinin ayrı dosyalarda tutulması ekran paketlerinde sorumlulukları
+  daha net hale getirir.
+- Yeni ekranlarda ilgili kontrat parçasına doğrudan erişim kolaylaşır ve dosya boyutu
+  büyüdükçe okunabilirlik korunur.
+- Bu karar sunum katmanındaki MVI davranışını değiştirmez; yalnızca dosya yerleşimi standardını
+  günceller.
+
+**Etkilenen dosyalar:**
+- `docs/architecture/mvi-contracts.md`
+- `docs/architecture/mvi-overview.md`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/login/LoginState.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/login/LoginIntent.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/login/LoginEffect.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/login/LoginContract.kt` (silindi)
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/otp/OtpState.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/otp/OtpIntent.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/otp/OtpEffect.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/auth/otp/OtpContract.kt` (silindi)
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/splash/SplashState.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/splash/SplashIntent.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/splash/SplashEffect.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/splash/SplashContract.kt` (silindi)
+
+**Nasıl kullanılır:** Yeni ekranlarda State, Intent ve Effect ayrı dosyalarda tanımlanır.
+ViewModel ve Screen dosyaları aynı paketteki bu tipleri kullanmaya devam eder.
+
+---
+
 ## 2026-07-02 — Renk Sistemi: Dynamic Color Kapalı, Genişletilmiş Özel Renk Seti
 
 **Karar:** `RenCarTheme` bileşeninde `dynamicColor` parametresinin varsayılan değeri `false` olarak ayarlanmıştır. Ayrıca Material3 `ColorScheme`'in karşılamadığı semantik/kategori renkleri (başarı, uyarı, araç kategorisi vurgu renkleri, devre dışı durumu) için `RenCarExtendedColors` adında ayrı bir `CompositionLocal` tabanlı token seti eklenmiştir.

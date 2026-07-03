@@ -1,7 +1,7 @@
 # MVI Contracts — State, Intent, Effect Kuralları
 
-> `agents.md` §2.4 gereği bağlayıcıdır. Bu doküman her ekranın `<Feature>Contract.kt`
-> dosyasında State/Intent/Effect'in nasıl tanımlanacağını belirler.
+> `agents.md` §2.4 gereği bağlayıcıdır. Bu doküman her ekranın State/Intent/Effect
+> dosyalarının nasıl tanımlanacağını belirler.
 
 ---
 
@@ -79,5 +79,16 @@ sealed interface LoginEffect : UiEffect {
 
 ## 5) Dosya Yerleşimi
 
-Bir ekranın State, Intent ve Effect tanımları **tek bir dosyada** toplanır:
-`presentation/screen/<feature>/<Feature>Contract.kt`. Üç tip için ayrı dosya açılmaz.
+Bir ekranın State, Intent ve Effect tanımları **ayrı dosyalarda** tutulur:
+
+```text
+presentation/screen/<feature>/
+    <Feature>State.kt
+    <Feature>Intent.kt
+    <Feature>Effect.kt
+```
+
+- `<Feature>State.kt` yalnızca ekran state'ini ve state'e doğrudan ait sabitleri içerir.
+- `<Feature>Intent.kt` yalnızca ekran intent hiyerarşisini içerir.
+- `<Feature>Effect.kt` yalnızca ekran effect hiyerarşisini içerir.
+- Yeni ekranlarda `<Feature>Contract.kt` dosyası açılmaz.

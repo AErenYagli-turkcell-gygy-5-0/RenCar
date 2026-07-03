@@ -36,7 +36,9 @@ Her ekran/feature kendi paketinde aşağıdaki dosyalarla temsil edilir
 
 ```
 presentation/screen/<feature>/
-    <Feature>Contract.kt   // State + Intent + Effect
+    <Feature>State.kt      // Ekranın immutable UI state modeli
+    <Feature>Intent.kt     // Kullanıcı/sistem olayları
+    <Feature>Effect.kt     // Tek seferlik yan etkiler
     <Feature>ViewModel.kt  // MviViewModel<State, Intent, Effect> uygulaması, @HiltViewModel
     <Feature>Screen.kt     // Route (stateful) + Screen (stateless) composable'lar
 ```
