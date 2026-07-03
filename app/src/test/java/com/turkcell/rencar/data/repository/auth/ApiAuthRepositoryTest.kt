@@ -1,6 +1,6 @@
-package com.turkcell.rencar.data.repository
+package com.turkcell.rencar.data.repository.auth
 
-import com.turkcell.rencar.data.remote.AuthApiService
+import com.turkcell.rencar.data.remote.auth.AuthApiService
 import com.turkcell.rencar.domain.auth.AuthError
 import com.turkcell.rencar.domain.auth.AuthResult
 import com.turkcell.rencar.domain.auth.LoginChallenge

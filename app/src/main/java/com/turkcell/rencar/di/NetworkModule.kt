@@ -1,7 +1,7 @@
 package com.turkcell.rencar.di
 
 import com.turkcell.rencar.BuildConfig
-import com.turkcell.rencar.data.remote.AuthApiService
+import com.turkcell.rencar.data.remote.auth.AuthApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

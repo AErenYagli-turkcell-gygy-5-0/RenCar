@@ -1,6 +1,6 @@
 package com.turkcell.rencar.di
 
-import com.turkcell.rencar.data.repository.ApiAuthRepository
+import com.turkcell.rencar.data.repository.auth.ApiAuthRepository
 import com.turkcell.rencar.domain.auth.AuthRepository
 import dagger.Binds
 import dagger.Module

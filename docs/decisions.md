@@ -10,6 +10,28 @@ Bu dosya RenCar projesinde alınan mimari/teknik kararların kaydını tutar (bk
 
 ---
 
+## 2026-07-04 — Auth DTO ve Domain Modellerinin Ayrı Dosyalarda Tutulması
+
+**Karar:** Auth katmanındaki her bağımsız DTO ve domain modeli, sınıf adıyla aynı adı taşıyan
+ayrı bir Kotlin dosyasında tutulacaktır. Auth uzak veri kaynağına ait servis ve DTO'lar
+`data/remote/auth/` feature sınırı altında; DTO'lar bunun `dto/` alt paketinde tutulacaktır.
+Auth repository implementasyonu `data/repository/auth/` feature alt paketinde tutulacaktır.
+Bir sealed interface'e ait kapalı alt tipler ise ana interface ile aynı dosyada kalacaktır.
+
+**Gerekçe:**
+- Model ve DTO tanımlarının konumunu doğrudan sınıf adı üzerinden bulabilmek.
+- Auth kapsamı genişledikçe toplu model dosyalarının büyümesini önlemek.
+- Birbirine ait sealed interface ve alt tiplerini gereksiz şekilde parçalamamak.
+
+**Etkilenen alanlar:**
+- `data/remote/auth/`
+- `data/remote/auth/dto/`
+- `data/repository/auth/`
+- `domain/auth/`
+- `app/src/test/java/com/turkcell/rencar/test/MainDispatcherRule.kt` kullanım açıklaması
+
+---
+
 ## 2026-07-03 — Auth API Entegrasyonu: Retrofit, Repository Sınırı ve Login MVI Akışı
 
 **Karar:** `POST /auth/register` ve `POST /auth/login` uçları Retrofit 3 + Gson ile entegre
