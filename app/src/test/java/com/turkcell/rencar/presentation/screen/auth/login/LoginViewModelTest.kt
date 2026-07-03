@@ -7,6 +7,7 @@ import com.turkcell.rencar.domain.auth.LoginChallenge
 import com.turkcell.rencar.domain.auth.RegisterRequest
 import com.turkcell.rencar.domain.auth.RegisteredUser
 import com.turkcell.rencar.test.MainDispatcherRule
+import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -41,7 +42,7 @@ class LoginViewModelTest {
         viewModel.onIntent(LoginIntent.SendCodeClicked)
         advanceUntilIdle()
 
-        assertEquals("532 000 00 00", viewModel.state.value.phoneNumber)
+        assertEquals("5320000000", viewModel.state.value.phoneNumber)
         assertEquals(listOf("+905320000000"), repository.loginRequests)
         assertFalse(viewModel.state.value.isLoading)
         assertEquals(
@@ -62,6 +63,19 @@ class LoginViewModelTest {
             "Telefon numarası 10 haneli olmalıdır.",
             viewModel.state.value.errorMessage
         )
+    }
+
+    @Test
+    fun `phone visual transformation keeps cursor after inserted spaces`() {
+        val transformed = TurkishPhoneNumberVisualTransformation.filter(
+            AnnotatedString("5496141234")
+        )
+
+        assertEquals("549 614 12 34", transformed.text.text)
+        assertEquals(5, transformed.offsetMapping.originalToTransformed(4))
+        assertEquals(4, transformed.offsetMapping.transformedToOriginal(5))
+        assertEquals(13, transformed.offsetMapping.originalToTransformed(10))
+        assertEquals(10, transformed.offsetMapping.transformedToOriginal(13))
     }
 
     @Test

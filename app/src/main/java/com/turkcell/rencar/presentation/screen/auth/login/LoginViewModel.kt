@@ -27,7 +27,7 @@ class LoginViewModel @Inject constructor(
         val digits = value.filter(Char::isDigit).take(PHONE_NUMBER_LENGTH)
         setState {
             copy(
-                phoneNumber = formatPhoneNumber(digits),
+                phoneNumber = digits,
                 errorMessage = null
             )
         }
@@ -60,20 +60,6 @@ class LoginViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    private fun formatPhoneNumber(digits: String): String {
-        val groups = listOf(3, 3, 2, 2)
-        var startIndex = 0
-        return buildList {
-            groups.forEach { groupSize ->
-                if (startIndex < digits.length) {
-                    val endIndex = minOf(startIndex + groupSize, digits.length)
-                    add(digits.substring(startIndex, endIndex))
-                    startIndex = endIndex
-                }
-            }
-        }.joinToString(separator = " ")
     }
 
     private fun AuthError.toMessage(): String = when (this) {

@@ -33,7 +33,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -47,6 +51,45 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
+
+internal object TurkishPhoneNumberVisualTransformation : VisualTransformation {
+
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digits = text.text.take(PHONE_NUMBER_LENGTH)
+        val formatted = buildString {
+            digits.forEachIndexed { index, digit ->
+                if (index == 3 || index == 6 || index == 8) append(' ')
+                append(digit)
+            }
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                val safeOffset = offset.coerceIn(0, digits.length)
+                val spacesBeforeOffset =
+                    (if (safeOffset > 3) 1 else 0) +
+                        (if (safeOffset > 6) 1 else 0) +
+                        (if (safeOffset > 8) 1 else 0)
+                return (safeOffset + spacesBeforeOffset).coerceAtMost(formatted.length)
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                val safeOffset = offset.coerceIn(0, formatted.length)
+                val originalOffset = when {
+                    safeOffset <= 3 -> safeOffset
+                    safeOffset <= 7 -> safeOffset - 1
+                    safeOffset <= 10 -> safeOffset - 2
+                    else -> safeOffset - 3
+                }
+                return originalOffset.coerceIn(0, digits.length)
+            }
+        }
+
+        return TransformedText(AnnotatedString(formatted), offsetMapping)
+    }
+
+    private const val PHONE_NUMBER_LENGTH = 10
+}
 
 @Composable
 fun LoginRoute(
@@ -175,6 +218,7 @@ fun LoginScreen(
                             enabled = !state.isLoading,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            visualTransformation = TurkishPhoneNumberVisualTransformation,
                             textStyle = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = 0.5.sp,
@@ -294,7 +338,7 @@ fun LoginScreen(
 private fun LoginScreenLightPreview() {
     RenCarTheme(darkTheme = false) {
         LoginScreen(
-            state = LoginState(phoneNumber = "532 000 00 00"),
+            state = LoginState(phoneNumber = "5320000000"),
             onIntent = {}
         )
     }
@@ -305,7 +349,7 @@ private fun LoginScreenLightPreview() {
 private fun LoginScreenDarkPreview() {
     RenCarTheme(darkTheme = true) {
         LoginScreen(
-            state = LoginState(phoneNumber = "532 000 00 00"),
+            state = LoginState(phoneNumber = "5320000000"),
             onIntent = {}
         )
     }
