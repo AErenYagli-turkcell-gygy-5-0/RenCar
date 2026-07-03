@@ -10,6 +10,40 @@ Bu dosya RenCar projesinde alınan mimari/teknik kararların kaydını tutar (bk
 
 ---
 
+## 2026-07-03 — Auth API Entegrasyonu: Retrofit, Repository Sınırı ve Login MVI Akışı
+
+**Karar:** `POST /auth/register` ve `POST /auth/login` uçları Retrofit 3 + Gson ile entegre
+edilecektir. Sunum katmanı Retrofit/HTTP tiplerine doğrudan bağımlı olmayacak; `AuthRepository`
+domain arayüzü üzerinden `AuthResult` kullanacaktır. API implementasyonu Hilt ile singleton olarak
+bağlanacaktır.
+
+**Kapsam:**
+- Register çağrısı data/domain seviyesinde hazırlanır; bu kararda kayıt ekranı eklenmez.
+- Login ekranı 10 haneli Türkiye telefon numarasını alır ve API'ye `+90XXXXXXXXXX` olarak gönderir.
+- Login başarılıysa backend'in döndürdüğü telefonla mevcut OTP ekranına geçilir.
+- OTP doğrulama, refresh, logout, `/auth/me` ve kalıcı token yönetimi kapsam dışıdır.
+
+**Hata politikası:** Swagger hata gövdeleri için bir şema tanımlamadığından hata metni parse
+edilmez. Register `409` sonucu `EmailAlreadyRegistered`, login `401` sonucu `UserNotFound`,
+`IOException` sonucu `Network`, diğer hatalar `Unexpected` olarak domain katmanına çevrilir.
+
+**Token politikası:** Register cevabındaki access/refresh token alanları wire DTO'da karşılanır;
+saklanmaz, loglanmaz ve domain/presentation katmanına aktarılmaz.
+
+**Gerekçe:**
+- Repository sınırı, backend/Retrofit ayrıntılarının MVI ViewModel'lerine sızmasını engeller.
+- Retrofit servisi ve repository binding'lerinin Hilt tarafından sağlanması mevcut DI standardıyla
+  uyumludur.
+- `BuildConfig.API_BASE_URL`, ortam adresinin ağ modülünden ayrılmasını sağlar.
+
+**Etkilenen alanlar:**
+- `gradle/libs.versions.toml`, `app/build.gradle.kts`, `AndroidManifest.xml`
+- `data/remote/`, `data/repository/`, `domain/auth/`, `di/`
+- `presentation/screen/auth/login/`, `presentation/navigation/RenCarDestination.kt`
+- Auth repository ve Login ViewModel unit testleri
+
+---
+
 ## 2026-07-03 — MVI Kontrat Dosyalarının State / Intent / Effect Olarak Ayrılması
 
 **Karar:** Ekran bazlı MVI kontrat tanımları artık tek `<Feature>Contract.kt` dosyasında değil,
