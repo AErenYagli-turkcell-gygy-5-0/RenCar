@@ -6,6 +6,7 @@ import com.turkcell.rencar.domain.auth.AuthResult
 import com.turkcell.rencar.domain.auth.LoginChallenge
 import com.turkcell.rencar.domain.auth.RegisterRequest
 import com.turkcell.rencar.domain.auth.RegisteredUser
+import com.turkcell.rencar.domain.auth.VerifiedSession
 import com.turkcell.rencar.test.MainDispatcherRule
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.CompletableDeferred
@@ -125,5 +126,10 @@ class LoginViewModelTest {
             loginRequests += phone
             return loginGate?.await() ?: loginResult
         }
+
+        override suspend fun verifyOtp(
+            phone: String,
+            code: String
+        ): AuthResult<VerifiedSession> = AuthResult.Failure(AuthError.Unexpected)
     }
 }

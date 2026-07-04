@@ -18,6 +18,7 @@ class LoginViewModel @Inject constructor(
     override fun onIntent(intent: LoginIntent) {
         when (intent) {
             LoginIntent.BackClicked -> sendEffect { LoginEffect.NavigateBack }
+            LoginIntent.SignUpClicked -> sendEffect { LoginEffect.NavigateToRegister }
             is LoginIntent.PhoneNumberChanged -> handlePhoneNumberChanged(intent.value)
             LoginIntent.SendCodeClicked -> handleSendCode()
         }

@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.turkcell.rencar.presentation.screen.auth.license.LicenseUploadRoute
 import com.turkcell.rencar.presentation.screen.auth.login.LoginRoute
 import com.turkcell.rencar.presentation.screen.auth.otp.OtpRoute
+import com.turkcell.rencar.presentation.screen.auth.register.RegisterRoute
 import com.turkcell.rencar.presentation.screen.splash.SplashRoute
 
 @Composable
@@ -30,6 +31,18 @@ fun RenCarNavHost(
 
         composable(RenCarDestination.Login.route) {
             LoginRoute(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToOtp = { phoneNumber ->
+                    navController.navigate(RenCarDestination.Otp.createRoute(phoneNumber))
+                },
+                onNavigateToRegister = {
+                    navController.navigate(RenCarDestination.Register.route)
+                }
+            )
+        }
+
+        composable(RenCarDestination.Register.route) {
+            RegisterRoute(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToOtp = { phoneNumber ->
                     navController.navigate(RenCarDestination.Otp.createRoute(phoneNumber))
