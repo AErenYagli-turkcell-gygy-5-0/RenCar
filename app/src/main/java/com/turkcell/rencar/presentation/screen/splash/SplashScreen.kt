@@ -1,5 +1,6 @@
 package com.turkcell.rencar.presentation.screen.splash
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -15,12 +16,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,18 +39,48 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
-import androidx.compose.material3.Icon
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val IconGradientStartLight = Color(0xFF1E7FE0)
 private val IconGradientStartDark = Color(0xFF3B8EF0)
+
+private data class OnboardingPage(
+    val iconRes: Int,
+    val titleRes: Int,
+    val descriptionRes: Int,
+    val iconContentDescriptionRes: Int
+)
+
+private val onboardingPages = listOf(
+    OnboardingPage(
+        iconRes = R.drawable.onboarding_find_car,
+        titleRes = R.string.splash_page_find_car_title,
+        descriptionRes = R.string.splash_page_find_car_description,
+        iconContentDescriptionRes = R.string.splash_page_find_car_icon_description
+    ),
+    OnboardingPage(
+        iconRes = R.drawable.onboarding_quick_rental,
+        titleRes = R.string.splash_page_quick_rental_title,
+        descriptionRes = R.string.splash_page_quick_rental_description,
+        iconContentDescriptionRes = R.string.splash_page_quick_rental_icon_description
+    ),
+    OnboardingPage(
+        iconRes = R.drawable.onboarding_safe_trip,
+        titleRes = R.string.splash_page_safe_trip_title,
+        descriptionRes = R.string.splash_page_safe_trip_description,
+        iconContentDescriptionRes = R.string.splash_page_safe_trip_icon_description
+    )
+)
 
 @Composable
 fun SplashRoute(
@@ -77,6 +112,16 @@ fun SplashOnboardingScreen(
     modifier: Modifier = Modifier
 ) {
     val isDark = isSystemInDarkTheme()
+    val pagerState = rememberPagerState(
+        initialPage = state.currentPage,
+        pageCount = { onboardingPages.size }
+    )
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .collect { page -> onIntent(SplashIntent.PageChanged(page)) }
+    }
 
     Box(
         modifier = modifier
@@ -85,70 +130,80 @@ fun SplashOnboardingScreen(
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 36.dp),
-                contentAlignment = Alignment.Center
-            ) {
+                    .testTag("splash_pager"),
+                verticalAlignment = Alignment.CenterVertically
+            ) { pageIndex ->
+                val page = onboardingPages[pageIndex]
+
                 Box(
                     modifier = Modifier
-                        .size(260.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0f)
-                                )
-                            )
-                        )
-                )
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        .fillMaxSize()
+                        .padding(horizontal = 36.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(98.dp)
-                            .shadow(
-                                elevation = 20.dp,
-                                shape = RoundedCornerShape(30.dp),
-                                ambientColor = RenCarPrimaryLight,
-                                spotColor = RenCarPrimaryLight
-                            )
-                            .clip(RoundedCornerShape(30.dp))
+                            .size(260.dp)
+                            .clip(CircleShape)
                             .background(
-                                Brush.linearGradient(
+                                Brush.radialGradient(
                                     colors = listOf(
-                                        if (isDark) IconGradientStartDark else IconGradientStartLight,
-                                        RenCarPrimaryLight
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0f)
                                     )
                                 )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_rencar_car),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(50.dp)
+                            )
+                    )
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .size(98.dp)
+                                .shadow(
+                                    elevation = 20.dp,
+                                    shape = RoundedCornerShape(30.dp),
+                                    ambientColor = RenCarPrimaryLight,
+                                    spotColor = RenCarPrimaryLight
+                                )
+                                .clip(RoundedCornerShape(30.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            if (isDark) IconGradientStartDark else IconGradientStartLight,
+                                            RenCarPrimaryLight
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = page.iconRes),
+                                contentDescription = stringResource(page.iconContentDescriptionRes),
+                                modifier = Modifier.size(50.dp)
+                            )
+                        }
+
+                        Text(
+                            text = stringResource(page.titleRes),
+                            style = MaterialTheme.typography.displaySmall,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 28.dp)
+                        )
+
+                        Text(
+                            text = stringResource(page.descriptionRes),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 10.dp)
                         )
                     }
-
-                    Text(
-                        text = stringResource(R.string.splash_title),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(top = 28.dp)
-                    )
-
-                    Text(
-                        text = stringResource(R.string.splash_subtitle),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 10.dp)
-                    )
                 }
             }
 
@@ -160,27 +215,30 @@ fun SplashOnboardingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(modifier = Modifier.padding(bottom = 24.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .width(22.dp)
-                            .height(7.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 7.dp)
-                            .size(7.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.outline)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 7.dp)
-                            .size(7.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.outline)
-                    )
+                    repeat(onboardingPages.size) { index ->
+                        val isSelected = index == state.currentPage
+                        Box(
+                            modifier = Modifier
+                                .padding(start = if (index == 0) 0.dp else 7.dp)
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.width(22.dp).height(7.dp)
+                                    } else {
+                                        Modifier.size(7.dp)
+                                    }
+                                )
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.outline
+                                    }
+                                )
+                                .semantics { selected = isSelected }
+                                .testTag("splash_page_indicator_$index")
+                        )
+                    }
                 }
 
                 Box(
@@ -227,7 +285,7 @@ fun SplashOnboardingScreen(
 @Composable
 private fun SplashOnboardingScreenLightPreview() {
     RenCarTheme(darkTheme = false) {
-        SplashOnboardingScreen(state = SplashState, onIntent = {})
+        SplashOnboardingScreen(state = SplashState(), onIntent = {})
     }
 }
 
@@ -235,6 +293,6 @@ private fun SplashOnboardingScreenLightPreview() {
 @Composable
 private fun SplashOnboardingScreenDarkPreview() {
     RenCarTheme(darkTheme = true) {
-        SplashOnboardingScreen(state = SplashState, onIntent = {})
+        SplashOnboardingScreen(state = SplashState(), onIntent = {})
     }
 }
