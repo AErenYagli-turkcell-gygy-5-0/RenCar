@@ -3,9 +3,12 @@ package com.turkcell.rencar.data.repository.license
 import android.content.Context
 import android.net.Uri
 import com.turkcell.rencar.data.remote.license.LicenseApiService
+import com.turkcell.rencar.data.remote.license.dto.LicenseStatusResponseDto
 import com.turkcell.rencar.domain.license.LicenseError
+import com.turkcell.rencar.domain.license.LicenseReviewStatus
 import com.turkcell.rencar.domain.license.LicenseRepository
 import com.turkcell.rencar.domain.license.LicenseResult
+import com.turkcell.rencar.domain.license.LicenseStatus
 import com.turkcell.rencar.domain.license.UploadedLicense
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -24,19 +27,25 @@ class ApiLicenseRepository @Inject constructor(
     override suspend fun uploadLicense(
         frontImageUri: Uri,
         backImageUri: Uri
-    ): LicenseResult<UploadedLicense> = try {
+    ): LicenseResult<UploadedLicense> = runRequest {
         val response = apiService.upload(
             front = frontImageUri.toMultipartPart(FRONT_FIELD_NAME),
             back = backImageUri.toMultipartPart(BACK_FIELD_NAME)
         )
-        LicenseResult.Success(
-            UploadedLicense(
-                id = response.id,
-                status = response.status,
-                frontImageUrl = response.frontImageUrl,
-                backImageUrl = response.backImageUrl
-            )
+        UploadedLicense(
+            id = response.id,
+            status = response.status,
+            frontImageUrl = response.frontImageUrl,
+            backImageUrl = response.backImageUrl
         )
+    }
+
+    override suspend fun getLicenseStatus(): LicenseResult<LicenseStatus> = runRequest {
+        apiService.getStatus().toDomain()
+    }
+
+    private suspend fun <T> runRequest(request: suspend () -> T): LicenseResult<T> = try {
+        LicenseResult.Success(request())
     } catch (error: CancellationException) {
         throw error
     } catch (error: HttpException) {
@@ -73,3 +82,11 @@ class ApiLicenseRepository @Inject constructor(
         const val HTTP_PAYLOAD_TOO_LARGE = 413
     }
 }
+
+internal fun LicenseStatusResponseDto.toDomain() = LicenseStatus(
+    reviewStatus = LicenseReviewStatus.valueOf(status),
+    frontImageUrl = frontImageUrl,
+    backImageUrl = backImageUrl,
+    rejectReason = rejectReason,
+    reviewedAt = reviewedAt
+)
