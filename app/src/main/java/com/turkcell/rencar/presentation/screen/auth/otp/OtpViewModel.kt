@@ -60,7 +60,16 @@ class OtpViewModel @Inject constructor(
             when (val result = authRepository.verifyOtp(state.value.phoneNumber, digits)) {
                 is AuthResult.Success -> {
                     setState { copy(isVerifying = false) }
-                    sendEffect { OtpEffect.VerificationCompleted }
+                    when (result.data.user.role) {
+                        ROLE_PENDING ->
+                            sendEffect { OtpEffect.NavigateToLicenseVerification }
+
+                        ROLE_CUSTOMER ->
+                            sendEffect { OtpEffect.NavigateToHome }
+
+                        else ->
+                            setState { copy(errorMessage = UNSUPPORTED_ROLE_MESSAGE) }
+                    }
                 }
 
                 is AuthResult.Failure -> {
@@ -108,6 +117,10 @@ class OtpViewModel @Inject constructor(
     }
 
     private companion object {
+        const val ROLE_PENDING = "PENDING"
+        const val ROLE_CUSTOMER = "CUSTOMER"
+        const val UNSUPPORTED_ROLE_MESSAGE =
+            "Bu hesap müşteri uygulaması için uygun değil."
         const val COUNTDOWN_TICK_MILLIS = 1_000L
         const val INVALID_CODE_MESSAGE = "Kod geçersiz veya süresi dolmuş."
         const val USER_NOT_FOUND_MESSAGE = "Bu telefon numarasına kayıtlı kullanıcı bulunamadı."

@@ -16,6 +16,8 @@ sealed class RenCarDestination(val route: String) {
 
     data object LicenseUpload : RenCarDestination("license-upload")
 
+    data object Home : RenCarDestination("home")
+
     companion object {
         const val ARG_PHONE_NUMBER = "phoneNumber"
     }

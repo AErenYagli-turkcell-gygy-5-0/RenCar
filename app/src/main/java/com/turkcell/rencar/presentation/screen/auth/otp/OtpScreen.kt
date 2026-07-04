@@ -51,7 +51,8 @@ import com.turkcell.rencar.presentation.theme.RenCarTheme
 @Composable
 fun OtpRoute(
     onNavigateBack: () -> Unit,
-    onVerified: () -> Unit,
+    onNavigateToLicenseVerification: () -> Unit,
+    onNavigateToHome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OtpViewModel = hiltViewModel()
 ) {
@@ -61,7 +62,8 @@ fun OtpRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 OtpEffect.NavigateBack -> onNavigateBack()
-                OtpEffect.VerificationCompleted -> onVerified()
+                OtpEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
+                OtpEffect.NavigateToHome -> onNavigateToHome()
             }
         }
     }

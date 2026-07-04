@@ -11,6 +11,7 @@ import com.turkcell.rencar.presentation.screen.auth.license.LicenseUploadRoute
 import com.turkcell.rencar.presentation.screen.auth.login.LoginRoute
 import com.turkcell.rencar.presentation.screen.auth.otp.OtpRoute
 import com.turkcell.rencar.presentation.screen.auth.register.RegisterRoute
+import com.turkcell.rencar.presentation.screen.home.HomeRoute
 import com.turkcell.rencar.presentation.screen.splash.SplashRoute
 
 @Composable
@@ -58,19 +59,40 @@ fun RenCarNavHost(
         ) {
             OtpRoute(
                 onNavigateBack = { navController.popBackStack() },
-                onVerified = {
-                    navController.navigate(RenCarDestination.LicenseUpload.route)
+                onNavigateToLicenseVerification = {
+                    navController.navigateAfterAuth(RenCarDestination.LicenseUpload.route)
+                },
+                onNavigateToHome = {
+                    navController.navigateAfterAuth(RenCarDestination.Home.route)
                 }
             )
         }
 
         composable(RenCarDestination.LicenseUpload.route) {
             LicenseUploadRoute(
-                onNavigateBack = { navController.popBackStack() },
-                // Selfie ve Onay adımları henüz kapsamda değil; bu ekran akışın son
-                // implemente edilen adımıdır (bkz. plan onayı — Ehliyet Doğrulama, adım 1).
-                onUploadCompleted = {}
+                onNavigateBack = {
+                    navController.navigateAfterAuth(RenCarDestination.Login.route)
+                },
+                onNavigateHome = {
+                    navController.navigateAfterAuth(RenCarDestination.Home.route)
+                },
+                onNavigateToLogin = {
+                    navController.navigateAfterAuth(RenCarDestination.Login.route)
+                }
             )
         }
+
+        composable(RenCarDestination.Home.route) {
+            HomeRoute()
+        }
+    }
+}
+
+private fun NavHostController.navigateAfterAuth(route: String) {
+    navigate(route) {
+        popUpTo(RenCarDestination.Splash.route) {
+            inclusive = true
+        }
+        launchSingleTop = true
     }
 }
