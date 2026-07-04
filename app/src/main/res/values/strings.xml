@@ -25,7 +25,9 @@ dakikalar içinde yola çık.</string>
     <string name="otp_title">Telefonunu doğrula</string>
     <string name="otp_instruction_suffix">numarasına gönderdiğimiz 6 haneli kodu gir.</string>
     <string name="otp_resend_prefix">Kodu tekrar gönder · </string>
+    <string name="otp_resend_action">Kodu tekrar gönder</string>
     <string name="otp_verify_button">Doğrula ve Devam Et</string>
+    <string name="otp_verify_loading">Doğrulanıyor...</string>
     <string name="otp_change_phone_prefix">Numara yanlış mı? </string>
     <string name="otp_change_phone_action">Değiştir</string>
 
@@ -43,5 +45,6 @@ dakikalar içinde yola çık.</string>
     <string name="license_info_emphasis">birkaç dakika</string>
     <string name="license_info_suffix"> sürer.</string>
     <string name="license_continue_button">Devam Et</string>
+    <string name="license_continue_loading">Yükleniyor...</string>
     <string name="license_uploaded">Yüklendi</string>
 </resources>
