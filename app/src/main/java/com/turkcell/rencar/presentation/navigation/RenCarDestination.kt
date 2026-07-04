@@ -10,6 +10,8 @@ sealed class RenCarDestination(val route: String) {
         fun createRoute(phoneNumber: String) = "otp/$phoneNumber"
     }
 
+    data object LicenseUpload : RenCarDestination("license-upload")
+
     companion object {
         const val ARG_PHONE_NUMBER = "phoneNumber"
     }

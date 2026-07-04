@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.turkcell.rencar.presentation.screen.auth.license.LicenseUploadRoute
 import com.turkcell.rencar.presentation.screen.auth.login.LoginRoute
 import com.turkcell.rencar.presentation.screen.auth.otp.OtpRoute
 import com.turkcell.rencar.presentation.screen.splash.SplashRoute
@@ -44,9 +45,18 @@ fun RenCarNavHost(
         ) {
             OtpRoute(
                 onNavigateBack = { navController.popBackStack() },
-                // Doğrulama sonrası gidilecek bir Home/Dashboard ekranı henüz kapsamda değil
-                // (bkz. docs/decisions.md — 2026-07-02, Sunum Katmanı MVI kararı).
-                onVerified = {}
+                onVerified = {
+                    navController.navigate(RenCarDestination.LicenseUpload.route)
+                }
+            )
+        }
+
+        composable(RenCarDestination.LicenseUpload.route) {
+            LicenseUploadRoute(
+                onNavigateBack = { navController.popBackStack() },
+                // Selfie ve Onay adımları henüz kapsamda değil; bu ekran akışın son
+                // implemente edilen adımıdır (bkz. plan onayı — Ehliyet Doğrulama, adım 1).
+                onUploadCompleted = {}
             )
         }
     }
