@@ -29,6 +29,25 @@ Bu dosya RenCar projesinde alınan mimari/teknik kararların kaydını tutar (bk
 
 ---
 
+## 2026-07-04 — Splash Onboarding İçeriğinin Tek Route İçinde Pager Olarak Yönetilmesi
+
+**Karar:** Splash onboarding akışı ayrı navigasyon hedefleri yerine tek `SplashRoute` içinde üç
+içerikli `HorizontalPager` olarak gösterilecektir. Geçerli sayfa indeksi `SplashState` içinde
+tutulacak ve kullanıcı kaydırmaları `SplashIntent.PageChanged` ile ViewModel'e aktarılacaktır.
+Görsel ve metin kaynakları sunum katmanında kalacak; ViewModel yalnızca geçerli indeksi yönetecektir.
+
+**Gerekçe:**
+- Üç onboarding içeriği aynı ekran akışının parçalarıdır; ayrı route oluşturmak gereksiz navigasyon
+  durumu üretir.
+- Sayfa göstergesinin pager ile aynı state kaynağından beslenmesi, statik gösterge ve içerik
+  uyumsuzluğunu önler.
+- Android resource kimliklerinin State'e taşınmaması ViewModel'i Android UI ayrıntılarından bağımsız
+  tutar.
+
+**Etkilenen alanlar:**
+- `presentation/screen/splash/`
+- `app/src/main/res/values/strings.xml`
+
 ## 2026-07-04 — Otp Doğrulama ve Ehliyet Yükleme API Entegrasyonu; Bellek-İçi Oturum Token Yönetimi
 
 **Karar:** `POST /auth/verify-otp` ve `POST /license/upload` uçları entegre edilmiştir.

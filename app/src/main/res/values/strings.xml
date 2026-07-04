@@ -2,9 +2,15 @@
     <string name="app_name">RenCar</string>
 
     <!-- Splash Screen -->
-    <string name="splash_title">Rencar</string>
-    <string name="splash_subtitle">Yakındaki aracı bul,
-dakikalar içinde yola çık.</string>
+    <string name="splash_page_find_car_title">Yakınındaki Aracı Bul</string>
+    <string name="splash_page_find_car_description">Konumuna en yakın araçları keşfet, sana uygun aracı kolayca seç.</string>
+    <string name="splash_page_find_car_icon_description">Yakındaki araçları bulma simgesi</string>
+    <string name="splash_page_quick_rental_title">Dakikalar İçinde Kirala</string>
+    <string name="splash_page_quick_rental_description">Rezervasyonunu hızlıca tamamla, uzun işlemlerle vakit kaybetme.</string>
+    <string name="splash_page_quick_rental_icon_description">Hızlı araç kiralama simgesi</string>
+    <string name="splash_page_safe_trip_title">Güvenle Yola Çık</string>
+    <string name="splash_page_safe_trip_description">Doğrulanmış araçlarla yolculuğuna güvenle başla ve sürüşün keyfini çıkar.</string>
+    <string name="splash_page_safe_trip_icon_description">Güvenli yolculuk simgesi</string>
     <string name="splash_cta_button">Hemen Başla</string>
     <string name="splash_login_prompt_prefix">Zaten hesabım var · </string>
     <string name="splash_login_prompt_action">Giriş yap</string>
