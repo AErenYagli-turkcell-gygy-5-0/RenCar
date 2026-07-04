@@ -131,5 +131,8 @@ class LoginViewModelTest {
             phone: String,
             code: String
         ): AuthResult<VerifiedSession> = AuthResult.Failure(AuthError.Unexpected)
+
+        override suspend fun refreshSession(): AuthResult<VerifiedSession> =
+            AuthResult.Failure(AuthError.Unexpected)
     }
 }

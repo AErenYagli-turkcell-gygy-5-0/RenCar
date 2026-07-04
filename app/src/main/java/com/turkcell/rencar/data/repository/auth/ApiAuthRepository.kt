@@ -2,6 +2,7 @@ package com.turkcell.rencar.data.repository.auth
 
 import com.turkcell.rencar.data.remote.auth.AuthApiService
 import com.turkcell.rencar.data.remote.auth.dto.LoginRequestDto
+import com.turkcell.rencar.data.remote.auth.dto.RefreshTokenRequestDto
 import com.turkcell.rencar.data.remote.auth.dto.RegisterRequestDto
 import com.turkcell.rencar.data.remote.auth.dto.UserResponseDto
 import com.turkcell.rencar.data.remote.auth.dto.VerifyOtpRequestDto
@@ -73,13 +74,17 @@ class ApiAuthRepository @Inject constructor(
             }
         ) {
             val response = apiService.verifyOtp(VerifyOtpRequestDto(phone = phone, code = code))
-            sessionTokenHolder.update(response.accessToken)
-            VerifiedSession(
-                user = response.user.toDomain(),
-                accessToken = response.accessToken,
-                refreshToken = response.refreshToken
-            )
+            response.toSession()
         }
+
+    override suspend fun refreshSession(): AuthResult<VerifiedSession> {
+        val refreshToken = sessionTokenHolder.refreshToken
+            ?: return AuthResult.Failure(AuthError.Unexpected)
+
+        return runRequest(httpError = { AuthError.Unexpected }) {
+            apiService.refresh(RefreshTokenRequestDto(refreshToken)).toSession()
+        }
+    }
 
     private suspend fun <T> runRequest(
         httpError: (Int) -> AuthError,
@@ -105,6 +110,15 @@ class ApiAuthRepository @Inject constructor(
         createdAt = createdAt,
         updatedAt = updatedAt
     )
+
+    private fun com.turkcell.rencar.data.remote.auth.dto.AuthResponseDto.toSession(): VerifiedSession {
+        sessionTokenHolder.update(accessToken = accessToken, refreshToken = refreshToken)
+        return VerifiedSession(
+            user = user.toDomain(),
+            accessToken = accessToken,
+            refreshToken = refreshToken
+        )
+    }
 
     private companion object {
         const val HTTP_UNAUTHORIZED = 401
