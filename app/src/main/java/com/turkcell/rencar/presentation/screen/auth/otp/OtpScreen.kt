@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,11 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -138,59 +144,88 @@ fun OtpVerificationScreen(
                 modifier = Modifier.padding(top = 8.dp)
             )
 
-            Row(modifier = Modifier.padding(top = 30.dp)) {
-                repeat(OTP_LENGTH) { index ->
-                    val digit = state.digits.getOrNull(index)
-                    val isActive = digit == null && index == state.digits.length
+            Box(modifier = Modifier.padding(top = 30.dp)) {
+                Row {
+                    repeat(OTP_LENGTH) { index ->
+                        val digit = state.digits.getOrNull(index)
+                        val isActive = digit == null && index == state.digits.length
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = if (index == 0) 0.dp else 9.dp)
-                            .height(62.dp)
-                            .then(
-                                if (isActive) {
-                                    Modifier
-                                        .border(
-                                            width = 2.dp,
-                                            color = MaterialTheme.colorScheme.primary,
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = if (index == 0) 0.dp else 9.dp)
+                                .height(62.dp)
+                                .then(
+                                    if (isActive) {
+                                        Modifier
+                                            .border(
+                                                width = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                shape = RoundedCornerShape(15.dp)
+                                            )
+                                            .background(
+                                                color = MaterialTheme.colorScheme.primaryContainer,
+                                                shape = RoundedCornerShape(15.dp)
+                                            )
+                                    } else {
+                                        Modifier.border(
+                                            width = 1.5.dp,
+                                            color = MaterialTheme.colorScheme.outline,
                                             shape = RoundedCornerShape(15.dp)
                                         )
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primaryContainer,
-                                            shape = RoundedCornerShape(15.dp)
-                                        )
-                                } else {
-                                    Modifier.border(
-                                        width = 1.5.dp,
-                                        color = MaterialTheme.colorScheme.outline,
-                                        shape = RoundedCornerShape(15.dp)
-                                    )
-                                }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        when {
-                            digit != null -> Text(
-                                text = digit.toString(),
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            when {
+                                digit != null -> Text(
+                                    text = digit.toString(),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
 
-                            isActive -> Box(
-                                modifier = Modifier
-                                    .width(2.dp)
-                                    .height(26.dp)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .background(MaterialTheme.colorScheme.primary)
-                            )
+                                isActive -> Box(
+                                    modifier = Modifier
+                                        .width(2.dp)
+                                        .height(26.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(MaterialTheme.colorScheme.primary)
+                                )
+                            }
                         }
                     }
                 }
+
+                BasicTextField(
+                    value = state.digits,
+                    onValueChange = { onIntent(OtpIntent.DigitsChanged(it)) },
+                    enabled = !state.isVerifying,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    textStyle = MaterialTheme.typography.headlineSmall.copy(color = Color.Transparent),
+                    cursorBrush = SolidColor(Color.Transparent),
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(horizontal = 0.dp)
+                )
+            }
+
+            state.errorMessage?.let { errorMessage ->
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
             }
 
             Row(
-                modifier = Modifier.padding(top = 22.dp),
+                modifier = Modifier
+                    .padding(top = 22.dp)
+                    .clickable(
+                        enabled = state.remainingSeconds == 0 && !state.isResending,
+                        onClick = { onIntent(OtpIntent.ResendClicked) }
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -199,19 +234,28 @@ fun OtpVerificationScreen(
                     tint = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.size(16.dp)
                 )
-                Text(
-                    text = buildAnnotatedString {
-                        append(stringResource(R.string.otp_resend_prefix))
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                            val minutes = state.remainingSeconds / 60
-                            val seconds = (state.remainingSeconds % 60).toString().padStart(2, '0')
-                            append("$minutes:$seconds")
-                        }
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.padding(start = 7.dp)
-                )
+                if (state.remainingSeconds > 0) {
+                    Text(
+                        text = buildAnnotatedString {
+                            append(stringResource(R.string.otp_resend_prefix))
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                                val minutes = state.remainingSeconds / 60
+                                val seconds = (state.remainingSeconds % 60).toString().padStart(2, '0')
+                                append("$minutes:$seconds")
+                            }
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(start = 7.dp)
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.otp_resend_action),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 7.dp)
+                    )
+                }
             }
 
             Box(
@@ -226,15 +270,29 @@ fun OtpVerificationScreen(
                         spotColor = RenCarPrimaryLight
                     )
                     .clip(RoundedCornerShape(18.dp))
-                    .background(RenCarPrimaryLight)
-                    .clickable { onIntent(OtpIntent.VerifyClicked) },
+                    .background(RenCarPrimaryLight.copy(alpha = if (state.isVerifying) 0.55f else 1f))
+                    .clickable(enabled = !state.isVerifying) { onIntent(OtpIntent.VerifyClicked) },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = stringResource(R.string.otp_verify_button),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (state.isVerifying) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Text(
+                        text = if (state.isVerifying) {
+                            stringResource(R.string.otp_verify_loading)
+                        } else {
+                            stringResource(R.string.otp_verify_button)
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(start = if (state.isVerifying) 8.dp else 0.dp)
+                    )
+                }
             }
 
             Text(

@@ -10,6 +10,88 @@ Bu dosya RenCar projesinde alınan mimari/teknik kararların kaydını tutar (bk
 
 ---
 
+## 2026-07-04 — Otp Doğrulama ve Ehliyet Yükleme API Entegrasyonu; Bellek-İçi Oturum Token Yönetimi
+
+**Karar:** `POST /auth/verify-otp` ve `POST /license/upload` uçları entegre edilmiştir.
+`POST /auth/verify-otp` başarılı dönüşte backend'in ürettiği `accessToken`, yeni
+`data/session/SessionTokenHolder.kt` (`@Singleton`) sınıfında yalnızca bellekte (`@Volatile var`)
+tutulur; diske/DataStore'a yazılmaz. `data/remote/AuthInterceptor.kt` adlı bir OkHttp
+`Interceptor`, bu token mevcutsa tüm isteklere `Authorization: Bearer` başlığını otomatik ekler;
+bu interceptor `di/NetworkModule.kt` içinde kurulan tekil `OkHttpClient`'a bağlanmıştır. Bu şekilde
+Otp ekranında elde edilen token, Ehliyet Yükleme ekranındaki `/license/upload` çağrısına
+kullanıcı/ViewModel araya girmeden taşınmış olur.
+
+**Kapsam:**
+- Otp ekranı artık gerçek bir 6 haneli kod girişi alır (mevcut kutu tasarımının üzerine
+  bindirilmiş şeffaf bir `BasicTextField` ile); `VerifyClicked` intent'i telefon + kodu
+  `AuthRepository.verifyOtp()` üzerinden `/auth/verify-otp`'a gönderir.
+- Kodu tekrar gönder (resend) özelliği eklenmiştir: mevcut `AuthRepository.requestLogin()`
+  çağrısı tekrar kullanılır (yeni bir endpoint gerekmez). Kodun geçerlilik süresi backend'den
+  ayrıca nav-arg olarak taşınmadığından (Login/NavHost dosyalarına dokunmamak amacıyla),
+  istemci tarafında sabit **300 saniyelik** yaklaşık bir geri sayım uygulanır; bu, sunucu
+  saatiyle birebir senkron değildir.
+- Ehliyet Yükleme ekranında galeri seçimi `androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia`
+  ile `LicenseUploadRoute` içinde yapılır (kamera değil, galeri/Photo Picker — kullanıcı onayı
+  ile). Seçilen `Uri`, `LicenseUploadIntent.FrontImageSelected`/`BackImageSelected` ile
+  ViewModel'e taşınır ve State'te tutulur (`frontImageUri`/`backImageUri`); eski
+  `isFrontUploaded`/`isBackUploaded` boolean alanları kaldırılmış, "yüklendi" rozeti artık
+  `Uri`'nin null olup olmamasından türetilir.
+- Seçilen `Uri`'lerin bayt içeriği (multipart gövde için) `ApiLicenseRepository` içinde,
+  `@ApplicationContext` ile enjekte edilen `Context.contentResolver` üzerinden okunur;
+  `LicenseUploadViewModel` Android Context'e dokunmaz, yalnızca `Uri` değerini taşır. `Uri`,
+  bir Context/yaşam döngüsü nesnesi değil hafif bir değer tipi olduğundan bu, ViewModel'de
+  "framework bağımlılığı olmasın" ilkesinin pragmatik bir yorumu olarak kabul edilmiştir
+  (kullanıcı onayı ile).
+- Galeri seçicinin (`rememberLauncherForActivityResult`) kendisi yalnızca `LicenseUploadRoute`
+  içinde kurulur; `LicenseUploadScreen`'in `(state, onIntent)` imzası değişmemiştir — Route,
+  kendisine iletilen `onIntent`'i sarmalayarak `FrontUploadClicked`/`BackUploadClicked`
+  intent'lerini picker açılışına çevirir, diğer tüm intent'leri doğrudan ViewModel'e iletir.
+
+**Hata politikası:**
+- Otp doğrulama: `401` → `AuthError.InvalidOtp` (yeni), diğerleri mevcut Login hata politikasıyla
+  aynı şekilde `Network`/`Unexpected`'a düşer.
+- Ehliyet yükleme: `400` → `LicenseError.InvalidFile`, `401` → `LicenseError.Unauthorized`,
+  `409` → `LicenseError.AlreadyReviewedOrCustomer`, `413` → `LicenseError.FileTooLarge`,
+  `IOException` → `Network`, diğerleri → `Unexpected`. Swagger hata gövdeleri için şema
+  tanımlanmadığından (bkz. 2026-07-03 kararı) hata metni burada da parse edilmez.
+
+**Token politikası (güncelleme):** 2026-07-03 kararında "kalıcı token yönetimi kapsam dışıdır"
+denmişti; bu karar bunu yalnızca **bellek-içi, süreç ömrüyle sınırlı** bir oturuma genişletir.
+Kalıcı depolama (ör. DataStore) hâlâ kapsam dışıdır ve ayrı bir karar gerektirir. Bilinen sınır:
+uygulama süreci öldürülürse (ör. arka planda sistem tarafından kapatılırsa) token kaybolur ve
+Ehliyet Yükleme ekranına dönüldüğünde `401` alınır.
+
+**Gerekçe:**
+- Login → Otp → Ehliyet Yükleme akışı tek bir uygulama oturumunda gerçekleştiğinden, bellek-içi
+  bir tutucu ek bağımlılık (DataStore vb.) gerektirmeden yeterlidir; bu en az kapsamlı çözümdür
+  (kullanıcı onayı ile).
+- `AuthResult<T>`/`AuthError` kalıbının Ehliyet için birebir tekrarlanması (`LicenseResult<T>`/
+  `LicenseError`), auth ve license özelliklerinin ayrı sınır (`domain/auth`, `domain/license`)
+  olarak tutulmasına dair 2026-07-04 (DTO/domain dosya yerleşimi) kararıyla tutarlıdır; ortak bir
+  jenerik `Result` tipine geçiş, mevcut `AuthResult` kullanım noktalarını da etkileyecek bir
+  sapma olacağından bu kararın kapsamına alınmamıştır.
+
+**Etkilenen alanlar:**
+- `data/session/SessionTokenHolder.kt` (yeni), `data/remote/AuthInterceptor.kt` (yeni)
+- `di/NetworkModule.kt`, `di/RepositoryModule.kt`
+- `gradle/libs.versions.toml`, `app/build.gradle.kts` (yeni ana bağımlılık: `com.squareup.okhttp3:okhttp`)
+- `domain/auth/AuthError.kt`, `domain/auth/AuthRepository.kt`, `domain/auth/VerifiedSession.kt` (yeni)
+- `data/remote/auth/AuthApiService.kt`, `data/remote/auth/dto/VerifyOtpRequestDto.kt` (yeni)
+- `data/repository/auth/ApiAuthRepository.kt`
+- `domain/license/` (yeni: `UploadedLicense.kt`, `LicenseError.kt`, `LicenseResult.kt`, `LicenseRepository.kt`)
+- `data/remote/license/` (yeni: `LicenseApiService.kt`, `dto/LicenseResponseDto.kt`)
+- `data/repository/license/ApiLicenseRepository.kt` (yeni)
+- `presentation/screen/auth/otp/` (`OtpState.kt`, `OtpIntent.kt`, `OtpViewModel.kt`, `OtpScreen.kt`)
+- `presentation/screen/auth/license/` (`LicenseUploadState.kt`, `LicenseUploadIntent.kt`,
+  `LicenseUploadViewModel.kt`, `LicenseUploadScreen.kt`)
+- `app/src/main/res/values/strings.xml`
+
+**Nasıl kullanılır:** Bearer token gerektiren yeni bir endpoint eklendiğinde ayrıca bir şey
+yapmaya gerek yoktur; `AuthInterceptor` mevcut token'ı otomatik ekler. Token'ı temizlemek
+gerekirse (ör. ileride bir çıkış/logout akışında) `SessionTokenHolder.clear()` çağrılmalıdır.
+
+---
+
 ## 2026-07-04 — Auth DTO ve Domain Modellerinin Ayrı Dosyalarda Tutulması
 
 **Karar:** Auth katmanındaki her bağımsız DTO ve domain modeli, sınıf adıyla aynı adı taşıyan
