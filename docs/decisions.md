@@ -6,6 +6,25 @@
 
 # Mimari Kararlar
 
+---
+
+## 2026-07-04 - Ortak Alt Navigasyon Bileseni
+
+**Karar:** Uygulama ekranlarinda tekrar kullanilacak alt navigasyon cubugu, ekran MVI
+kontrati acmadan `presentation/component/navigation/` altinda ortak Compose bileseni olarak
+tutulacaktir. Bilesen secili item bilgisini disaridan alacak ve item tiklamalarini callback ile
+ust katmana bildirecektir.
+
+**Gerekce:**
+- Alt navigasyon cubugu tek basina bir ekran/feature degildir; bu nedenle `State/Intent/Effect`
+  ve ViewModel dosyalari acilmasi MVI dokumanlarindaki ekran sorumlulugu ile uyumlu olmaz.
+- Navigasyon kararinin bilesenin icine gomulmemesi, ayni UI parcaciginin farkli ekran akislariyla
+  tekrar kullanilabilmesini saglar.
+- Light/Dark tema renkleri `MaterialTheme` uzerinden okunarak mevcut tema kararlarina bagli kalinir.
+
+**Etkilenen dosyalar:**
+- `app/src/main/java/com/turkcell/rencar/presentation/component/navigation/RenCarBottomNavBar.kt`
+
 Bu dosya RenCar projesinde alınan mimari/teknik kararların kaydını tutar (bkz. `agents.md` §2.4). Her karar tarih, gerekçe ve etkilenen dosyalarla birlikte eklenir.
 
 ---
