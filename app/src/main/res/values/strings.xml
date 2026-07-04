@@ -65,4 +65,18 @@
     <string name="license_continue_button">Devam Et</string>
     <string name="license_continue_loading">Yükleniyor...</string>
     <string name="license_uploaded">Yüklendi</string>
+    <!-- License Verification Flow -->
+    <string name="license_rejected_reason">Red nedeni: %1$s</string>
+    <string name="selfie_title">Selfie doğrulaması</string>
+    <string name="selfie_description">Yüzünüz net görünecek şekilde bir selfie çekin. Fotoğraf yalnızca bu işlem sırasında cihaz belleğinde tutulur.</string>
+    <string name="selfie_preview">Selfie önizlemesi</string>
+    <string name="selfie_capture">Selfie Çek</string>
+    <string name="selfie_retake">Yeniden Çek</string>
+    <string name="approval_waiting_title">İnceleme bekleniyor</string>
+    <string name="approval_waiting_description">Ehliyetiniz incelemeye alındı. Onaylandığında hesabınız müşteri hesabına dönüştürülecektir.</string>
+    <string name="approval_check_status">Durumu Kontrol Et</string>
+    <string name="common_retry">Tekrar Dene</string>
+
+    <!-- Home Placeholder -->
+    <string name="home_placeholder_title">Ana Sayfa</string>
 </resources>
