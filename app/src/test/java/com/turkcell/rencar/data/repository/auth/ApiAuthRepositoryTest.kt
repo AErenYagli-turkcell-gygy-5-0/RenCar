@@ -1,6 +1,7 @@
 package com.turkcell.rencar.data.repository.auth
 
 import com.turkcell.rencar.data.remote.auth.AuthApiService
+import com.turkcell.rencar.data.session.SessionTokenHolder
 import com.turkcell.rencar.domain.auth.AuthError
 import com.turkcell.rencar.domain.auth.AuthResult
 import com.turkcell.rencar.domain.auth.LoginChallenge
@@ -166,7 +167,7 @@ class ApiAuthRepositoryTest {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApiService::class.java)
-        return ApiAuthRepository(apiService)
+        return ApiAuthRepository(apiService, SessionTokenHolder())
     }
 
     private fun jsonResponse(code: Int, body: String) = MockResponse()

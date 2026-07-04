@@ -8,6 +8,8 @@ sealed class RenCarDestination(val route: String) {
 
     data object Login : RenCarDestination("login")
 
+    data object Register : RenCarDestination("register")
+
     data object Otp : RenCarDestination("otp/{$ARG_PHONE_NUMBER}") {
         fun createRoute(phoneNumber: String) = "otp/${Uri.encode(phoneNumber)}"
     }

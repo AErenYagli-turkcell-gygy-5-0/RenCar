@@ -8,6 +8,33 @@
 
 ---
 
+## 2026-07-04 - Register Ekrani ve OTP Akisinin Baslatilmasi
+
+**Karar:** Register ekrani `presentation/screen/auth/register/` altinda MVI dosya yapisiyla
+eklenecektir. Ekran `email`, `password`, `fullName` ve 10 haneli Turkiye telefon numarasi alacak;
+telefon Login ekranindaki kuralla `+90XXXXXXXXXX` formatina normalize edilerek
+`AuthRepository.register()` uzerinden `POST /auth/register` ucuna gonderilecektir. Register
+basarili olduktan sonra, backend sozlesmesinde OTP kodunu baslatan uc `POST /auth/login` oldugu
+icin ayni telefonla `AuthRepository.requestLogin()` cagrilacak ve basarili cevapla OTP ekranina
+gidilecektir.
+
+**Gerekce:**
+- `docs/api/openapi.json` icinde `POST /auth/register` basarili cevapta token dondurur; OTP kodu
+  baslatma sozlesmesi ise `POST /auth/login` uzerindedir. Bu nedenle sadece register cevabiyla OTP
+  ekranina gecmek, kod uretilmeden dogrulama ekranina gitme riski tasir.
+- Register sunum katmani, mevcut Login referans implementasyonundaki Route/Screen ayrimi,
+  State/Intent/Effect dosya ayrimi ve `MviViewModel` kalibini takip eder.
+- Login ekranindaki "Hesabin yok mu? Kayit ol" metni navigation effect uzerinden Register
+  route'una baglanir; `Screen` composable'i dogrudan `NavController` bilmez.
+
+**Etkilenen alanlar:**
+- `presentation/screen/auth/register/`
+- `presentation/screen/auth/login/`
+- `presentation/navigation/`
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-04 - Ortak Alt Navigasyon Bileseni
 
 **Karar:** Uygulama ekranlarinda tekrar kullanilacak alt navigasyon cubugu, ekran MVI

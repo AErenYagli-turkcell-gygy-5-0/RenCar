@@ -27,6 +27,18 @@
     <string name="login_signup_prompt_prefix">Hesabın yok mu? </string>
     <string name="login_signup_prompt_action">Kayıt ol</string>
 
+    <!-- Register Screen -->
+    <string name="register_title">Hesap oluştur</string>
+    <string name="register_subtitle">Bilgilerini gir, telefon numaranı doğrulayarak RenCar hesabını oluştur.</string>
+    <string name="register_full_name_label">Ad soyad</string>
+    <string name="register_email_label">E-posta</string>
+    <string name="register_password_label">Şifre</string>
+    <string name="register_phone_label">Telefon numarası</string>
+    <string name="register_submit_loading">Hesap oluşturuluyor...</string>
+    <string name="register_submit_default">Hesap Oluştur</string>
+    <string name="register_login_prompt_prefix">Zaten hesabın var mı? </string>
+    <string name="register_login_prompt_action">Giriş yap</string>
+
     <!-- OTP Screen -->
     <string name="otp_title">Telefonunu doğrula</string>
     <string name="otp_instruction_suffix">numarasına gönderdiğimiz 6 haneli kodu gir.</string>

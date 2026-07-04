@@ -1,11 +1,9 @@
-package com.turkcell.rencar.presentation.screen.auth.login
+package com.turkcell.rencar.presentation.screen.auth.register
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,11 +16,15 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,14 +36,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -50,75 +49,35 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
+import com.turkcell.rencar.presentation.screen.auth.login.TurkishPhoneNumberVisualTransformation
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 
-internal object TurkishPhoneNumberVisualTransformation : VisualTransformation {
-
-    override fun filter(text: AnnotatedString): TransformedText {
-        val digits = text.text.take(PHONE_NUMBER_LENGTH)
-        val formatted = buildString {
-            digits.forEachIndexed { index, digit ->
-                if (index == 3 || index == 6 || index == 8) append(' ')
-                append(digit)
-            }
-        }
-
-        val offsetMapping = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                val safeOffset = offset.coerceIn(0, digits.length)
-                val spacesBeforeOffset =
-                    (if (safeOffset > 3) 1 else 0) +
-                        (if (safeOffset > 6) 1 else 0) +
-                        (if (safeOffset > 8) 1 else 0)
-                return (safeOffset + spacesBeforeOffset).coerceAtMost(formatted.length)
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                val safeOffset = offset.coerceIn(0, formatted.length)
-                val originalOffset = when {
-                    safeOffset <= 3 -> safeOffset
-                    safeOffset <= 7 -> safeOffset - 1
-                    safeOffset <= 10 -> safeOffset - 2
-                    else -> safeOffset - 3
-                }
-                return originalOffset.coerceIn(0, digits.length)
-            }
-        }
-
-        return TransformedText(AnnotatedString(formatted), offsetMapping)
-    }
-
-    private const val PHONE_NUMBER_LENGTH = 10
-}
-
 @Composable
-fun LoginRoute(
+fun RegisterRoute(
     onNavigateBack: () -> Unit,
     onNavigateToOtp: (String) -> Unit,
-    onNavigateToRegister: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                LoginEffect.NavigateBack -> onNavigateBack()
-                LoginEffect.NavigateToRegister -> onNavigateToRegister()
-                is LoginEffect.NavigateToOtp -> onNavigateToOtp(effect.phoneNumber)
+                RegisterEffect.NavigateBack -> onNavigateBack()
+                is RegisterEffect.NavigateToOtp -> onNavigateToOtp(effect.phoneNumber)
             }
         }
     }
 
-    LoginScreen(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+    RegisterScreen(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
 @Composable
-fun LoginScreen(
-    state: LoginState,
-    onIntent: (LoginIntent) -> Unit,
+fun RegisterScreen(
+    state: RegisterState,
+    onIntent: (RegisterIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (isSystemInDarkTheme()) {
@@ -138,6 +97,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 28.dp, vertical = 14.dp)
             ) {
                 Box(
@@ -145,7 +105,9 @@ fun LoginScreen(
                         .size(42.dp)
                         .clip(RoundedCornerShape(13.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onIntent(LoginIntent.BackClicked) },
+                        .clickable(enabled = !state.isLoading) {
+                            onIntent(RegisterIntent.BackClicked)
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -157,24 +119,52 @@ fun LoginScreen(
                 }
 
                 Text(
-                    text = stringResource(R.string.login_title),
+                    text = stringResource(R.string.register_title),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(top = 28.dp)
                 )
 
                 Text(
-                    text = stringResource(R.string.login_subtitle),
+                    text = stringResource(R.string.register_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
+                RegisterTextField(
+                    label = stringResource(R.string.register_full_name_label),
+                    value = state.fullName,
+                    enabled = !state.isLoading,
+                    keyboardType = KeyboardType.Text,
+                    onValueChange = { onIntent(RegisterIntent.FullNameChanged(it)) },
+                    modifier = Modifier.padding(top = 28.dp)
+                )
+
+                RegisterTextField(
+                    label = stringResource(R.string.register_email_label),
+                    value = state.email,
+                    enabled = !state.isLoading,
+                    keyboardType = KeyboardType.Email,
+                    onValueChange = { onIntent(RegisterIntent.EmailChanged(it)) },
+                    modifier = Modifier.padding(top = 18.dp)
+                )
+
+                RegisterTextField(
+                    label = stringResource(R.string.register_password_label),
+                    value = state.password,
+                    enabled = !state.isLoading,
+                    keyboardType = KeyboardType.Password,
+                    onValueChange = { onIntent(RegisterIntent.PasswordChanged(it)) },
+                    isPassword = true,
+                    modifier = Modifier.padding(top = 18.dp)
+                )
+
                 Text(
-                    text = stringResource(R.string.login_phone_label),
+                    text = stringResource(R.string.register_phone_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 32.dp, bottom = 9.dp)
+                    modifier = Modifier.padding(top = 18.dp, bottom = 9.dp)
                 )
 
                 Row {
@@ -190,10 +180,13 @@ fun LoginScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🇹🇷", fontSize = 18.sp)
+                            Text(text = "TR", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                             Text(
                                 text = stringResource(R.string.login_country_code),
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp
+                                ),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(start = 7.dp)
                             )
@@ -215,16 +208,13 @@ fun LoginScreen(
                     ) {
                         BasicTextField(
                             value = state.phoneNumber,
-                            onValueChange = {
-                                onIntent(LoginIntent.PhoneNumberChanged(it))
-                            },
+                            onValueChange = { onIntent(RegisterIntent.PhoneNumberChanged(it)) },
                             enabled = !state.isLoading,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             visualTransformation = TurkishPhoneNumberVisualTransformation,
                             textStyle = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 0.5.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             ),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -252,25 +242,6 @@ fun LoginScreen(
                     )
                 }
 
-                Row(
-                    modifier = Modifier.padding(
-                        top = if (state.errorMessage == null) 14.dp else 8.dp
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_info_outline),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.size(17.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.login_info_text),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.padding(start = 9.dp)
-                    )
-                }
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -289,7 +260,7 @@ fun LoginScreen(
                             )
                         )
                         .clickable(enabled = !state.isLoading) {
-                            onIntent(LoginIntent.SendCodeClicked)
+                            onIntent(RegisterIntent.CreateAccountClicked)
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -309,7 +280,11 @@ fun LoginScreen(
                             )
                         }
                         Text(
-                            text = if (state.isLoading) stringResource(R.string.login_submit_loading) else stringResource(R.string.login_submit_default),
+                            text = if (state.isLoading) {
+                                stringResource(R.string.register_submit_loading)
+                            } else {
+                                stringResource(R.string.register_submit_default)
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(start = 8.dp)
@@ -320,9 +295,9 @@ fun LoginScreen(
 
             Text(
                 text = buildAnnotatedString {
-                    append(stringResource(R.string.login_signup_prompt_prefix))
+                    append(stringResource(R.string.register_login_prompt_prefix))
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
-                        append(stringResource(R.string.login_signup_prompt_action))
+                        append(stringResource(R.string.register_login_prompt_action))
                     }
                 },
                 style = MaterialTheme.typography.bodyMedium,
@@ -330,7 +305,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(enabled = !state.isLoading) {
-                        onIntent(LoginIntent.SignUpClicked)
+                        onIntent(RegisterIntent.LoginClicked)
                     }
                     .padding(horizontal = 28.dp, vertical = 28.dp),
                 textAlign = TextAlign.Center
@@ -339,23 +314,80 @@ fun LoginScreen(
     }
 }
 
-@Preview(name = "Login - Light", showBackground = true)
 @Composable
-private fun LoginScreenLightPreview() {
+private fun RegisterTextField(
+    label: String,
+    value: String,
+    enabled: Boolean,
+    keyboardType: KeyboardType,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    isPassword: Boolean = false
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(bottom = 9.dp)
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .border(
+                width = 1.5.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(15.dp)
+            )
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            enabled = enabled,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            visualTransformation = if (isPassword) {
+                PasswordVisualTransformation()
+            } else {
+                androidx.compose.ui.text.input.VisualTransformation.None
+            },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Preview(name = "Register - Light", showBackground = true)
+@Composable
+private fun RegisterScreenLightPreview() {
     RenCarTheme(darkTheme = false) {
-        LoginScreen(
-            state = LoginState(phoneNumber = "5320000000"),
+        RegisterScreen(
+            state = RegisterState(
+                email = "ahmet@example.com",
+                fullName = "Ahmet Yılmaz",
+                phoneNumber = "5320000000"
+            ),
             onIntent = {}
         )
     }
 }
 
-@Preview(name = "Login - Dark", showBackground = true)
+@Preview(name = "Register - Dark", showBackground = true)
 @Composable
-private fun LoginScreenDarkPreview() {
+private fun RegisterScreenDarkPreview() {
     RenCarTheme(darkTheme = true) {
-        LoginScreen(
-            state = LoginState(phoneNumber = "5320000000"),
+        RegisterScreen(
+            state = RegisterState(
+                email = "ahmet@example.com",
+                fullName = "Ahmet Yılmaz",
+                phoneNumber = "5320000000"
+            ),
             onIntent = {}
         )
     }
