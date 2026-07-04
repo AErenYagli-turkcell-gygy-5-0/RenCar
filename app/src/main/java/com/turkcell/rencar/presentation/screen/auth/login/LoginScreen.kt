@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,10 +31,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +51,45 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
+
+internal object TurkishPhoneNumberVisualTransformation : VisualTransformation {
+
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digits = text.text.take(PHONE_NUMBER_LENGTH)
+        val formatted = buildString {
+            digits.forEachIndexed { index, digit ->
+                if (index == 3 || index == 6 || index == 8) append(' ')
+                append(digit)
+            }
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                val safeOffset = offset.coerceIn(0, digits.length)
+                val spacesBeforeOffset =
+                    (if (safeOffset > 3) 1 else 0) +
+                        (if (safeOffset > 6) 1 else 0) +
+                        (if (safeOffset > 8) 1 else 0)
+                return (safeOffset + spacesBeforeOffset).coerceAtMost(formatted.length)
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                val safeOffset = offset.coerceIn(0, formatted.length)
+                val originalOffset = when {
+                    safeOffset <= 3 -> safeOffset
+                    safeOffset <= 7 -> safeOffset - 1
+                    safeOffset <= 10 -> safeOffset - 2
+                    else -> safeOffset - 3
+                }
+                return originalOffset.coerceIn(0, digits.length)
+            }
+        }
+
+        return TransformedText(AnnotatedString(formatted), offsetMapping)
+    }
+
+    private const val PHONE_NUMBER_LENGTH = 10
+}
 
 @Composable
 fun LoginRoute(
@@ -162,18 +210,50 @@ fun LoginScreen(
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
-                        Text(
-                            text = state.phoneNumber,
-                            style = MaterialTheme.typography.bodyLarge.copy(
+                        BasicTextField(
+                            value = state.phoneNumber,
+                            onValueChange = {
+                                onIntent(LoginIntent.PhoneNumberChanged(it))
+                            },
+                            enabled = !state.isLoading,
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            visualTransformation = TurkishPhoneNumberVisualTransformation,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 0.5.sp
+                                letterSpacing = 0.5.sp,
+                                color = MaterialTheme.colorScheme.onSurface
                             ),
-                            color = MaterialTheme.colorScheme.onSurface
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.fillMaxWidth(),
+                            decorationBox = { innerTextField ->
+                                if (state.phoneNumber.isEmpty()) {
+                                    Text(
+                                        text = "5XX XXX XX XX",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                }
+                                innerTextField()
+                            }
                         )
                     }
                 }
 
-                Row(modifier = Modifier.padding(top = 14.dp)) {
+                state.errorMessage?.let { errorMessage ->
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.padding(
+                        top = if (state.errorMessage == null) 14.dp else 8.dp
+                    )
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_info_outline),
                         contentDescription = null,
@@ -200,19 +280,33 @@ fun LoginScreen(
                             spotColor = RenCarPrimaryLight
                         )
                         .clip(RoundedCornerShape(18.dp))
-                        .background(RenCarPrimaryLight)
-                        .clickable { onIntent(LoginIntent.SendCodeClicked) },
+                        .background(
+                            RenCarPrimaryLight.copy(
+                                alpha = if (state.isLoading) 0.55f else 1f
+                            )
+                        )
+                        .clickable(enabled = !state.isLoading) {
+                            onIntent(LoginIntent.SendCodeClicked)
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_message_bubble),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_message_bubble),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                         Text(
-                            text = "Kod Gönder",
+                            text = if (state.isLoading) "Gönderiliyor..." else "Kod Gönder",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(start = 8.dp)
@@ -243,7 +337,10 @@ fun LoginScreen(
 @Composable
 private fun LoginScreenLightPreview() {
     RenCarTheme(darkTheme = false) {
-        LoginScreen(state = LoginState(), onIntent = {})
+        LoginScreen(
+            state = LoginState(phoneNumber = "5320000000"),
+            onIntent = {}
+        )
     }
 }
 
@@ -251,6 +348,9 @@ private fun LoginScreenLightPreview() {
 @Composable
 private fun LoginScreenDarkPreview() {
     RenCarTheme(darkTheme = true) {
-        LoginScreen(state = LoginState(), onIntent = {})
+        LoginScreen(
+            state = LoginState(phoneNumber = "5320000000"),
+            onIntent = {}
+        )
     }
 }
