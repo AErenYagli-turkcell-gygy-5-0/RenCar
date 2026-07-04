@@ -4,19 +4,23 @@ import com.turkcell.rencar.data.remote.auth.AuthApiService
 import com.turkcell.rencar.data.remote.auth.dto.LoginRequestDto
 import com.turkcell.rencar.data.remote.auth.dto.RegisterRequestDto
 import com.turkcell.rencar.data.remote.auth.dto.UserResponseDto
+import com.turkcell.rencar.data.remote.auth.dto.VerifyOtpRequestDto
+import com.turkcell.rencar.data.session.SessionTokenHolder
 import com.turkcell.rencar.domain.auth.AuthError
 import com.turkcell.rencar.domain.auth.AuthRepository
 import com.turkcell.rencar.domain.auth.AuthResult
 import com.turkcell.rencar.domain.auth.LoginChallenge
 import com.turkcell.rencar.domain.auth.RegisterRequest
 import com.turkcell.rencar.domain.auth.RegisteredUser
+import com.turkcell.rencar.domain.auth.VerifiedSession
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
 class ApiAuthRepository @Inject constructor(
-    private val apiService: AuthApiService
+    private val apiService: AuthApiService,
+    private val sessionTokenHolder: SessionTokenHolder
 ) : AuthRepository {
 
     override suspend fun register(request: RegisterRequest): AuthResult<RegisteredUser> =
@@ -55,6 +59,25 @@ class ApiAuthRepository @Inject constructor(
                 message = response.message,
                 phone = response.phone,
                 expiresAt = response.expiresAt
+            )
+        }
+
+    override suspend fun verifyOtp(phone: String, code: String): AuthResult<VerifiedSession> =
+        runRequest(
+            httpError = { statusCode ->
+                if (statusCode == HTTP_UNAUTHORIZED) {
+                    AuthError.InvalidOtp
+                } else {
+                    AuthError.Unexpected
+                }
+            }
+        ) {
+            val response = apiService.verifyOtp(VerifyOtpRequestDto(phone = phone, code = code))
+            sessionTokenHolder.update(response.accessToken)
+            VerifiedSession(
+                user = response.user.toDomain(),
+                accessToken = response.accessToken,
+                refreshToken = response.refreshToken
             )
         }
 

@@ -1,5 +1,8 @@
 package com.turkcell.rencar.presentation.screen.auth.license
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -56,6 +60,14 @@ fun LicenseUploadRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    val frontImagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let { viewModel.onIntent(LicenseUploadIntent.FrontImageSelected(it)) } }
+
+    val backImagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let { viewModel.onIntent(LicenseUploadIntent.BackImageSelected(it)) } }
+
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -65,7 +77,25 @@ fun LicenseUploadRoute(
         }
     }
 
-    LicenseUploadScreen(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+    LicenseUploadScreen(
+        state = state,
+        onIntent = { intent ->
+            when (intent) {
+                LicenseUploadIntent.FrontUploadClicked ->
+                    frontImagePicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+
+                LicenseUploadIntent.BackUploadClicked ->
+                    backImagePicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+
+                else -> viewModel.onIntent(intent)
+            }
+        },
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -147,7 +177,7 @@ fun LicenseUploadScreen(
             ) {
                 LicenseUploadBox(
                     label = stringResource(R.string.license_front_label),
-                    isUploaded = state.isFrontUploaded,
+                    isUploaded = state.frontImageUri != null,
                     placeholderText = stringResource(R.string.license_front_placeholder),
                     onClick = { onIntent(LicenseUploadIntent.FrontUploadClicked) }
                 )
@@ -156,10 +186,19 @@ fun LicenseUploadScreen(
 
                 LicenseUploadBox(
                     label = stringResource(R.string.license_back_label),
-                    isUploaded = state.isBackUploaded,
+                    isUploaded = state.backImageUri != null,
                     placeholderText = stringResource(R.string.license_back_placeholder),
                     onClick = { onIntent(LicenseUploadIntent.BackUploadClicked) }
                 )
+
+                state.errorMessage?.let { errorMessage ->
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
+                }
 
                 Row(
                     modifier = Modifier
@@ -201,15 +240,29 @@ fun LicenseUploadScreen(
                         spotColor = RenCarPrimaryLight
                     )
                     .clip(RoundedCornerShape(18.dp))
-                    .background(RenCarPrimaryLight)
-                    .clickable { onIntent(LicenseUploadIntent.ContinueClicked) },
+                    .background(RenCarPrimaryLight.copy(alpha = if (state.isUploading) 0.55f else 1f))
+                    .clickable(enabled = !state.isUploading) { onIntent(LicenseUploadIntent.ContinueClicked) },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = stringResource(R.string.license_continue_button),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (state.isUploading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Text(
+                        text = if (state.isUploading) {
+                            stringResource(R.string.license_continue_loading)
+                        } else {
+                            stringResource(R.string.license_continue_button)
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(start = if (state.isUploading) 8.dp else 0.dp)
+                    )
+                }
             }
         }
     }
