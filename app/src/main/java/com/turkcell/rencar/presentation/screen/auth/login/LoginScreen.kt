@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.SpanStyle
@@ -154,21 +155,21 @@ fun LoginScreen(
                 }
 
                 Text(
-                    text = "Tekrar hoş geldin",
+                    text = stringResource(R.string.login_title),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(top = 28.dp)
                 )
 
                 Text(
-                    text = "Telefon numaranı gir, SMS ile doğrulama kodu gönderelim.",
+                    text = stringResource(R.string.login_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
                 Text(
-                    text = "Telefon numarası",
+                    text = stringResource(R.string.login_phone_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 32.dp, bottom = 9.dp)
@@ -189,7 +190,7 @@ fun LoginScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "🇹🇷", fontSize = 18.sp)
                             Text(
-                                text = "+90",
+                                text = stringResource(R.string.login_country_code),
                                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(start = 7.dp)
@@ -229,7 +230,7 @@ fun LoginScreen(
                             decorationBox = { innerTextField ->
                                 if (state.phoneNumber.isEmpty()) {
                                     Text(
-                                        text = "5XX XXX XX XX",
+                                        text = stringResource(R.string.login_phone_placeholder),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.outlineVariant
                                     )
@@ -261,7 +262,7 @@ fun LoginScreen(
                         modifier = Modifier.size(17.dp)
                     )
                     Text(
-                        text = "6 haneli kodu bu numaraya göndereceğiz. SMS ücreti operatörüne bağlıdır.",
+                        text = stringResource(R.string.login_info_text),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outlineVariant,
                         modifier = Modifier.padding(start = 9.dp)
@@ -306,7 +307,7 @@ fun LoginScreen(
                             )
                         }
                         Text(
-                            text = if (state.isLoading) "Gönderiliyor..." else "Kod Gönder",
+                            text = if (state.isLoading) stringResource(R.string.login_submit_loading) else stringResource(R.string.login_submit_default),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(start = 8.dp)
@@ -317,9 +318,9 @@ fun LoginScreen(
 
             Text(
                 text = buildAnnotatedString {
-                    append("Hesabın yok mu? ")
+                    append(stringResource(R.string.login_signup_prompt_prefix))
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
-                        append("Kayıt ol")
+                        append(stringResource(R.string.login_signup_prompt_action))
                     }
                 },
                 style = MaterialTheme.typography.bodyMedium,
