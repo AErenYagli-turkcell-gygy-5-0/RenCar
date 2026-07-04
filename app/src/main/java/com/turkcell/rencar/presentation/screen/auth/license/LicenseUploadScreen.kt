@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -103,12 +104,12 @@ fun LicenseUploadScreen(
 
                 Column(modifier = Modifier.padding(start = 14.dp)) {
                     Text(
-                        text = "Ehliyet doğrulama",
+                        text = stringResource(R.string.license_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Kiralamadan önce tek seferlik",
+                        text = stringResource(R.string.license_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 1.dp)
@@ -122,21 +123,21 @@ fun LicenseUploadScreen(
                     .padding(top = 18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LicenseStep(number = "1", label = "Ehliyet", isActive = true)
+                LicenseStep(number = "1", label = stringResource(R.string.license_step_license), isActive = true)
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .height(2.dp)
                         .background(MaterialTheme.colorScheme.outline)
                 )
-                LicenseStep(number = "2", label = "Selfie", isActive = false)
+                LicenseStep(number = "2", label = stringResource(R.string.license_step_selfie), isActive = false)
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .height(2.dp)
                         .background(MaterialTheme.colorScheme.outline)
                 )
-                LicenseStep(number = "3", label = "Onay", isActive = false)
+                LicenseStep(number = "3", label = stringResource(R.string.license_step_approval), isActive = false)
             }
 
             Column(
@@ -145,18 +146,18 @@ fun LicenseUploadScreen(
                     .weight(1f)
             ) {
                 LicenseUploadBox(
-                    label = "Ehliyet ön yüz",
+                    label = stringResource(R.string.license_front_label),
                     isUploaded = state.isFrontUploaded,
-                    placeholderText = "Ön yüzü çek veya yükle",
+                    placeholderText = stringResource(R.string.license_front_placeholder),
                     onClick = { onIntent(LicenseUploadIntent.FrontUploadClicked) }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 LicenseUploadBox(
-                    label = "Ehliyet arka yüz",
+                    label = stringResource(R.string.license_back_label),
                     isUploaded = state.isBackUploaded,
-                    placeholderText = "Arka yüzü çek veya yükle",
+                    placeholderText = stringResource(R.string.license_back_placeholder),
                     onClick = { onIntent(LicenseUploadIntent.BackUploadClicked) }
                 )
 
@@ -176,11 +177,11 @@ fun LicenseUploadScreen(
                     )
                     Text(
                         text = buildAnnotatedString {
-                            append("Bilgilerin güvenle saklanır. Doğrulama genelde ")
+                            append(stringResource(R.string.license_info_prefix))
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append("birkaç dakika")
+                                append(stringResource(R.string.license_info_emphasis))
                             }
-                            append(" sürer.")
+                            append(stringResource(R.string.license_info_suffix))
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
@@ -205,7 +206,7 @@ fun LicenseUploadScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Devam Et",
+                    text = stringResource(R.string.license_continue_button),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
@@ -288,7 +289,7 @@ private fun LicenseUploadBox(
                         modifier = Modifier.size(11.dp)
                     )
                     Text(
-                        text = "Yüklendi",
+                        text = stringResource(R.string.license_uploaded),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.extendedColors.onSuccess,
                         modifier = Modifier.padding(start = 4.dp)

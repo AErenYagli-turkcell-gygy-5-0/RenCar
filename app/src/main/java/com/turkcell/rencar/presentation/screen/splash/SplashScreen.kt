@@ -41,6 +41,7 @@ import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 import androidx.compose.material3.Icon
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.LaunchedEffect
 
 private val IconGradientStartLight = Color(0xFF1E7FE0)
@@ -135,14 +136,14 @@ fun SplashOnboardingScreen(
                     }
 
                     Text(
-                        text = "Rencar",
+                        text = stringResource(R.string.splash_title),
                         style = MaterialTheme.typography.displaySmall,
                         color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(top = 28.dp)
                     )
 
                     Text(
-                        text = "Yakındaki aracı bul,\ndakikalar içinde yola çık.",
+                        text = stringResource(R.string.splash_subtitle),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -198,7 +199,7 @@ fun SplashOnboardingScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Hemen Başla",
+                        text = stringResource(R.string.splash_cta_button),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
@@ -206,9 +207,9 @@ fun SplashOnboardingScreen(
 
                 Text(
                     text = buildAnnotatedString {
-                        append("Zaten hesabım var · ")
+                        append(stringResource(R.string.splash_login_prompt_prefix))
                         withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
-                            append("Giriş yap")
+                            append(stringResource(R.string.splash_login_prompt_action))
                         }
                     },
                     style = MaterialTheme.typography.bodyMedium,

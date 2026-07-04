@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -118,7 +119,7 @@ fun OtpVerificationScreen(
             }
 
             Text(
-                text = "Telefonunu doğrula",
+                text = stringResource(R.string.otp_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 22.dp)
@@ -129,7 +130,8 @@ fun OtpVerificationScreen(
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
                         append(state.phoneNumber)
                     }
-                    append(" numarasına gönderdiğimiz 6 haneli kodu gir.")
+                    append(" ")
+                    append(stringResource(R.string.otp_instruction_suffix))
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -199,7 +201,7 @@ fun OtpVerificationScreen(
                 )
                 Text(
                     text = buildAnnotatedString {
-                        append("Kodu tekrar gönder · ")
+                        append(stringResource(R.string.otp_resend_prefix))
                         withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)) {
                             val minutes = state.remainingSeconds / 60
                             val seconds = (state.remainingSeconds % 60).toString().padStart(2, '0')
@@ -229,7 +231,7 @@ fun OtpVerificationScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Doğrula ve Devam Et",
+                    text = stringResource(R.string.otp_verify_button),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
@@ -237,9 +239,9 @@ fun OtpVerificationScreen(
 
             Text(
                 text = buildAnnotatedString {
-                    append("Numara yanlış mı? ")
+                    append(stringResource(R.string.otp_change_phone_prefix))
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
-                        append("Değiştir")
+                        append(stringResource(R.string.otp_change_phone_action))
                     }
                 },
                 style = MaterialTheme.typography.bodyMedium,
