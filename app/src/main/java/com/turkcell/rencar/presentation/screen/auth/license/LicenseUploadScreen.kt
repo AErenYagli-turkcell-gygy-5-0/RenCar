@@ -41,22 +41,20 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
-import com.turkcell.rencar.presentation.theme.RenCarTheme
 import com.turkcell.rencar.presentation.theme.extendedColors
 
 @Composable
 fun LicenseUploadRoute(
+    modifier: Modifier = Modifier,
+    viewModel: LicenseUploadViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onUploadCompleted: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: LicenseUploadViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -101,8 +99,8 @@ fun LicenseUploadRoute(
 @Composable
 fun LicenseUploadScreen(
     state: LicenseUploadState,
+    modifier: Modifier = Modifier,
     onIntent: (LicenseUploadIntent) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
@@ -270,8 +268,8 @@ fun LicenseUploadScreen(
 
 @Composable
 private fun LicenseStep(
-    number: String,
     label: String,
+    number: String,
     isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -303,8 +301,8 @@ private fun LicenseUploadBox(
     label: String,
     isUploaded: Boolean,
     placeholderText: String,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val outlineColor = MaterialTheme.colorScheme.outline
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -392,20 +390,4 @@ private fun Modifier.dashedBorder(
         ),
         cornerRadius = CornerRadius(cornerRadius.toPx())
     )
-}
-
-@Preview(name = "License Upload - Light", showBackground = true)
-@Composable
-private fun LicenseUploadScreenLightPreview() {
-    RenCarTheme(darkTheme = false) {
-        LicenseUploadScreen(state = LicenseUploadState(), onIntent = {})
-    }
-}
-
-@Preview(name = "License Upload - Dark", showBackground = true)
-@Composable
-private fun LicenseUploadScreenDarkPreview() {
-    RenCarTheme(darkTheme = true) {
-        LicenseUploadScreen(state = LicenseUploadState(), onIntent = {})
-    }
 }

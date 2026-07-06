@@ -8,6 +8,37 @@
 
 ---
 
+## 2026-07-06 — Alt Navigasyon İkonlarının Ayrı Bir Dosyada Toplanması
+
+**Karar:** `presentation/component/navigation/BottomNavBar.kt` içinde tanımlı olan, ikonları
+`Canvas`/`DrawScope` ile elle çizen `RenCarBottomNavIcon` composable'ı ve ona ait
+`iconStroke`/`drawMapPinIcon`/`drawHistoryIcon`/`drawWalletIcon`/`drawProfileIcon` özel
+fonksiyonları, aynı paket altında yeni açılan `RenCarIcons.kt` dosyasına taşınmıştır.
+`BottomNavBar.kt` artık yalnızca nav bar bileşenini ve önizlemelerini içerir.
+
+Proje genelinde bu karar öncesinde başka bir tarama yapılmış; `LoginScreen`, `RegisterScreen`,
+`OtpScreen`, `LicenseUploadScreen` ve `SplashScreen` içindeki tüm `Icon`/`Image` kullanımlarının
+`painterResource(id = R.drawable.ic_...)` ile `res/drawable` altındaki XML vector drawable'lara
+referans verdiği; bunların Kotlin kodu olmadığı ve zaten Android'in standart kaynak mekanizmasıyla
+merkezi tutulduğu için `RenCarIcons.kt`'ye taşınmadığı tespit edilmiştir.
+`LicenseUploadScreen.kt` içindeki `Modifier.dashedBorder(...)` bir ikon değil, genel amaçlı
+kesikli çerçeve çizen bir Modifier uzantısı olduğundan kapsam dışında bırakılmıştır.
+
+**Gerekçe:**
+- İkon çizim mantığı, nav bar'ın layout/state sorumluluğundan bağımsız, tekrar kullanılabilir bir
+  görsel varlık kümesidir; ayrı dosyada tutulması dosya boyutunu küçültür ve okunabilirliği artırır.
+- `RenCarBottomNavIcon` yalnızca bu paket içinde çağrıldığından `internal`/`private` yerine paket
+  içi varsayılan görünürlükle bırakılmış, gereksiz bir erişim genişletmesi yapılmamıştır.
+- Elle çizilen (`Canvas`/`DrawScope`) ikonlar ile XML vector drawable tabanlı ikonlar farklı
+  tanımlama mekanizmalarıdır; ikincisi zaten `res/drawable/` altında merkezidir ve bu kararın
+  kapsamına alınmamıştır.
+
+**Etkilenen alanlar:**
+- `presentation/component/navigation/BottomNavBar.kt`
+- `presentation/component/navigation/RenCarIcons.kt` (yeni)
+
+---
+
 ## 2026-07-04 - Register Ekrani ve OTP Akisinin Baslatilmasi
 
 **Karar:** Register ekrani `presentation/screen/auth/register/` altinda MVI dosya yapisiyla

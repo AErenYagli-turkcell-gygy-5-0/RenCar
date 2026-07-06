@@ -44,14 +44,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
-import com.turkcell.rencar.presentation.theme.RenCarTheme
 
 internal object TurkishPhoneNumberVisualTransformation : VisualTransformation {
 
@@ -94,11 +92,11 @@ internal object TurkishPhoneNumberVisualTransformation : VisualTransformation {
 
 @Composable
 fun LoginRoute(
-    onNavigateBack: () -> Unit,
-    onNavigateToOtp: (String) -> Unit,
-    onNavigateToRegister: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: LoginViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    onNavigateToOtp: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -118,8 +116,8 @@ fun LoginRoute(
 @Composable
 fun LoginScreen(
     state: LoginState,
+    modifier: Modifier = Modifier,
     onIntent: (LoginIntent) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.background
@@ -336,27 +334,5 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
         }
-    }
-}
-
-@Preview(name = "Login - Light", showBackground = true)
-@Composable
-private fun LoginScreenLightPreview() {
-    RenCarTheme(darkTheme = false) {
-        LoginScreen(
-            state = LoginState(phoneNumber = "5320000000"),
-            onIntent = {}
-        )
-    }
-}
-
-@Preview(name = "Login - Dark", showBackground = true)
-@Composable
-private fun LoginScreenDarkPreview() {
-    RenCarTheme(darkTheme = true) {
-        LoginScreen(
-            state = LoginState(phoneNumber = "5320000000"),
-            onIntent = {}
-        )
     }
 }

@@ -40,20 +40,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
-import com.turkcell.rencar.presentation.theme.RenCarTheme
 
 @Composable
 fun OtpRoute(
-    onNavigateBack: () -> Unit,
-    onVerified: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: OtpViewModel = hiltViewModel()
+    viewModel: OtpViewModel = hiltViewModel(),
+    onVerified: () -> Unit,
+    onNavigateBack: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -72,8 +70,8 @@ fun OtpRoute(
 @Composable
 fun OtpVerificationScreen(
     state: OtpState,
+    modifier: Modifier = Modifier,
     onIntent: (OtpIntent) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.background
@@ -311,21 +309,5 @@ fun OtpVerificationScreen(
                     .clickable { onIntent(OtpIntent.ChangeNumberClicked) }
             )
         }
-    }
-}
-
-@Preview(name = "OTP - Light", showBackground = true)
-@Composable
-private fun OtpVerificationScreenLightPreview() {
-    RenCarTheme(darkTheme = false) {
-        OtpVerificationScreen(state = OtpState(), onIntent = {})
-    }
-}
-
-@Preview(name = "OTP - Dark", showBackground = true)
-@Composable
-private fun OtpVerificationScreenDarkPreview() {
-    RenCarTheme(darkTheme = true) {
-        OtpVerificationScreen(state = OtpState(), onIntent = {})
     }
 }

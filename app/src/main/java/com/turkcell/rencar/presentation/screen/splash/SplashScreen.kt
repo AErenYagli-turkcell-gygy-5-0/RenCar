@@ -37,7 +37,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -48,7 +47,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
-import com.turkcell.rencar.presentation.theme.RenCarTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val IconGradientStartLight = Color(0xFF1E7FE0)
@@ -84,9 +82,9 @@ private val onboardingPages = listOf(
 
 @Composable
 fun SplashRoute(
-    onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SplashViewModel = hiltViewModel()
+    viewModel: SplashViewModel = hiltViewModel(),
+    onNavigateToLogin: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -108,8 +106,8 @@ fun SplashRoute(
 @Composable
 fun SplashOnboardingScreen(
     state: SplashState,
+    modifier: Modifier = Modifier,
     onIntent: (SplashIntent) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val isDark = isSystemInDarkTheme()
     val pagerState = rememberPagerState(
@@ -278,21 +276,5 @@ fun SplashOnboardingScreen(
                 )
             }
         }
-    }
-}
-
-@Preview(name = "Splash - Light", showBackground = true)
-@Composable
-private fun SplashOnboardingScreenLightPreview() {
-    RenCarTheme(darkTheme = false) {
-        SplashOnboardingScreen(state = SplashState(), onIntent = {})
-    }
-}
-
-@Preview(name = "Splash - Dark", showBackground = true)
-@Composable
-private fun SplashOnboardingScreenDarkPreview() {
-    RenCarTheme(darkTheme = true) {
-        SplashOnboardingScreen(state = SplashState(), onIntent = {})
     }
 }
