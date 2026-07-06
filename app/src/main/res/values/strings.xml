@@ -13,56 +13,56 @@
     <string name="splash_page_safe_trip_icon_description">Güvenli yolculuk simgesi</string>
     <string name="splash_cta_button">Hemen Başla</string>
     <string name="splash_login_prompt_prefix">Zaten hesabım var · </string>
-    <string name="splash_login_prompt_action">Giriş yap</string>
+    <string name="splash_login_prompt_action">Giriş Yap</string>
 
     <!-- Login Screen -->
     <string name="login_title">Tekrar hoş geldin</string>
     <string name="login_subtitle">Telefon numaranı gir, SMS ile doğrulama kodu gönderelim.</string>
-    <string name="login_phone_label">Telefon numarası</string>
+    <string name="login_phone_label">Telefon Numarası</string>
     <string name="login_country_code">+90</string>
     <string name="login_phone_placeholder">5XX XXX XX XX</string>
     <string name="login_info_text">6 haneli kodu bu numaraya göndereceğiz. SMS ücreti operatörüne bağlıdır.</string>
-    <string name="login_submit_loading">Gönderiliyor...</string>
+    <string name="login_submit_loading">Gönderiliyor…</string>
     <string name="login_submit_default">Kod Gönder</string>
     <string name="login_signup_prompt_prefix">Hesabın yok mu? </string>
-    <string name="login_signup_prompt_action">Kayıt ol</string>
+    <string name="login_signup_prompt_action">Kayıt Ol</string>
 
     <!-- Register Screen -->
-    <string name="register_title">Hesap oluştur</string>
+    <string name="register_title">Hesap Oluştur</string>
     <string name="register_subtitle">Bilgilerini gir, telefon numaranı doğrulayarak RenCar hesabını oluştur.</string>
-    <string name="register_full_name_label">Ad soyad</string>
+    <string name="register_full_name_label">Ad Soyad</string>
     <string name="register_email_label">E-posta</string>
     <string name="register_password_label">Şifre</string>
-    <string name="register_phone_label">Telefon numarası</string>
-    <string name="register_submit_loading">Hesap oluşturuluyor...</string>
+    <string name="register_phone_label">Telefon Numarası</string>
+    <string name="register_submit_loading">Hesap oluşturuluyor…</string>
     <string name="register_submit_default">Hesap Oluştur</string>
     <string name="register_login_prompt_prefix">Zaten hesabın var mı? </string>
-    <string name="register_login_prompt_action">Giriş yap</string>
+    <string name="register_login_prompt_action">Giriş Yap</string>
 
     <!-- OTP Screen -->
-    <string name="otp_title">Telefonunu doğrula</string>
+    <string name="otp_title">Telefonunu Doğrula</string>
     <string name="otp_instruction_suffix">numarasına gönderdiğimiz 6 haneli kodu gir.</string>
     <string name="otp_resend_prefix">Kodu tekrar gönder · </string>
     <string name="otp_resend_action">Kodu tekrar gönder</string>
     <string name="otp_verify_button">Doğrula ve Devam Et</string>
-    <string name="otp_verify_loading">Doğrulanıyor...</string>
+    <string name="otp_verify_loading">Doğrulanıyor…</string>
     <string name="otp_change_phone_prefix">Numara yanlış mı? </string>
     <string name="otp_change_phone_action">Değiştir</string>
 
     <!-- License Upload Screen -->
-    <string name="license_title">Ehliyet doğrulama</string>
+    <string name="license_title">Ehliyet Doğrulama</string>
     <string name="license_subtitle">Kiralamadan önce tek seferlik</string>
     <string name="license_step_license">Ehliyet</string>
     <string name="license_step_selfie">Selfie</string>
     <string name="license_step_approval">Onay</string>
-    <string name="license_front_label">Ehliyet ön yüz</string>
-    <string name="license_back_label">Ehliyet arka yüz</string>
+    <string name="license_front_label">Ehliyet Ön Yüz</string>
+    <string name="license_back_label">Ehliyet Arka Yüz</string>
     <string name="license_front_placeholder">Ön yüzü çek veya yükle</string>
     <string name="license_back_placeholder">Arka yüzü çek veya yükle</string>
     <string name="license_info_prefix">Bilgilerin güvenle saklanır. Doğrulama genelde </string>
     <string name="license_info_emphasis">birkaç dakika</string>
     <string name="license_info_suffix"> sürer.</string>
     <string name="license_continue_button">Devam Et</string>
-    <string name="license_continue_loading">Yükleniyor...</string>
+    <string name="license_continue_loading">Yükleniyor…</string>
     <string name="license_uploaded">Yüklendi</string>
 </resources>
