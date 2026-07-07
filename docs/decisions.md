@@ -8,6 +8,47 @@
 
 ---
 
+## 2026-07-07 — Ana Ekran Haritası: MapLibre Entegrasyonu ve Konum İzni Reddedilirse Fallback Davranışı
+
+**Karar:** `HomeScreen` artık placeholder olmaktan çıkarılıp gerçek bir MVI ekranına dönüştürülecektir.
+Harita render'ı için `presentation/component/map/` altında yeni bir `RencarMap` bileşeni MapLibre
+Native Android SDK (`org.maplibre.gl:android-sdk`) ile kurulacak; araç fiyat marker'ları MapLibre
+Annotation eklentisi (`org.maplibre.gl:android-plugin-annotation-v9`) tabanlı `SymbolLayer` ile
+gösterilecektir. Kullanıcı konumu `com.google.android.gms:play-services-location` paketindeki
+`FusedLocationProviderClient` ile alınacaktır.
+
+Konum izni reddedilirse harita varsayılan merkezle (`DEFAULT_CENTER`) yüklenmeye devam edecek,
+kullanıcı konumu gösterilmeyecek ve kamera kullanıcı konumuna otomatik gitmeyecektir; ekranda nazik
+bir uyarı banner'ı gösterilecek ve kullanıcı isterse izni tekrar deneyebilecektir.
+
+**Gerekçe:**
+- Projede daha önce hiçbir harita/konum kütüphanesi bulunmuyordu; `RencarMap.kt`/`MapStyle.kt` gibi
+  dosyalar bu kararla ilk kez oluşturulmaktadır (kullanıcı onayı ile, bkz. agents.md §2.2).
+- MapLibre Native açık kaynak olması ve OSM raster tile stiliyle doğrudan uyumlu olması, Play
+  Services Location ise Android'in standart, pil verimli konum API'si olması nedeniyle tercih
+  edilmiştir; kütüphane adları ve versiyonları kullanıcı tarafından doğrudan belirlenmiştir.
+- Konum izni verilmeden haritanın tamamen kilitlenmesi kötü bir kullanıcı deneyimi oluşturacağından,
+  izin reddedildiğinde de harita gösterime devam eder; yalnızca kullanıcıya özel konum bilgisi
+  gizlenir.
+- Fiyat marker'ları MapLibre Annotation eklentisinin `SymbolManager`/`SymbolOptions` API'si ile
+  oluşturulmuş, fiyat metni `SymbolOptions.withTextField` yerine önceden `Canvas` ile çizilip
+  `Style.addImage` ile eklenen tek bir bitmap ikonuna gömülmüştür. Sebep: `SymbolManager` üzerinde
+  `withTextField` kullanımı bilinen bir görünürlük hatasına sahiptir (bkz. yukarı akış
+  `maplibre/maplibre-plugins-android` deposu #60 — text alanı eklenince sembol tamamen kayboluyor).
+  Bitmap aynı (kategori, fiyat) kombinasyonu için önbelleğe alınır; kategori başına sınırsız
+  bitmap üretimi söz konusu değildir.
+
+**Etkilenen alanlar:**
+- `gradle/libs.versions.toml`, `app/build.gradle.kts` (yeni bağımlılıklar: MapLibre SDK, MapLibre
+  Annotation, Play Services Location)
+- `app/src/main/AndroidManifest.xml` (`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`)
+- `presentation/component/map/` (yeni: `MapStyle.kt`, `VehicleMarker.kt`, `RencarMap.kt`)
+- `presentation/screen/home/` (`HomeState.kt`, `HomeIntent.kt`, `HomeEffect.kt`, `HomeViewModel.kt`,
+  `HomeScreen.kt`, yeni `HomeScreenComponents.kt`)
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-06 — Alt Navigasyon İkonlarının Ayrı Bir Dosyada Toplanması
 
 **Karar:** `presentation/component/navigation/BottomNavBar.kt` içinde tanımlı olan, ikonları

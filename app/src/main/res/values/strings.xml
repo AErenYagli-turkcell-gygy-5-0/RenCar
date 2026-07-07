@@ -77,6 +77,17 @@
     <string name="approval_check_status">Durumu Kontrol Et</string>
     <string name="common_retry">Tekrar Dene</string>
 
-    <!-- Home Placeholder -->
-    <string name="home_placeholder_title">Ana Sayfa</string>
+    <!-- Home Screen -->
+    <string name="home_search_placeholder">Nereden araç alacaksın?</string>
+    <string name="home_search_icon_description">Ara</string>
+    <string name="home_filter_menu_description">Filtrele</string>
+    <string name="home_locate_me_description">Konumuma git</string>
+    <string name="home_nearby_count">Yakında %1$d araç</string>
+    <string name="home_filter_all">Tümü</string>
+    <string name="home_filter_economic">Ekonomik</string>
+    <string name="home_filter_comfort">Konfor</string>
+    <string name="home_filter_suv">SU</string>
+    <string name="home_find_nearest_button">En Yakın Aracı Bul</string>
+    <string name="home_location_permission_banner">Konumunuzu paylaşırsanız daha doğru sonuçlar bulabilirsiniz</string>
+    <string name="home_location_permission_action">İzin ver</string>
 </resources>
