@@ -10,11 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
-import com.turkcell.rencar.presentation.theme.RenCarTheme
 
 @Composable
 fun HomeRoute(
@@ -28,8 +26,8 @@ fun HomeRoute(
 @Composable
 fun HomeScreen(
     state: HomeState,
-    onIntent: (HomeIntent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onIntent: (HomeIntent) -> Unit
 ) {
     if (state.isPlaceholder) {
         Box(
@@ -44,13 +42,5 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun HomeScreenPreview() {
-    RenCarTheme {
-        HomeScreen(state = HomeState(), onIntent = {})
     }
 }

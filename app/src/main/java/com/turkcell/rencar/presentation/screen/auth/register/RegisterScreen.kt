@@ -43,7 +43,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,14 +50,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.screen.auth.login.TurkishPhoneNumberVisualTransformation
 import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
-import com.turkcell.rencar.presentation.theme.RenCarTheme
 
 @Composable
 fun RegisterRoute(
+    modifier: Modifier = Modifier,
+    viewModel: RegisterViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToOtp: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -77,8 +75,8 @@ fun RegisterRoute(
 @Composable
 fun RegisterScreen(
     state: RegisterState,
+    modifier: Modifier = Modifier,
     onIntent: (RegisterIntent) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.background
@@ -320,9 +318,9 @@ private fun RegisterTextField(
     value: String,
     enabled: Boolean,
     keyboardType: KeyboardType,
-    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    onValueChange: (String) -> Unit,
 ) {
     Text(
         text = label,
@@ -359,36 +357,6 @@ private fun RegisterTextField(
             ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Preview(name = "Register - Light", showBackground = true)
-@Composable
-private fun RegisterScreenLightPreview() {
-    RenCarTheme(darkTheme = false) {
-        RegisterScreen(
-            state = RegisterState(
-                email = "ahmet@example.com",
-                fullName = "Ahmet Yılmaz",
-                phoneNumber = "5320000000"
-            ),
-            onIntent = {}
-        )
-    }
-}
-
-@Preview(name = "Register - Dark", showBackground = true)
-@Composable
-private fun RegisterScreenDarkPreview() {
-    RenCarTheme(darkTheme = true) {
-        RegisterScreen(
-            state = RegisterState(
-                email = "ahmet@example.com",
-                fullName = "Ahmet Yılmaz",
-                phoneNumber = "5320000000"
-            ),
-            onIntent = {}
         )
     }
 }
