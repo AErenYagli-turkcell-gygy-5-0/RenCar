@@ -48,13 +48,12 @@ import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 
 @Composable
 fun OtpRoute(
-    onNavigateBack: () -> Unit,
-    onNavigateToLicenseVerification: () -> Unit,
-    onNavigateToHome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OtpViewModel = hiltViewModel(),
     onVerified: () -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onNavigateToLicenseVerification: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 

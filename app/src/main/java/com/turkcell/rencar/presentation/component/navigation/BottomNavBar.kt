@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 
-enum class RenCarBottomNavItem(
+enum class BottomNavItem(
     val label: String
 ) {
     Map(label = "Harita"),
@@ -38,10 +38,10 @@ enum class RenCarBottomNavItem(
 }
 
 @Composable
-fun RenCarBottomNavBar(
-    selectedItem: RenCarBottomNavItem,
+fun BottomNavBar(
+    selectedItem: BottomNavItem,
     modifier: Modifier = Modifier,
-    onItemSelected: (RenCarBottomNavItem) -> Unit,
+    onItemSelected: (BottomNavItem) -> Unit,
 ) {
     val containerColor = MaterialTheme.colorScheme.surface
     val selectedColor = MaterialTheme.colorScheme.primary
@@ -66,9 +66,9 @@ fun RenCarBottomNavBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            RenCarBottomNavItem.entries.forEach { item ->
+            BottomNavItem.entries.forEach { item ->
                 val selected = item == selectedItem
-                RenCarBottomNavBarItem(
+                BottomNavBarItem(
                     item = item,
                     selected = selected,
                     color = if (selected) selectedColor else unselectedColor,
@@ -91,10 +91,10 @@ fun RenCarBottomNavBar(
 }
 
 @Composable
-private fun RenCarBottomNavBarItem(
+private fun BottomNavBarItem(
     color: Color,
     selected: Boolean,
-    item: RenCarBottomNavItem,
+    item: BottomNavItem,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -133,15 +133,15 @@ private fun RenCarBottomNavBarItem(
 
 @Preview(name = "Bottom Nav - Light", showBackground = true, widthDp = 360)
 @Composable
-private fun RenCarBottomNavBarLightPreview() {
+private fun BottomNavBarLightPreview() {
     RenCarTheme(darkTheme = false) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            RenCarBottomNavBar(
-                selectedItem = RenCarBottomNavItem.Map,
+            BottomNavBar(
+                selectedItem = BottomNavItem.Map,
                 onItemSelected = {}
             )
         }
@@ -150,15 +150,15 @@ private fun RenCarBottomNavBarLightPreview() {
 
 @Preview(name = "Bottom Nav - Dark", showBackground = true, widthDp = 360)
 @Composable
-private fun RenCarBottomNavBarDarkPreview() {
+private fun BottomNavBarDarkPreview() {
     RenCarTheme(darkTheme = true) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            RenCarBottomNavBar(
-                selectedItem = RenCarBottomNavItem.Map,
+            BottomNavBar(
+                selectedItem = BottomNavItem.Map,
                 onItemSelected = {}
             )
         }

@@ -44,13 +44,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
-import com.turkcell.rencar.presentation.theme.RenCarTheme
 import com.turkcell.rencar.presentation.theme.extendedColors
 import java.io.ByteArrayOutputStream
 
@@ -61,8 +59,6 @@ fun LicenseUploadRoute(
     onNavigateBack: () -> Unit,
     onNavigateHome: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: LicenseUploadViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val frontImagePicker = rememberLauncherForActivityResult(
@@ -416,10 +412,10 @@ private fun MessageCard(text: String) {
 @Composable
 private fun PrimaryButton(
     text: String,
-    isLoading: Boolean,
     enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    isLoading: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     Box(
         modifier = modifier
@@ -545,17 +541,6 @@ private fun Modifier.dashedBorder(
         ),
         cornerRadius = CornerRadius(cornerRadius.toPx())
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun LicenseUploadPreview() {
-    RenCarTheme {
-        LicenseUploadScreen(
-            state = LicenseUploadState(currentStep = LicenseVerificationStep.LICENSE),
-            onIntent = {}
-        )
-    }
 }
 
 private const val SELFIE_JPEG_QUALITY = 80
