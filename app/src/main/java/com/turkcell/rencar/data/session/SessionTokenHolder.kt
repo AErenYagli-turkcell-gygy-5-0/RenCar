@@ -10,11 +10,17 @@ class SessionTokenHolder @Inject constructor() {
     var accessToken: String? = null
         private set
 
-    fun update(accessToken: String) {
+    @Volatile
+    var refreshToken: String? = null
+        private set
+
+    fun update(accessToken: String, refreshToken: String) {
         this.accessToken = accessToken
+        this.refreshToken = refreshToken
     }
 
     fun clear() {
         accessToken = null
+        refreshToken = null
     }
 }

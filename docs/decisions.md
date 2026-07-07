@@ -36,6 +36,37 @@ kesikli çerçeve çizen bir Modifier uzantısı olduğundan kapsam dışında b
 **Etkilenen alanlar:**
 - `presentation/component/navigation/BottomNavBar.kt`
 - `presentation/component/navigation/RenCarIcons.kt` (yeni)
+## 2026-07-04 - Backend Durumuna Dayalı Ehliyet Doğrulama Akışı
+
+**Karar:** OTP doğrulamasından sonra kullanıcı, backend'in döndürdüğü role göre
+yönlendirilecektir. `CUSTOMER` doğrudan Home hedefine, `PENDING` ise
+`GET /license/status` ile çözümlenen ehliyet akışına gider. Ehliyet durumu
+`NOT_SUBMITTED` veya `REJECTED` ise yükleme, `UNDER_REVIEW` ise onay bekleme,
+`APPROVED` ise refresh-token rotation sonrasında Home hedefi açılır.
+
+Ehliyetin ön ve arka yüzü Selfie adımı tamamlanmadan API'ye gönderilmez. Backend
+selfie alanı sağlamadığından selfie `TakePicturePreview` ile düşük çözünürlüklü
+JPEG byte dizisi olarak yalnızca `LicenseUploadState` içinde tutulur; kalıcı
+depolamaya veya ağ isteğine yazılmaz ve ehliyet yüklemesi tamamlanınca temizlenir.
+
+Access ve refresh tokenlar `SessionTokenHolder` içinde yalnızca süreç ömrü boyunca
+tutulur. Admin onayından sonra `POST /auth/refresh` çağrılarak yeni `CUSTOMER`
+rolünü taşıyan access token alınır. DataStore veya başka bir kalıcı oturum çözümü
+bu kararın kapsamı dışındadır.
+
+**Gerekçe:**
+- Onaylanmış kullanıcıların tekrar ehliyet yüklemeye yönlendirilmesini engellemek.
+- `/license/upload` çağrısının oluşturduğu `UNDER_REVIEW` durumunu backend
+  sözleşmesiyle uyumlu zamanda başlatmak.
+- Selfie için backend desteği bulunmadığından hassas veriyi kalıcılaştırmamak.
+- Eski JWT içindeki `PENDING` rolüyle CUSTOMER uçlarına erişilmesini önlemek.
+
+**Etkilenen alanlar:**
+- `data/remote/auth/`, `data/repository/auth/`, `data/session/`
+- `domain/license/`, `data/remote/license/`, `data/repository/license/`
+- `presentation/screen/auth/otp/`, `presentation/screen/auth/license/`
+- `presentation/screen/home/`, `presentation/navigation/`
+
 
 ---
 

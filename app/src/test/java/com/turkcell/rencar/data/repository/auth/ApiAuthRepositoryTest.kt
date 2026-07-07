@@ -22,12 +22,14 @@ class ApiAuthRepositoryTest {
 
     private lateinit var server: MockWebServer
     private lateinit var repository: ApiAuthRepository
+    private lateinit var sessionTokenHolder: SessionTokenHolder
 
     @Before
     fun setUp() {
         server = MockWebServer()
         server.start()
-        repository = createRepository(server)
+        sessionTokenHolder = SessionTokenHolder()
+        repository = createRepository(server, sessionTokenHolder)
     }
 
     @After
@@ -153,7 +155,7 @@ class ApiAuthRepositoryTest {
     fun `connection failure maps network error`() = runTest {
         val offlineServer = MockWebServer()
         offlineServer.start()
-        val offlineRepository = createRepository(offlineServer)
+        val offlineRepository = createRepository(offlineServer, SessionTokenHolder())
         offlineServer.shutdown()
 
         val result = offlineRepository.requestLogin("+905320000000")
@@ -161,13 +163,51 @@ class ApiAuthRepositoryTest {
         assertEquals(AuthResult.Failure(AuthError.Network), result)
     }
 
-    private fun createRepository(mockWebServer: MockWebServer): ApiAuthRepository {
+    @Test
+    fun `refresh rotates stored token pair and exposes customer role`() = runTest {
+        sessionTokenHolder.update("old-access", "old-refresh")
+        server.enqueue(
+            jsonResponse(
+                code = 200,
+                body = """
+                    {
+                      "accessToken": "new-access",
+                      "refreshToken": "new-refresh",
+                      "user": {
+                        "id": "user-1",
+                        "email": "ahmet@example.com",
+                        "phone": "+905551112233",
+                        "fullName": "Ahmet Yılmaz",
+                        "role": "CUSTOMER",
+                        "createdAt": "2026-07-03T10:00:00.000Z",
+                        "updatedAt": "2026-07-04T10:00:00.000Z"
+                      }
+                    }
+                """.trimIndent()
+            )
+        )
+
+        val result = repository.refreshSession()
+
+        val request = server.takeRequest()
+        assertEquals("/auth/refresh", request.path)
+        assertEquals("""{"refreshToken":"old-refresh"}""", request.body.readUtf8())
+        assertTrue(result is AuthResult.Success)
+        assertEquals("CUSTOMER", (result as AuthResult.Success).data.user.role)
+        assertEquals("new-access", sessionTokenHolder.accessToken)
+        assertEquals("new-refresh", sessionTokenHolder.refreshToken)
+    }
+
+    private fun createRepository(
+        mockWebServer: MockWebServer,
+        tokenHolder: SessionTokenHolder
+    ): ApiAuthRepository {
         val apiService = Retrofit.Builder()
             .baseUrl(mockWebServer.url("/"))
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApiService::class.java)
-        return ApiAuthRepository(apiService, SessionTokenHolder())
+        return ApiAuthRepository(apiService, tokenHolder)
     }
 
     private fun jsonResponse(code: Int, body: String) = MockResponse()

@@ -48,6 +48,9 @@ import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 
 @Composable
 fun OtpRoute(
+    onNavigateBack: () -> Unit,
+    onNavigateToLicenseVerification: () -> Unit,
+    onNavigateToHome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OtpViewModel = hiltViewModel(),
     onVerified: () -> Unit,
@@ -59,7 +62,8 @@ fun OtpRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 OtpEffect.NavigateBack -> onNavigateBack()
-                OtpEffect.VerificationCompleted -> onVerified()
+                OtpEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
+                OtpEffect.NavigateToHome -> onNavigateToHome()
             }
         }
     }
