@@ -1,5 +1,6 @@
 package com.turkcell.rencar.presentation.screen.home
 
+import com.turkcell.rencar.presentation.component.navigation.BottomNavItem
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,8 +26,13 @@ class HomeViewModel @Inject constructor() :
             // Gerçek arama/filtreleme mantığı backend entegrasyonu ile birlikte eklenecektir.
             HomeIntent.FindNearestClicked -> Unit
 
-            is HomeIntent.NavItemSelected ->
-                setState { copy(selectedNavItem = intent.item) }
+            is HomeIntent.NavItemSelected -> {
+                if (intent.item == BottomNavItem.Profile) {
+                    sendEffect { HomeEffect.NavigateToProfile }
+                } else {
+                    setState { copy(selectedNavItem = intent.item) }
+                }
+            }
         }
     }
 }

@@ -18,6 +18,8 @@ sealed class RenCarDestination(val route: String) {
 
     data object Home : RenCarDestination("home")
 
+    data object Profile : RenCarDestination("profile")
+
     companion object {
         const val ARG_PHONE_NUMBER = "phoneNumber"
     }

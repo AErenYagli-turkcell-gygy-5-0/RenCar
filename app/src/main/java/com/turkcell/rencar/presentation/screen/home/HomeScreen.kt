@@ -41,6 +41,7 @@ private const val LOCATION_UPDATE_INTERVAL_MS = 5000L
 
 @Composable
 fun HomeRoute(
+    onNavigateToProfile: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -62,6 +63,14 @@ fun HomeRoute(
 
     LaunchedEffect(Unit) {
         permissionLauncher.launch(locationPermissions)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                HomeEffect.NavigateToProfile -> onNavigateToProfile()
+            }
+        }
     }
 
     // Yalnızca izin durumu (verildi/reddedildi) değiştiğinde konum güncellemelerini yeniden kurar.
