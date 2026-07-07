@@ -16,16 +16,16 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun RenCarBottomNavIcon(
-    item: RenCarBottomNavItem,
+    item: BottomNavItem,
     tint: Color,
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
         when (item) {
-            RenCarBottomNavItem.Map -> drawMapPinIcon(tint)
-            RenCarBottomNavItem.History -> drawHistoryIcon(tint)
-            RenCarBottomNavItem.Wallet -> drawWalletIcon(tint)
-            RenCarBottomNavItem.Profile -> drawProfileIcon(tint)
+            BottomNavItem.Map -> drawMapPinIcon(tint)
+            BottomNavItem.History -> drawHistoryIcon(tint)
+            BottomNavItem.Wallet -> drawWalletIcon(tint)
+            BottomNavItem.Profile -> drawProfileIcon(tint)
         }
     }
 }
