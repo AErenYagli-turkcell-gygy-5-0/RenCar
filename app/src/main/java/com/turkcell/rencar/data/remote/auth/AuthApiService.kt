@@ -5,8 +5,10 @@ import com.turkcell.rencar.data.remote.auth.dto.LoginRequestDto
 import com.turkcell.rencar.data.remote.auth.dto.LoginResponseDto
 import com.turkcell.rencar.data.remote.auth.dto.RefreshTokenRequestDto
 import com.turkcell.rencar.data.remote.auth.dto.RegisterRequestDto
+import com.turkcell.rencar.data.remote.auth.dto.UserResponseDto
 import com.turkcell.rencar.data.remote.auth.dto.VerifyOtpRequestDto
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface AuthApiService {
@@ -22,4 +24,10 @@ interface AuthApiService {
 
     @POST("auth/refresh")
     suspend fun refresh(@Body request: RefreshTokenRequestDto): AuthResponseDto
+
+    @GET("auth/me")
+    suspend fun me(): UserResponseDto
+
+    @POST("auth/logout")
+    suspend fun logout()
 }

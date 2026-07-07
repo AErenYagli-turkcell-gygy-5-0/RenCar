@@ -86,6 +86,29 @@ class ApiAuthRepository @Inject constructor(
         }
     }
 
+    override suspend fun getCurrentUser(): AuthResult<RegisteredUser> =
+        runRequest(httpError = { code ->
+            if (code == HTTP_UNAUTHORIZED) {
+                AuthError.Unauthorized
+            } else {
+                AuthError.Unexpected
+            }
+        }) {
+            apiService.me().toDomain()
+        }
+
+    override suspend fun logout(): AuthResult<Unit> =
+        runRequest(httpError = { code ->
+            if (code == HTTP_UNAUTHORIZED) {
+                AuthError.Unauthorized
+            } else {
+                AuthError.Unexpected
+            }
+        }) {
+            apiService.logout()
+            sessionTokenHolder.clear()
+        }
+
     private suspend fun <T> runRequest(
         httpError: (Int) -> AuthError,
         request: suspend () -> T
@@ -104,7 +127,7 @@ class ApiAuthRepository @Inject constructor(
     private fun UserResponseDto.toDomain() = RegisteredUser(
         id = id,
         email = email,
-        phone = phone,
+        phone = phone.orEmpty(),
         fullName = fullName,
         role = role,
         createdAt = createdAt,

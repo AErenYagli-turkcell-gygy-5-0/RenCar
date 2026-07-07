@@ -9,4 +9,8 @@ interface AuthRepository {
     suspend fun verifyOtp(phone: String, code: String): AuthResult<VerifiedSession>
 
     suspend fun refreshSession(): AuthResult<VerifiedSession>
+
+    suspend fun getCurrentUser(): AuthResult<RegisteredUser>
+
+    suspend fun logout(): AuthResult<Unit>
 }
