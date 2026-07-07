@@ -50,7 +50,6 @@ import com.turkcell.rencar.presentation.theme.RenCarPrimaryLight
 fun OtpRoute(
     modifier: Modifier = Modifier,
     viewModel: OtpViewModel = hiltViewModel(),
-    onVerified: () -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToLicenseVerification: () -> Unit
