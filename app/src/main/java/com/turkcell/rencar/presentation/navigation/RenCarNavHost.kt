@@ -12,6 +12,7 @@ import com.turkcell.rencar.presentation.screen.auth.login.LoginRoute
 import com.turkcell.rencar.presentation.screen.auth.otp.OtpRoute
 import com.turkcell.rencar.presentation.screen.auth.register.RegisterRoute
 import com.turkcell.rencar.presentation.screen.home.HomeRoute
+import com.turkcell.rencar.presentation.screen.profile.ProfileRoute
 import com.turkcell.rencar.presentation.screen.splash.SplashRoute
 
 @Composable
@@ -83,7 +84,34 @@ fun RenCarNavHost(
         }
 
         composable(RenCarDestination.Home.route) {
-            HomeRoute()
+            HomeRoute(
+                onNavigateToProfile = {
+                    navController.navigate(RenCarDestination.Profile.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(RenCarDestination.Profile.route) {
+            ProfileRoute(
+                onNavigateToHome = {
+                    navController.navigate(RenCarDestination.Home.route) {
+                        popUpTo(RenCarDestination.Home.route) {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(RenCarDestination.Login.route) {
+                        popUpTo(RenCarDestination.Home.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
     }
 }

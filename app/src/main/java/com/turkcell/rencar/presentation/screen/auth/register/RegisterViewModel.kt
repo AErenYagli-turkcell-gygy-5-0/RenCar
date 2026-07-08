@@ -110,6 +110,7 @@ class RegisterViewModel @Inject constructor(
 
     private fun AuthError.toMessage(): String = when (this) {
         AuthError.EmailAlreadyRegistered -> EMAIL_ALREADY_REGISTERED_MESSAGE
+        AuthError.Unauthorized -> UNAUTHORIZED_MESSAGE
         AuthError.Network -> NETWORK_ERROR_MESSAGE
         AuthError.UserNotFound,
         AuthError.InvalidOtp,
@@ -125,6 +126,7 @@ class RegisterViewModel @Inject constructor(
         const val INVALID_PASSWORD_MESSAGE = "Şifre en az 6 karakter olmalıdır."
         const val INVALID_PHONE_MESSAGE = "Telefon numarası 10 haneli olmalıdır."
         const val EMAIL_ALREADY_REGISTERED_MESSAGE = "Bu e-posta adresi zaten kayıtlı."
+        const val UNAUTHORIZED_MESSAGE = "Oturumunuz sona ermiş. Lütfen tekrar giriş yapın."
         const val NETWORK_ERROR_MESSAGE = "İnternet bağlantınızı kontrol edip tekrar deneyin."
         const val UNEXPECTED_ERROR_MESSAGE = "Bir hata oluştu. Lütfen tekrar deneyin."
     }

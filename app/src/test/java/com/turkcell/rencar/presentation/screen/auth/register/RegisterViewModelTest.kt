@@ -134,5 +134,14 @@ class RegisterViewModelTest {
             phone: String,
             code: String
         ): AuthResult<VerifiedSession> = AuthResult.Failure(AuthError.Unexpected)
+
+        override suspend fun refreshSession(): AuthResult<VerifiedSession> =
+            AuthResult.Failure(AuthError.Unexpected)
+
+        override suspend fun getCurrentUser(): AuthResult<RegisteredUser> =
+            AuthResult.Failure(AuthError.Unexpected)
+
+        override suspend fun logout(): AuthResult<Unit> =
+            AuthResult.Failure(AuthError.Unexpected)
     }
 }

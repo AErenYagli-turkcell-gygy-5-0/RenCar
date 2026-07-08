@@ -90,4 +90,31 @@
     <string name="home_find_nearest_button">En Yakın Aracı Bul</string>
     <string name="home_location_permission_banner">Konumunuzu paylaşırsanız daha doğru sonuçlar bulabilirsiniz</string>
     <string name="home_location_permission_action">İzin ver</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_unknown_name">Profil</string>
+    <string name="profile_phone_missing">Telefon bilgisi yok</string>
+    <string name="profile_license_verified">Ehliyet doğrulandı</string>
+    <string name="profile_license_under_review">Ehliyet incelemede</string>
+    <string name="profile_license_rejected">Ehliyet reddedildi</string>
+    <string name="profile_license_not_submitted">Ehliyet yüklenmedi</string>
+    <string name="profile_license_approved_subtitle">Backend durumuna göre onaylı</string>
+    <string name="profile_license_under_review_subtitle">Admin onayı bekleniyor</string>
+    <string name="profile_license_rejected_subtitle">Yeniden yükleme gerekiyor</string>
+    <string name="profile_license_not_submitted_subtitle">Kiralamadan önce doğrulama gerekiyor</string>
+    <string name="profile_license_approved_badge">Onaylı</string>
+    <string name="profile_license_pending_badge">Beklemede</string>
+    <string name="profile_license_rejected_badge">Reddedildi</string>
+    <string name="profile_license_missing_badge">Eksik</string>
+    <string name="profile_payment_methods">Ödeme yöntemleri</string>
+    <string name="profile_settings">Ayarlar</string>
+    <string name="profile_help_support">Yardım &amp; destek</string>
+    <string name="profile_invite_earn">Davet et · ₺50 kazan</string>
+    <string name="profile_logout">Çıkış yap</string>
+    <string name="profile_logout_loading">Çıkış yapılıyor…</string>
+    <string name="profile_logout_confirm_title">Çıkış yapılsın mı?</string>
+    <string name="profile_logout_confirm_message">Onay verirsen mevcut oturumun kapatılacak ve giriş ekranına döneceksin.</string>
+    <string name="profile_logout_confirm_action">Çıkış yap</string>
+    <string name="profile_logout_cancel_action">Vazgeç</string>
+    <string name="profile_retry">Tekrar dene</string>
 </resources>

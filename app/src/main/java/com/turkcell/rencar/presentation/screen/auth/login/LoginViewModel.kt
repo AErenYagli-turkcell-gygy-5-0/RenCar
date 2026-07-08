@@ -65,6 +65,7 @@ class LoginViewModel @Inject constructor(
 
     private fun AuthError.toMessage(): String = when (this) {
         AuthError.UserNotFound -> USER_NOT_FOUND_MESSAGE
+        AuthError.Unauthorized -> UNAUTHORIZED_MESSAGE
         AuthError.Network -> NETWORK_ERROR_MESSAGE
         AuthError.EmailAlreadyRegistered,
         AuthError.InvalidOtp,
@@ -76,6 +77,7 @@ class LoginViewModel @Inject constructor(
         const val TURKEY_PHONE_PREFIX = "+90"
         const val INVALID_PHONE_MESSAGE = "Telefon numarası 10 haneli olmalıdır."
         const val USER_NOT_FOUND_MESSAGE = "Bu telefon numarasına kayıtlı kullanıcı bulunamadı."
+        const val UNAUTHORIZED_MESSAGE = "Oturumunuz sona ermiş. Lütfen tekrar giriş yapın."
         const val NETWORK_ERROR_MESSAGE = "İnternet bağlantınızı kontrol edip tekrar deneyin."
         const val UNEXPECTED_ERROR_MESSAGE = "Bir hata oluştu. Lütfen tekrar deneyin."
     }

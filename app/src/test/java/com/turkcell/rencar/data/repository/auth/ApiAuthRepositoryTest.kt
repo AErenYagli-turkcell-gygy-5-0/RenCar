@@ -198,6 +198,68 @@ class ApiAuthRepositoryTest {
         assertEquals("new-refresh", sessionTokenHolder.refreshToken)
     }
 
+    @Test
+    fun `me returns current user and maps nullable phone to empty value`() = runTest {
+        server.enqueue(
+            jsonResponse(
+                code = 200,
+                body = """
+                    {
+                      "id": "user-1",
+                      "email": "ahmet@example.com",
+                      "phone": null,
+                      "fullName": "Ahmet Yılmaz",
+                      "role": "CUSTOMER",
+                      "createdAt": "2026-07-03T10:00:00.000Z",
+                      "updatedAt": "2026-07-04T10:00:00.000Z"
+                    }
+                """.trimIndent()
+            )
+        )
+
+        val result = repository.getCurrentUser()
+
+        val request = server.takeRequest()
+        assertEquals("/auth/me", request.path)
+        assertEquals(
+            AuthResult.Success(
+                RegisteredUser(
+                    id = "user-1",
+                    email = "ahmet@example.com",
+                    phone = "",
+                    fullName = "Ahmet Yılmaz",
+                    role = "CUSTOMER",
+                    createdAt = "2026-07-03T10:00:00.000Z",
+                    updatedAt = "2026-07-04T10:00:00.000Z"
+                )
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `me maps unauthorized response`() = runTest {
+        server.enqueue(jsonResponse(code = 401, body = "{}"))
+
+        val result = repository.getCurrentUser()
+
+        assertEquals(AuthResult.Failure(AuthError.Unauthorized), result)
+    }
+
+    @Test
+    fun `logout calls api and clears stored tokens`() = runTest {
+        sessionTokenHolder.update("access", "refresh")
+        server.enqueue(jsonResponse(code = 200, body = """{"message":"ok"}"""))
+
+        val result = repository.logout()
+
+        val request = server.takeRequest()
+        assertEquals("/auth/logout", request.path)
+        assertEquals(AuthResult.Success(Unit), result)
+        assertEquals(null, sessionTokenHolder.accessToken)
+        assertEquals(null, sessionTokenHolder.refreshToken)
+    }
+
     private fun createRepository(
         mockWebServer: MockWebServer,
         tokenHolder: SessionTokenHolder

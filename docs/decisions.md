@@ -8,6 +8,34 @@
 
 ---
 
+## 2026-07-07 — Profil Ekranı: Gerçek API Verisi ve Pasif Menü Satırları
+
+**Karar:** Profil ekranı `presentation/screen/profile/` altında MVI dosya yapısıyla eklenecektir.
+Kullanıcı adı ve telefon bilgisi `GET /auth/me`, ehliyet doğrulama durumu `GET /license/status`,
+çıkış işlemi ise `POST /auth/logout` üzerinden alınacaktır. Çıkış başarılı olduğunda
+`SessionTokenHolder.clear()` ile bellek-içi tokenlar temizlenir ve kullanıcı Login ekranına döner.
+
+Profil ekranındaki ödeme yöntemleri, ayarlar, yardım & destek, davet et ve edit alanları bu
+iterasyonda yalnızca görsel olarak gösterilir; ayrı route, placeholder ekran veya tıklama davranışı
+eklenmez. OpenAPI sözleşmesinde ehliyet sınıfı alanı bulunmadığından ekranda `B sınıfı` gibi
+uydurulmuş veri gösterilmez; ehliyet kartı sadece backend durumuna göre metin üretir.
+
+**Gerekçe:**
+- Profil ekranı kullanıcıya oturum ve ehliyet durumunu gösteren gerçek bir müşteri ekranıdır; mock
+  veri kullanmak mevcut API sözleşmesi varken yanıltıcı olur.
+- Menü satırlarını pasif bırakmak, henüz kapsamı tanımlanmamış alt ekranlar için route ve state
+  borcu oluşturmadan tasarım görünümünü tamamlar.
+- Logout sırasında token temizliği yapılmazsa kullanıcı görsel olarak çıkış yapmış olsa bile korumalı
+  endpointlere eski access token ile istek gönderebilir.
+
+**Etkilenen alanlar:**
+- `data/remote/auth/`, `data/repository/auth/`, `domain/auth/`
+- `presentation/screen/profile/`
+- `presentation/screen/home/`, `presentation/navigation/`
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-07 — Ana Ekran Haritası: MapLibre Entegrasyonu ve Konum İzni Reddedilirse Fallback Davranışı
 
 **Karar:** `HomeScreen` artık placeholder olmaktan çıkarılıp gerçek bir MVI ekranına dönüştürülecektir.

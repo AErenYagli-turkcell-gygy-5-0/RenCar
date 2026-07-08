@@ -111,6 +111,7 @@ class OtpViewModel @Inject constructor(
     private fun AuthError.toMessage(): String = when (this) {
         AuthError.InvalidOtp -> INVALID_CODE_MESSAGE
         AuthError.UserNotFound -> USER_NOT_FOUND_MESSAGE
+        AuthError.Unauthorized -> UNAUTHORIZED_MESSAGE
         AuthError.Network -> NETWORK_ERROR_MESSAGE
         AuthError.EmailAlreadyRegistered,
         AuthError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
@@ -124,6 +125,7 @@ class OtpViewModel @Inject constructor(
         const val COUNTDOWN_TICK_MILLIS = 1_000L
         const val INVALID_CODE_MESSAGE = "Kod geçersiz veya süresi dolmuş."
         const val USER_NOT_FOUND_MESSAGE = "Bu telefon numarasına kayıtlı kullanıcı bulunamadı."
+        const val UNAUTHORIZED_MESSAGE = "Oturumunuz sona ermiş. Lütfen tekrar giriş yapın."
         const val NETWORK_ERROR_MESSAGE = "İnternet bağlantınızı kontrol edip tekrar deneyin."
         const val UNEXPECTED_ERROR_MESSAGE = "Bir hata oluştu. Lütfen tekrar deneyin."
     }
