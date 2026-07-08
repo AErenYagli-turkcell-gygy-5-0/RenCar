@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +26,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +38,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.component.map.LatLng
 import com.turkcell.rencar.presentation.component.map.RencarMap
 import com.turkcell.rencar.presentation.component.map.RencarMapController
@@ -66,6 +73,7 @@ fun HomeRoute(
     }
 
     LaunchedEffect(Unit) {
+        viewModel.onIntent(HomeIntent.ScreenStarted)
         viewModel.effect.collect { effect ->
             when (effect) {
                 HomeEffect.NavigateToProfile -> onNavigateToProfile()
@@ -138,16 +146,25 @@ fun HomeScreen(
         }
     }
 
+    val filteredVehicles = state.vehicles.filter { vehicle ->
+        state.selectedCategory == null || vehicle.category == state.selectedCategory
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(1f)) {
             RencarMap(
                 modifier = Modifier.fillMaxSize(),
                 myLocation = state.myLocation,
-                vehicles = state.vehicles.filter { vehicle ->
-                    state.selectedCategory == null || vehicle.category == state.selectedCategory
-                },
+                vehicles = filteredVehicles,
                 onControllerReady = { mapController = it }
             )
+
+            if (state.isVehiclesLoading && !state.hasLoadedVehicles) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
 
             HomeSearchBar(
                 modifier = Modifier
@@ -181,13 +198,35 @@ fun HomeScreen(
             }
 
             HomeNearbyInfoCard(
-                nearbyCount = state.nearbyCount,
+                nearbyCount = filteredVehicles.size,
                 locationLabel = state.locationLabel,
                 distanceLabel = state.distanceLabel,
                 selectedCategory = state.selectedCategory,
                 onCategorySelected = { onIntent(HomeIntent.CategorySelected(it)) },
                 onFindNearestClicked = { onIntent(HomeIntent.FindNearestClicked) }
             )
+
+            state.vehiclesErrorMessage?.let { message ->
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = stringResource(R.string.home_vehicles_retry),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                            .clickable { onIntent(HomeIntent.RetryVehiclesClicked) }
+                    )
+                }
+            }
 
             BottomNavBar(
                 selectedItem = state.selectedNavItem,

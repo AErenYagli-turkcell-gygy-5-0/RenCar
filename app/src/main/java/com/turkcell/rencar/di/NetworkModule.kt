@@ -4,6 +4,7 @@ import com.turkcell.rencar.BuildConfig
 import com.turkcell.rencar.data.remote.AuthInterceptor
 import com.turkcell.rencar.data.remote.auth.AuthApiService
 import com.turkcell.rencar.data.remote.license.LicenseApiService
+import com.turkcell.rencar.data.remote.vehicle.VehicleApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,4 +42,9 @@ object NetworkModule {
     @Singleton
     fun provideLicenseApiService(retrofit: Retrofit): LicenseApiService =
         retrofit.create(LicenseApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideVehicleApiService(retrofit: Retrofit): VehicleApiService =
+        retrofit.create(VehicleApiService::class.java)
 }

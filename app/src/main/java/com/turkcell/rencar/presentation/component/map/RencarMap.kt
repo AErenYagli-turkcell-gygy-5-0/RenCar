@@ -6,16 +6,21 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -76,6 +81,8 @@ fun RencarMap(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val categoryColors = MaterialTheme.extendedColors
+    val density = LocalDensity.current
+    val statusBarInsetPx = WindowInsets.statusBars.getTop(density)
 
     val currentMyLocation = rememberUpdatedState(myLocation)
     val currentVehicles = rememberUpdatedState(vehicles)
@@ -86,7 +93,21 @@ fun RencarMap(
     val meSourceState = remember { mutableStateOf<GeoJsonSource?>(null) }
     val styleState = remember { mutableStateOf<Style?>(null) }
     val symbolManagerState = remember { mutableStateOf<SymbolManager?>(null) }
+    val mapLibreMapState = remember { mutableStateOf<MapLibreMap?>(null) }
     val addedIconIds = remember { mutableStateOf(mutableSetOf<String>()) }
+
+    LaunchedEffect(mapLibreMapState.value, statusBarInsetPx) {
+        val map = mapLibreMapState.value ?: return@LaunchedEffect
+        val edgeMarginPx = with(density) { 16.dp.roundToPx() }
+        val topExtraPx = with(density) { 96.dp.roundToPx() }
+        map.uiSettings.setCompassFadeFacingNorth(false)
+        map.uiSettings.setCompassMargins(
+            edgeMarginPx,
+            statusBarInsetPx + topExtraPx,
+            edgeMarginPx,
+            edgeMarginPx
+        )
+    }
 
     DisposableEffect(lifecycleOwner, mapView) {
         val observer = LifecycleEventObserver { _, event ->
@@ -108,6 +129,7 @@ fun RencarMap(
         modifier = modifier.fillMaxSize(),
         factory = {
             mapView.getMapAsync { mapLibreMap ->
+                mapLibreMapState.value = mapLibreMap
                 mapLibreMap.moveCamera(
                     CameraUpdateFactory.newCameraPosition(
                         CameraPosition.Builder()

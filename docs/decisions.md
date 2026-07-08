@@ -8,6 +8,84 @@
 
 ---
 
+## 2026-07-08 — Ana Ekran Araç Verisi: GET /vehicles Entegrasyonu, Kategori Filtresinin Backend Tipine Göre Yeniden Kurulması, Pusula Konumlandırma Düzeltmesi ve Splash'a Marka Karşılama Sayfası
+
+**Karar (araç verisi):** `HomeState.mockVehicles` kaldırılmıştır. `domain/vehicle/` altında Auth/License
+katmanlarıyla aynı desende (`Vehicle`, `VehicleType`, `VehicleError`, `VehicleResult`,
+`VehicleRepository`) yeni bir domain sınırı, `data/remote/vehicle/` ve `data/repository/vehicle/`
+altında da `GET /vehicles` uç noktasını çağıran karşılıkları eklenmiştir. `HomeViewModel`, Profil
+ekranındaki `ScreenStarted`/`loadProfile()` deseniyle aynı şekilde `HomeIntent.ScreenStarted`
+üzerinde araçları yükler; `HomeIntent.RetryVehiclesClicked` ile yeniden denenebilir. `HomeState`'e
+`isVehiclesLoading`, `hasLoadedVehicles`, `vehiclesErrorMessage` alanları eklenmiş, sabit
+`nearbyCount` alanı kaldırılarak yerine `HomeScreen` içinde filtrelenmiş araç listesinden anlık
+hesaplanan sayım geçirilmiştir.
+
+**Karar (kategori filtresi):** OpenAPI sözleşmesinde araçlar için yalnızca gövde tipi
+(`SEDAN/SUV/HATCHBACK/STATION/MINIVAN`) alanı bulunur; fiyat/segment bazlı bir alan yoktur. Bu
+nedenle önceki Ekonomik/Konfor/SUV filtre çipleri kaldırılmış, kullanıcı onayıyla filtre backend'in
+gerçek `VehicleType` enum'una birebir taşınmıştır (Tümü/Sedan/SUV/Hatchback/Station/Minivan).
+`presentation/component/map/VehicleMarker.kt` içindeki eski `VehicleCategory` enum'ı silinmiş,
+Profil ekranındaki `LicenseReviewStatus` kullanım örüntüsüyle tutarlı olarak sunum katmanında
+doğrudan `domain.vehicle.VehicleType` kullanılmaya başlanmıştır. Harita üzerindeki fiyat balonu
+rengi salt görsel bir ayrım olduğundan (backend'de kategori vurgu rengi kavramı yoktur) mevcut 4
+`RenCarExtendedColors` tokenı (`categoryEconomic/categoryPremium/categorySuv/categoryExtra`) 5
+tipe dağıtılmış, yalnızca `SUV` isim eşleşmesiyle kendi tokenını korumuştur; yeni bir renk tokenı
+eklenmemiştir.
+
+**Karar (pusula düzeltmesi):** `MainActivity`'deki `enableEdgeToEdge()` nedeniyle MapLibre'nin
+native `compass` kontrolü `WindowInsets`'ten habersiz kalıp status bar'ın altında/içinde
+görünüyordu. Kontrol kaldırılmamış; `RencarMap.kt` içinde `WindowInsets.statusBars` ile okunan
+inset değeri, `mapLibreMap.uiSettings.setCompassMargins(...)` çağrısına status bar yüksekliği +
+sabit bir boşluk olarak `LaunchedEffect` üzerinden aktarılmıştır.
+
+**Ek not — pusula kalıcı görünürlüğü:** İlk uygulamadan sonra pusulanın hiç görünmediği bildirilmiştir.
+Sebebi konumlama değil, MapLibre'nin varsayılan `compassFadeFacingNorth = true` davranışıdır: harita
+kuzeye dönükken (bearing 0) pusula birkaç saniye içinde saydamlaşıp gizlenir; önceki (konum hatalı)
+halinde yalnızca kullanıcı haritayı parmakla hareket ettirirken oluşan ufak/istemsiz döndürmelerde kısa
+süreliğine görünüyordu. `RencarMap.kt` içinde aynı `LaunchedEffect`'e
+`mapLibreMap.uiSettings.setCompassFadeFacingNorth(false)` eklenerek pusula, düzeltilmiş konumuyla
+kalıcı olarak görünür bırakılmıştır.
+
+**Karar (splash marka sayfası):** Kullanıcının ilettiği tasarım görseline dayanarak, mevcut 3
+sayfalık splash onboarding pager'ının başına (index 0) logo + "Rencar" başlığı + slogan içeren yeni
+bir "karşılama" sayfası eklenmiştir; alttaki ortak CTA/giriş bölümü ve nokta göstergesi
+değiştirilmemiştir. `SplashState.PAGE_COUNT` 3'ten 4'e çıkarılmış, pager ve nokta göstergesi artık
+sabit `onboardingPages.size` yerine bu tek kaynaktan beslenmektedir. Sayfa içeriği (ikon kutusu +
+başlık + açıklama) daha önce pager `content` lambda'sına gömülüyken, tekrarı önlemek için
+`OnboardingPageBody` adında paylaşılan bir private composable'a çıkarılmıştır. Logo için projede
+daha önce eklenmiş ama hiçbir yerde kullanılmayan `res/drawable/ic_rencar_car.xml` yeniden
+kullanılmıştır; yeni bir görsel varlık eklenmemiştir.
+
+**Gerekçe:**
+- `agents.md` §2.2 gereği, backend'de karşılığı olmayan Ekonomik/Konfor segment verisi
+  uydurulamayacağından kategori filtresi gerçek `VehicleType` alanına taşınmıştır (kullanıcı
+  onayıyla, alternatifi filtre çubuğunu tamamen kaldırmaktı).
+- Pusula kaldırılmak yerine konumlandırılmıştır; uygulamanın harita döndürme jesti hâlâ
+  kullanılabilir kalmıştır (kullanıcı onayıyla, alternatifi native pusulayı tamamen devre dışı
+  bırakmaktı).
+- `domain/vehicle` ve `data/*/vehicle` katmanlarının Auth/License ile birebir aynı dosya/isim
+  deseninde kurulması, `docs/architecture/mvi-overview.md` kapsamı dışında olsa da mevcut
+  repository/Result/Error ayrımı standardını korur.
+- `locationLabel`/`distanceLabel` ("Kadıköy çevresinde", "3 dk uzaklıkta") için backend'de ters
+  coğrafi kodlama veya mesafe hesaplama uç noktası olmadığından bu alanlar bu kararın kapsamı
+  dışında bırakılmış, sabit değerlerini korumuştur; ayrı bir karar gerektirir.
+- `VehicleMarker.price` `Int` tipinde kaldığından `pricePerDay` (API'de `number`) tam sayıya
+  yuvarlanır; bilinen küçük bir hassasiyet sınırlamasıdır.
+
+**Etkilenen alanlar:**
+- `domain/vehicle/` (yeni: `Vehicle.kt`, `VehicleType.kt`, `VehicleError.kt`, `VehicleResult.kt`,
+  `VehicleRepository.kt`)
+- `data/remote/vehicle/` (yeni: `VehicleApiService.kt`, `dto/VehicleResponseDto.kt`)
+- `data/repository/vehicle/ApiVehicleRepository.kt` (yeni)
+- `di/NetworkModule.kt`, `di/RepositoryModule.kt`
+- `presentation/component/map/VehicleMarker.kt`, `presentation/component/map/RencarMap.kt`
+- `presentation/screen/home/` (`HomeState.kt`, `HomeIntent.kt`, `HomeViewModel.kt`, `HomeScreen.kt`,
+  `HomeScreenComponents.kt`)
+- `presentation/screen/splash/` (`SplashState.kt`, `SplashScreen.kt`)
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-07 — Profil Ekranı: Gerçek API Verisi ve Pasif Menü Satırları
 
 **Karar:** Profil ekranı `presentation/screen/profile/` altında MVI dosya yapısıyla eklenecektir.
