@@ -1,8 +1,13 @@
 package com.turkcell.rencar.presentation.screen.home
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Looper
+import android.provider.Settings
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -13,9 +18,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +62,7 @@ fun HomeRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     val locationPermissions = arrayOf(
@@ -65,7 +74,13 @@ fun HomeRoute(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         val granted = results.values.any { it }
-        viewModel.onIntent(HomeIntent.LocationPermissionResult(granted))
+        // Reddedilip reddedilmediğine değil, sistemin diyaloğu tekrar gösterip gösteremeyeceğine bakılır:
+        // rationale gösterilebiliyorsa henüz kalıcı red yok; aksi halde (ve activity mevcutken)
+        // kullanıcı Ayarlar'a yönlendirilmelidir.
+        val canRequestAgain = granted || activity == null || locationPermissions.any {
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
+        }
+        viewModel.onIntent(HomeIntent.LocationPermissionResult(granted, canRequestAgain))
     }
 
     LaunchedEffect(Unit) {
@@ -90,6 +105,14 @@ fun HomeRoute(
         ) == PackageManager.PERMISSION_GRANTED
 
         if (state.permissionDenied == false && hasPermission) {
+            // Uygulama ilk açıldığında canlı GPS sabitlenmesini beklemeden, cihazdaki son bilinen
+            // konumla anında zoom yapılabilmesi için önbellekteki konum ayrıca sorgulanır.
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                location?.let {
+                    viewModel.onIntent(HomeIntent.MyLocationChanged(LatLng(it.latitude, it.longitude)))
+                }
+            }
+
             val request = LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
                 LOCATION_UPDATE_INTERVAL_MS
@@ -115,16 +138,65 @@ fun HomeRoute(
         }
     }
 
+    var settingsDialogDismissed by remember { mutableStateOf(false) }
+    LaunchedEffect(state.permissionDenied, state.canRequestPermission) {
+        settingsDialogDismissed = false
+    }
+
+    if (state.permissionDenied == true && !state.canRequestPermission && !settingsDialogDismissed) {
+        LocationPermissionSettingsDialog(
+            onOpenSettingsClick = { openAppSettings(context) },
+            onDismiss = { settingsDialogDismissed = true }
+        )
+    }
+
     HomeScreen(
         state = state,
         modifier = modifier,
         onIntent = { intent ->
             when (intent) {
                 // İzin sonucu her zaman platform diyaloğu üzerinden geldiğinden Route burada yakalar.
-                HomeIntent.RequestLocationPermissionClicked -> permissionLauncher.launch(locationPermissions)
+                // Sistem diyaloğu artık gösterilemiyorsa (kalıcı red) kullanıcı Ayarlar'a yönlendirilir.
+                HomeIntent.RequestLocationPermissionClicked -> {
+                    if (state.canRequestPermission) {
+                        permissionLauncher.launch(locationPermissions)
+                    } else {
+                        openAppSettings(context)
+                    }
+                }
+
                 else -> viewModel.onIntent(intent)
             }
         }
+    )
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+    context.startActivity(intent)
+}
+
+@Composable
+private fun LocationPermissionSettingsDialog(
+    onOpenSettingsClick: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onOpenSettingsClick) {
+                Text(text = stringResource(R.string.home_location_permission_permanently_denied_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.home_location_permission_permanently_denied_dismiss))
+            }
+        },
+        title = { Text(text = stringResource(R.string.home_location_permission_permanently_denied_title)) },
+        text = { Text(text = stringResource(R.string.home_location_permission_permanently_denied_message)) }
     )
 }
 

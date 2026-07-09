@@ -10,6 +10,8 @@ data class HomeState(
     val myLocation: LatLng? = null,
     // null: izin sonucu henüz gelmedi, true: reddedildi, false: verildi.
     val permissionDenied: Boolean? = null,
+    // false: izin kalıcı reddedildi, sistem diyaloğu artık gösterilemez; Ayarlar'a yönlendirilmeli.
+    val canRequestPermission: Boolean = true,
     val vehicles: List<VehicleMarker> = emptyList(),
     val isVehiclesLoading: Boolean = false,
     val hasLoadedVehicles: Boolean = false,

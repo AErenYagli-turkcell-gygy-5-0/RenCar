@@ -8,7 +8,7 @@ import com.turkcell.rencar.presentation.core.mvi.UiIntent
 sealed interface HomeIntent : UiIntent {
     data object ScreenStarted : HomeIntent
     data object RetryVehiclesClicked : HomeIntent
-    data class LocationPermissionResult(val granted: Boolean) : HomeIntent
+    data class LocationPermissionResult(val granted: Boolean, val canRequestAgain: Boolean) : HomeIntent
     data class MyLocationChanged(val location: LatLng) : HomeIntent
     data object RequestLocationPermissionClicked : HomeIntent
     data class CategorySelected(val category: VehicleType?) : HomeIntent

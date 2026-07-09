@@ -8,6 +8,55 @@
 
 ---
 
+## 2026-07-09 — Konum İzni Zorunluluğu: Ekran Geçişinin Kısıtlanması, Kalıcı Red Durumunda Ayarlar Yönlendirmesi ve Son Bilinen Konumla Hızlı Zoom
+
+**Karar (navigasyon kısıtlaması):** `HomeViewModel.onIntent`'teki `NavItemSelected` işleyicisine
+guard eklenmiştir: `HomeState.permissionDenied` `false` (yani izin açıkça verilmiş) olmadığı sürece
+`HomeEffect.NavigateToProfile` gönderilmez ve `selectedNavItem` değişmez. Böylece konum izni
+verilmeden kullanıcı Harita (Home) ekranından Profil'e (veya ileride eklenecek diğer sekmelere)
+geçemez.
+
+**Karar (kalıcı red / "İzin Ver" butonunun çalışmaması sorunu):** `HomeIntent.LocationPermissionResult`
+`granted: Boolean` alanının yanına `canRequestAgain: Boolean` eklenmiştir. `HomeRoute`, izin sonucu
+geldiğinde `ActivityCompat.shouldShowRequestPermissionRationale` ile bu değeri hesaplar
+(`androidx.activity.compose.LocalActivity` üzerinden alınan `Activity` ile). İzin kalıcı
+reddedildiğinde (`canRequestAgain == false`) Android işletim sistemi `ActivityResultContracts
+.RequestMultiplePermissions().launch(...)` çağrısında artık hiçbir sistem diyaloğu göstermez; bu
+nedenle "İzin Ver" tıklaması ve Home ekranı her açıldığında otomatik tetiklenen istek (`HomeScreen
+.kt` içindeki `LaunchedEffect(Unit)`), bu durumda `Settings.ACTION_APPLICATION_DETAILS_SETTINGS`
+ile uygulamanın sistem ayarlarına yönlendirir. Ayrıca bu durumda, Home ekranı her kompoze
+olduğunda (uygulama her açıldığında) kapatılamaz nitelikte olmayan ama varsayılan olarak açık gelen
+bir `AlertDialog` (`LocationPermissionSettingsDialog`) gösterilir; kullanıcı "Kapat" ile geçici
+olarak kapatabilir, ancak izin durumu değişmediği sürece bir sonraki uygulama açılışında diyalog
+tekrar görünür.
+
+**Karar (hızlı zoom):** Konum izni verildiğinde artık yalnızca canlı `requestLocationUpdates`
+sonucu beklenmez; aynı `DisposableEffect` içinde `FusedLocationProviderClient.lastLocation` ile
+cihazdaki önbellekteki son bilinen konum da sorgulanır ve varsa hemen `HomeIntent.MyLocationChanged`
+ile state'e yazılır. `HomeScreen` içindeki mevcut "ilk konumda bir kez zoom yap" mantığı
+(`hasAnimatedToUser`) değiştirilmemiştir; sadece konumun state'e ulaşma hızı iyileştirilmiştir.
+
+**Not — 2026-07-07 kararıyla ilişki:** Bu karar, aşağıdaki "2026-07-07 — Ana Ekran Haritası" kararında
+belirtilen "izin reddedildiğinde harita varsayılan merkezle gösterime devam eder, kilitlenmez"
+ilkesini BOZMAMAKTADIR: harita içeriği (varsayılan merkez, banner) aynı şekilde görünmeye devam
+eder. Bu karar yalnızca uygulama içi diğer ekranlara (şu an için Profil) geçişi kısıtlamaktadır.
+
+**Gerekçe:**
+- Kullanıcı talebi: konum izni verilmeden harita dışındaki ekranlara geçilmemesi ve izin
+  alınana kadar uygulama her açıldığında iznin tekrar istenmesi.
+- `shouldShowRequestPermissionRationale` tabanlı ayrım, Android'in resmi/standart kalıcı-red tespit
+  yöntemidir; ek bir kalıcı depolama (SharedPreferences/DataStore) gerektirmez, bu nedenle yeni bir
+  bağımlılık eklenmemiştir.
+- `lastLocation`, Play Services Location API'sinin standart parçasıdır (ek bağımlılık gerekmez);
+  canlı `requestLocationUpdates` akışı GPS soğuk başlangıçta gecikebildiğinden açılışta zoom'u
+  hızlandırmak için eklenmiştir.
+
+**Etkilenen alanlar:**
+- `presentation/screen/home/` (`HomeState.kt`, `HomeIntent.kt`, `HomeViewModel.kt`, `HomeScreen.kt`)
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-08 — Ana Ekran Araç Verisi: GET /vehicles Entegrasyonu, Kategori Filtresinin Backend Tipine Göre Yeniden Kurulması, Pusula Konumlandırma Düzeltmesi ve Splash'a Marka Karşılama Sayfası
 
 **Karar (araç verisi):** `HomeState.mockVehicles` kaldırılmıştır. `domain/vehicle/` altında Auth/License

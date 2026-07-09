@@ -26,7 +26,12 @@ class HomeViewModel @Inject constructor(
             HomeIntent.RetryVehiclesClicked -> loadVehicles()
 
             is HomeIntent.LocationPermissionResult ->
-                setState { copy(permissionDenied = intent.granted.not()) }
+                setState {
+                    copy(
+                        permissionDenied = intent.granted.not(),
+                        canRequestPermission = intent.canRequestAgain
+                    )
+                }
 
             is HomeIntent.MyLocationChanged ->
                 setState { copy(myLocation = intent.location) }
@@ -41,7 +46,11 @@ class HomeViewModel @Inject constructor(
             HomeIntent.FindNearestClicked -> Unit
 
             is HomeIntent.NavItemSelected -> {
-                if (intent.item == BottomNavItem.Profile) {
+                // Konum izni verilmeden harita dışındaki ekranlara geçiş engellenir (bkz. docs/decisions.md).
+                val locationGranted = state.value.permissionDenied == false
+                if (!locationGranted) {
+                    Unit
+                } else if (intent.item == BottomNavItem.Profile) {
                     sendEffect { HomeEffect.NavigateToProfile }
                 } else {
                     setState { copy(selectedNavItem = intent.item) }
