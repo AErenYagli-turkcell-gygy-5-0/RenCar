@@ -95,6 +95,10 @@
     <string name="home_find_nearest_button">En Yakın Aracı Bul</string>
     <string name="home_location_permission_banner">Konumunuzu paylaşırsanız daha doğru sonuçlar bulabilirsiniz</string>
     <string name="home_location_permission_action">İzin ver</string>
+    <string name="home_location_permission_permanently_denied_title">Konum izni gerekli</string>
+    <string name="home_location_permission_permanently_denied_message">RenCar\'ı kullanabilmek için konum iznini Ayarlar\'dan etkinleştirmeniz gerekiyor. İzin verilmeden diğer ekranlara geçilemez.</string>
+    <string name="home_location_permission_permanently_denied_confirm">Ayarları Aç</string>
+    <string name="home_location_permission_permanently_denied_dismiss">Kapat</string>
     <string name="home_vehicles_retry">Tekrar dene</string>
 
     <!-- Profile Screen -->
