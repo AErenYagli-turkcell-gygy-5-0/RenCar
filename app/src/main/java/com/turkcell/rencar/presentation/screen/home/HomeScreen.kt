@@ -12,12 +12,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +47,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.component.map.LatLng
 import com.turkcell.rencar.presentation.component.map.RencarMap
@@ -78,9 +76,6 @@ fun HomeRoute(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         val granted = results.values.any { it }
-        // Reddedilip reddedilmediğine değil, sistemin diyaloğu tekrar gösterip gösteremeyeceğine bakılır:
-        // rationale gösterilebiliyorsa henüz kalıcı red yok; aksi halde (ve activity mevcutken)
-        // kullanıcı Ayarlar'a yönlendirilmelidir.
         val canRequestAgain = granted || activity == null || locationPermissions.any {
             ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
         }
@@ -189,6 +184,23 @@ fun HomeRoute(
                     }
                 }
 
+                HomeIntent.RefreshMapClicked -> {
+                    val hasPermission = locationPermissions.any {
+                        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+                    }
+                    if (hasPermission) {
+                        fusedLocationClient.getCurrentLocation(
+                            Priority.PRIORITY_HIGH_ACCURACY,
+                            CancellationTokenSource().token
+                        ).addOnSuccessListener { location ->
+                            location?.let {
+                                viewModel.onIntent(HomeIntent.MyLocationChanged(LatLng(it.latitude, it.longitude)))
+                            }
+                        }
+                    }
+                    viewModel.onIntent(intent)
+                }
+
                 else -> viewModel.onIntent(intent)
             }
         }
@@ -262,12 +274,12 @@ fun HomeScreen(
                 )
             }
 
-            HomeSearchBar(
+            HomeRefreshMapFab(
+                onClick = { onIntent(HomeIntent.RefreshMapClicked) },
+                isRefreshing = state.isVehiclesLoading,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .fillMaxWidth()
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 84.dp)
             )
 
             HomeLocateMeFab(

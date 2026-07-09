@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -27,8 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -42,47 +43,6 @@ import com.turkcell.rencar.presentation.component.map.color
 import com.turkcell.rencar.presentation.theme.extendedColors
 import kotlin.math.cos
 import kotlin.math.sin
-
-@Composable
-fun HomeSearchBar(
-    modifier: Modifier = Modifier,
-    onFilterClick: () -> Unit = {}
-) {
-    val searchIconColor = Color(0xFF9AA3AE)
-    val filterIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(elevation = 6.dp, shape = RoundedCornerShape(18.dp))
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Canvas(modifier = Modifier.size(18.dp)) { drawSearchIcon(color = searchIconColor) }
-            Text(
-                text = stringResource(R.string.home_search_placeholder),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 10.dp)
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable(onClick = onFilterClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.size(16.dp)) { drawFilterIcon(color = filterIconColor) }
-        }
-    }
-}
 
 @Composable
 fun HomeLocateMeFab(
@@ -100,6 +60,34 @@ fun HomeLocateMeFab(
         elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
     ) {
         Canvas(modifier = Modifier.size(22.dp)) { drawLocateMeIcon(color = iconColor) }
+    }
+}
+
+@Composable
+fun HomeRefreshMapFab(
+    onClick: () -> Unit,
+    isRefreshing: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val iconColor = MaterialTheme.colorScheme.primary
+
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.primary,
+        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+    ) {
+        if (isRefreshing) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = iconColor,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Canvas(modifier = Modifier.size(20.dp)) { drawRefreshIcon(color = iconColor) }
+        }
     }
 }
 
@@ -278,35 +266,6 @@ fun HomeNearbyInfoCard(
     }
 }
 
-private fun DrawScope.drawSearchIcon(color: Color) {
-    val stroke = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
-    val radius = size.minDimension * 0.32f
-    val center = Offset(size.width * 0.42f, size.height * 0.42f)
-    drawCircle(color = color, radius = radius, center = center, style = stroke)
-    drawLine(
-        color = color,
-        start = Offset(center.x + radius * 0.7f, center.y + radius * 0.7f),
-        end = Offset(size.width * 0.92f, size.height * 0.92f),
-        strokeWidth = stroke.width,
-        cap = StrokeCap.Round
-    )
-}
-
-private fun DrawScope.drawFilterIcon(color: Color) {
-    val stroke = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
-    val ys = listOf(size.height * 0.2f, size.height * 0.5f, size.height * 0.8f)
-    val widths = listOf(0.9f, 0.65f, 0.4f)
-    ys.forEachIndexed { index, y ->
-        drawLine(
-            color = color,
-            start = Offset(size.width * (1f - widths[index]) / 2f, y),
-            end = Offset(size.width * (1f + widths[index]) / 2f, y),
-            strokeWidth = stroke.width,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
 private fun DrawScope.drawLocateMeIcon(color: Color) {
     val stroke = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
     val center = Offset(size.width / 2f, size.height / 2f)
@@ -325,5 +284,38 @@ private fun DrawScope.drawLocateMeIcon(color: Color) {
             y = center.y + (outerRadius * 1.5f * sin(angle)).toFloat()
         )
         drawLine(color = color, start = start, end = end, strokeWidth = stroke.width, cap = StrokeCap.Round)
+    }
+}
+
+private fun DrawScope.drawRefreshIcon(color: Color) {
+    val stroke = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
+    val radius = size.minDimension * 0.32f
+    val center = Offset(size.width / 2f, size.height / 2f)
+    val startAngle = -50f
+    val sweepAngle = 280f
+
+    drawArc(
+        color = color,
+        startAngle = startAngle,
+        sweepAngle = sweepAngle,
+        useCenter = false,
+        topLeft = Offset(center.x - radius, center.y - radius),
+        size = Size(radius * 2f, radius * 2f),
+        style = stroke
+    )
+
+    val endAngle = Math.toRadians((startAngle + sweepAngle).toDouble())
+    val arrowTip = Offset(
+        x = center.x + (radius * cos(endAngle)).toFloat(),
+        y = center.y + (radius * sin(endAngle)).toFloat()
+    )
+    val wingLength = radius * 0.55f
+    listOf(140.0, -140.0).forEach { wingOffsetDegrees ->
+        val wingAngle = endAngle + Math.toRadians(wingOffsetDegrees)
+        val wingEnd = Offset(
+            x = arrowTip.x + (wingLength * cos(wingAngle)).toFloat(),
+            y = arrowTip.y + (wingLength * sin(wingAngle)).toFloat()
+        )
+        drawLine(color = color, start = arrowTip, end = wingEnd, strokeWidth = stroke.width, cap = StrokeCap.Round)
     }
 }

@@ -81,7 +81,6 @@
     <string name="common_retry">Tekrar Dene</string>
 
     <!-- Home Screen -->
-    <string name="home_search_placeholder">Nereden araç alacaksın?</string>
     <string name="home_search_icon_description">Ara</string>
     <string name="home_filter_menu_description">Filtrele</string>
     <string name="home_locate_me_description">Konumuma git</string>
