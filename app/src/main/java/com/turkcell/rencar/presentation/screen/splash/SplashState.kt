@@ -6,6 +6,6 @@ data class SplashState(
     val currentPage: Int = 0
 ) : UiState {
     companion object {
-        const val PAGE_COUNT = 3
+        const val PAGE_COUNT = 4
     }
 }

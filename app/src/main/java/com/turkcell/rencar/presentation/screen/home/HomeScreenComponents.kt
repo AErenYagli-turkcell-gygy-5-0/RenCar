@@ -37,7 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.turkcell.rencar.R
-import com.turkcell.rencar.presentation.component.map.VehicleCategory
+import com.turkcell.rencar.domain.vehicle.VehicleType
 import com.turkcell.rencar.presentation.component.map.color
 import com.turkcell.rencar.presentation.theme.extendedColors
 import kotlin.math.cos
@@ -136,8 +136,8 @@ fun HomeLocationPermissionBanner(
 
 @Composable
 fun HomeFilterChipRow(
-    selectedCategory: VehicleCategory?,
-    onCategorySelected: (VehicleCategory?) -> Unit,
+    selectedCategory: VehicleType?,
+    onCategorySelected: (VehicleType?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.extendedColors
@@ -153,25 +153,39 @@ fun HomeFilterChipRow(
             onClick = { onCategorySelected(null) }
         )
         HomeCategoryChip(
-            label = stringResource(R.string.home_filter_economic),
-            selected = selectedCategory == VehicleCategory.Economic,
-            dotColor = VehicleCategory.Economic.color(colors),
-            selectedColor = VehicleCategory.Economic.color(colors),
-            onClick = { onCategorySelected(VehicleCategory.Economic) }
-        )
-        HomeCategoryChip(
-            label = stringResource(R.string.home_filter_comfort),
-            selected = selectedCategory == VehicleCategory.Comfort,
-            dotColor = VehicleCategory.Comfort.color(colors),
-            selectedColor = VehicleCategory.Comfort.color(colors),
-            onClick = { onCategorySelected(VehicleCategory.Comfort) }
+            label = stringResource(R.string.home_filter_sedan),
+            selected = selectedCategory == VehicleType.SEDAN,
+            dotColor = VehicleType.SEDAN.color(colors),
+            selectedColor = VehicleType.SEDAN.color(colors),
+            onClick = { onCategorySelected(VehicleType.SEDAN) }
         )
         HomeCategoryChip(
             label = stringResource(R.string.home_filter_suv),
-            selected = selectedCategory == VehicleCategory.Suv,
-            dotColor = VehicleCategory.Suv.color(colors),
-            selectedColor = VehicleCategory.Suv.color(colors),
-            onClick = { onCategorySelected(VehicleCategory.Suv) }
+            selected = selectedCategory == VehicleType.SUV,
+            dotColor = VehicleType.SUV.color(colors),
+            selectedColor = VehicleType.SUV.color(colors),
+            onClick = { onCategorySelected(VehicleType.SUV) }
+        )
+        HomeCategoryChip(
+            label = stringResource(R.string.home_filter_hatchback),
+            selected = selectedCategory == VehicleType.HATCHBACK,
+            dotColor = VehicleType.HATCHBACK.color(colors),
+            selectedColor = VehicleType.HATCHBACK.color(colors),
+            onClick = { onCategorySelected(VehicleType.HATCHBACK) }
+        )
+        HomeCategoryChip(
+            label = stringResource(R.string.home_filter_station),
+            selected = selectedCategory == VehicleType.STATION,
+            dotColor = VehicleType.STATION.color(colors),
+            selectedColor = VehicleType.STATION.color(colors),
+            onClick = { onCategorySelected(VehicleType.STATION) }
+        )
+        HomeCategoryChip(
+            label = stringResource(R.string.home_filter_minivan),
+            selected = selectedCategory == VehicleType.MINIVAN,
+            dotColor = VehicleType.MINIVAN.color(colors),
+            selectedColor = VehicleType.MINIVAN.color(colors),
+            onClick = { onCategorySelected(VehicleType.MINIVAN) }
         )
     }
 }
@@ -214,8 +228,8 @@ fun HomeNearbyInfoCard(
     nearbyCount: Int,
     locationLabel: String,
     distanceLabel: String,
-    selectedCategory: VehicleCategory?,
-    onCategorySelected: (VehicleCategory?) -> Unit,
+    selectedCategory: VehicleType?,
+    onCategorySelected: (VehicleType?) -> Unit,
     onFindNearestClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
