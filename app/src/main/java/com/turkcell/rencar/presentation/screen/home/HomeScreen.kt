@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,9 @@ import androidx.compose.foundation.clickable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -85,6 +89,26 @@ fun HomeRoute(
 
     LaunchedEffect(Unit) {
         permissionLauncher.launch(locationPermissions)
+    }
+
+    // İzin, sistem izin diyaloğu yerine Uygulama Ayarları'ndan verilirse permissionLauncher'ın
+    // callback'i hiç tetiklenmez; bu yüzden ekran her ön plana döndüğünde (ör. Ayarlar'dan geri
+    // dönüş) izin durumu ayrıca kontrol edilip state ile senkronize edilir.
+    val currentPermissionDenied = rememberUpdatedState(state.permissionDenied)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val granted = locationPermissions.any {
+                    ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+                }
+                if (granted && currentPermissionDenied.value != false) {
+                    viewModel.onIntent(HomeIntent.LocationPermissionResult(granted = true, canRequestAgain = true))
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(Unit) {

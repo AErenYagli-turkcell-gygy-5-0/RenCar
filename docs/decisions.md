@@ -36,6 +36,17 @@ cihazdaki önbellekteki son bilinen konum da sorgulanır ve varsa hemen `HomeInt
 ile state'e yazılır. `HomeScreen` içindeki mevcut "ilk konumda bir kez zoom yap" mantığı
 (`hasAnimatedToUser`) değiştirilmemiştir; sadece konumun state'e ulaşma hızı iyileştirilmiştir.
 
+**Karar (Ayarlar'dan dönüşte izin senkronizasyonu — ek düzeltme):** Kullanıcı `openAppSettings()` ile
+sistem Ayarlar'ına yönlendirilip izni oradan verdiğinde, `permissionLauncher`'ın sonuç callback'i
+hiç tetiklenmiyordu (çünkü izin isteği sistem izin diyaloğu üzerinden değil, Ayarlar ekranı üzerinden
+veriliyor); bu nedenle uygulamaya geri dönüldüğünde `HomeState` güncel kalmıyor, harita/navigasyon
+kısıtlaması izin verilmiş olmasına rağmen kaldırılmıyordu. `HomeRoute`'a, `presentation/component
+/map/RencarMap.kt` içinde zaten kullanılan `LocalLifecycleOwner` + `LifecycleEventObserver`
+deseniyle bir `ON_RESUME` dinleyicisi eklendi: ekran her ön plana döndüğünde
+`ContextCompat.checkSelfPermission` ile izin yeniden kontrol edilir; izin verilmiş ama state hâlâ
+"reddedildi" ise `HomeIntent.LocationPermissionResult(granted = true, canRequestAgain = true)`
+gönderilerek state senkronize edilir.
+
 **Not — 2026-07-07 kararıyla ilişki:** Bu karar, aşağıdaki "2026-07-07 — Ana Ekran Haritası" kararında
 belirtilen "izin reddedildiğinde harita varsayılan merkezle gösterime devam eder, kilitlenmez"
 ilkesini BOZMAMAKTADIR: harita içeriği (varsayılan merkez, banner) aynı şekilde görünmeye devam
