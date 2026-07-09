@@ -28,20 +28,37 @@ class ApiVehicleRepository @Inject constructor(
         VehicleResult.Failure(VehicleError.Unexpected)
     }
 
+    override suspend fun getVehicle(id: String): VehicleResult<Vehicle> = try {
+        VehicleResult.Success(apiService.getOne(id = id).toDomain())
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: HttpException) {
+        VehicleResult.Failure(error.code().toVehicleError())
+    } catch (error: IOException) {
+        VehicleResult.Failure(VehicleError.Network)
+    } catch (error: Exception) {
+        VehicleResult.Failure(VehicleError.Unexpected)
+    }
+
     private fun Int.toVehicleError(): VehicleError = when (this) {
         HTTP_UNAUTHORIZED -> VehicleError.Unauthorized
         HTTP_FORBIDDEN -> VehicleError.Forbidden
+        HTTP_NOT_FOUND -> VehicleError.NotFound
         else -> VehicleError.Unexpected
     }
 
     private companion object {
         const val HTTP_UNAUTHORIZED = 401
         const val HTTP_FORBIDDEN = 403
+        const val HTTP_NOT_FOUND = 404
     }
 }
 
 private fun VehicleResponseDto.toDomain() = Vehicle(
     id = id,
+    plate = plate,
+    brand = brand,
+    model = model,
     type = VehicleType.valueOf(type),
     pricePerDay = pricePerDay,
     latitude = latitude,

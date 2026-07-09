@@ -56,6 +56,14 @@ class HomeViewModel @Inject constructor(
                     setState { copy(selectedNavItem = intent.item) }
                 }
             }
+
+            is HomeIntent.VehicleMarkerClicked -> {
+                // Konum izni verilmeden CarDetail ekranına geçiş engellenir (bkz. docs/decisions.md).
+                val locationGranted = state.value.permissionDenied == false
+                if (locationGranted) {
+                    sendEffect { HomeEffect.NavigateToCarDetail(intent.vehicleId, state.value.myLocation) }
+                }
+            }
         }
     }
 
@@ -95,7 +103,7 @@ class HomeViewModel @Inject constructor(
     private fun VehicleError.toMessage(): String = when (this) {
         VehicleError.Unauthorized, VehicleError.Forbidden -> UNAUTHORIZED_MESSAGE
         VehicleError.Network -> NETWORK_ERROR_MESSAGE
-        VehicleError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
+        VehicleError.NotFound, VehicleError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
     }
 
     private companion object {

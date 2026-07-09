@@ -34,8 +34,11 @@ import org.maplibre.android.geometry.LatLng as MapLibreLatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import org.maplibre.android.plugins.annotation.OnSymbolClickListener
+import org.maplibre.android.plugins.annotation.Symbol
 import org.maplibre.android.plugins.annotation.SymbolManager
 import org.maplibre.android.plugins.annotation.SymbolOptions
+import com.google.gson.JsonPrimitive
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
@@ -76,7 +79,8 @@ fun RencarMap(
     initialZoom: Double = DEFAULT_ZOOM,
     myLocation: LatLng?,
     vehicles: List<VehicleMarker> = emptyList(),
-    onControllerReady: (RencarMapController) -> Unit = {}
+    onControllerReady: (RencarMapController) -> Unit = {},
+    onVehicleClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -88,6 +92,7 @@ fun RencarMap(
     val currentVehicles = rememberUpdatedState(vehicles)
     val currentCategoryColors = rememberUpdatedState(categoryColors)
     val currentOnControllerReady = rememberUpdatedState(onControllerReady)
+    val currentOnVehicleClick = rememberUpdatedState(onVehicleClick)
 
     val mapView = remember { MapView(context.also { MapLibre.getInstance(it) }) }
     val meSourceState = remember { mutableStateOf<GeoJsonSource?>(null) }
@@ -155,6 +160,17 @@ fun RencarMap(
                     styleState.value = style
 
                     val symbolManager = SymbolManager(mapView, mapLibreMap, style)
+                    symbolManager.addClickListener(
+                        OnSymbolClickListener { symbol: Symbol ->
+                            val vehicleId = symbol.data?.takeIf { it.isJsonPrimitive }?.asString
+                            if (vehicleId != null) {
+                                currentOnVehicleClick.value(vehicleId)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                    )
                     symbolManagerState.value = symbolManager
                     updateVehicleSymbols(
                         context = context,
@@ -224,6 +240,7 @@ private fun updateVehicleSymbols(
                 .withLatLng(MapLibreLatLng(vehicle.latitude, vehicle.longitude))
                 .withIconImage(iconId)
                 .withIconAnchor(Property.ICON_ANCHOR_BOTTOM)
+                .withData(JsonPrimitive(vehicle.id))
         )
     }
 }
