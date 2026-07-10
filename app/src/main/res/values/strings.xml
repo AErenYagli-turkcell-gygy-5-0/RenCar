@@ -127,4 +127,22 @@
     <string name="profile_logout_confirm_action">Çıkış yap</string>
     <string name="profile_logout_cancel_action">Vazgeç</string>
     <string name="profile_retry">Tekrar dene</string>
+    <!-- Reservation Confirmation Screen -->
+    <string name="reservation_confirmation_title">Rezervasyon Onayı</string>
+    <string name="reservation_rental_plan">Kiralama planı</string>
+    <string name="reservation_daily">Günlük</string>
+    <string name="reservation_price_per_day">%1$s/gün</string>
+    <string name="reservation_daily_fee">Günlük ücret</string>
+    <string name="reservation_estimated_total">Tahmini toplam</string>
+    <string name="reservation_estimated_price">~%1$s</string>
+    <string name="reservation_terms_confirmation">Kullanım şartlarını ve kasko/sigorta koşullarını okudum, onaylıyorum.</string>
+    <string name="reservation_complete">Rezervasyonu Tamamla</string>
+    <string name="reservation_retry">Tekrar dene</string>
+    <string name="reservation_error_vehicle_not_found">Araç bulunamadı veya artık müsait değil.</string>
+    <string name="reservation_error_conflict">Araç artık müsait olmayabilir veya aktif bir kiralamanız bulunabilir.</string>
+    <string name="reservation_error_unauthorized">Oturumunuz sona ermiş. Lütfen tekrar giriş yapın.</string>
+    <string name="reservation_error_forbidden">Bu işlem için yetkiniz bulunmuyor.</string>
+    <string name="reservation_error_invalid_request">Rezervasyon bilgileri geçersiz. Lütfen tekrar deneyin.</string>
+    <string name="reservation_error_network">İnternet bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="reservation_error_unexpected">Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.</string>
 </resources>

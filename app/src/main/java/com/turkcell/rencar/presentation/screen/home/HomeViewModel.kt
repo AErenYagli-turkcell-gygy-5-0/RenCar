@@ -95,6 +95,7 @@ class HomeViewModel @Inject constructor(
     private fun VehicleError.toMessage(): String = when (this) {
         VehicleError.Unauthorized, VehicleError.Forbidden -> UNAUTHORIZED_MESSAGE
         VehicleError.Network -> NETWORK_ERROR_MESSAGE
+        VehicleError.NotFound,
         VehicleError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
     }
 
