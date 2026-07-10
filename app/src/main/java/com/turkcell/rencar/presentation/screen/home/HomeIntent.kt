@@ -14,5 +14,6 @@ sealed interface HomeIntent : UiIntent {
     data class CategorySelected(val category: VehicleType?) : HomeIntent
     data object FindNearestClicked : HomeIntent
     data class NavItemSelected(val item: BottomNavItem) : HomeIntent
+    data class VehicleMarkerClicked(val vehicleId: String) : HomeIntent
     data object RefreshMapClicked : HomeIntent
 }

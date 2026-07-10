@@ -100,6 +100,14 @@
     <string name="home_location_permission_permanently_denied_dismiss">Kapat</string>
     <string name="home_vehicles_retry">Tekrar dene</string>
 
+    <!-- Car Detail Screen -->
+    <string name="car_detail_status_available">MÜSAİT</string>
+    <string name="car_detail_meta_with_distance">%1$s · %2$s uzaklığında</string>
+    <string name="car_detail_price_per_minute_suffix">/dk</string>
+    <string name="car_detail_price_per_hour">Saatlik %1$s</string>
+    <string name="car_detail_reserve_button">Rezerve Et</string>
+    <string name="car_detail_unlock_button">Kilidi Aç</string>
+
     <!-- Profile Screen -->
     <string name="profile_unknown_name">Profil</string>
     <string name="profile_phone_missing">Telefon bilgisi yok</string>

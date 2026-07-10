@@ -11,6 +11,7 @@ import com.turkcell.rencar.presentation.screen.auth.license.LicenseUploadRoute
 import com.turkcell.rencar.presentation.screen.auth.login.LoginRoute
 import com.turkcell.rencar.presentation.screen.auth.otp.OtpRoute
 import com.turkcell.rencar.presentation.screen.auth.register.RegisterRoute
+import com.turkcell.rencar.presentation.screen.cardetail.CarDetailRoute
 import com.turkcell.rencar.presentation.screen.home.HomeRoute
 import com.turkcell.rencar.presentation.screen.profile.ProfileRoute
 import com.turkcell.rencar.presentation.screen.splash.SplashRoute
@@ -89,7 +90,33 @@ fun RenCarNavHost(
                     navController.navigate(RenCarDestination.Profile.route) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToCarDetail = { vehicleId, latitude, longitude ->
+                    navController.navigate(
+                        RenCarDestination.CarDetail.createRoute(vehicleId, latitude, longitude)
+                    ) {
+                        launchSingleTop = true
+                    }
                 }
+            )
+        }
+
+        composable(
+            route = RenCarDestination.CarDetail.route,
+            arguments = listOf(
+                navArgument(RenCarDestination.ARG_VEHICLE_ID) { type = NavType.StringType },
+                navArgument(RenCarDestination.ARG_MY_LATITUDE) {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument(RenCarDestination.ARG_MY_LONGITUDE) {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) {
+            CarDetailRoute(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
