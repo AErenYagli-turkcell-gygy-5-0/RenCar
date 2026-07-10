@@ -104,7 +104,7 @@ fun RencarMap(
     LaunchedEffect(mapLibreMapState.value, statusBarInsetPx) {
         val map = mapLibreMapState.value ?: return@LaunchedEffect
         val edgeMarginPx = with(density) { 16.dp.roundToPx() }
-        val topExtraPx = with(density) { 96.dp.roundToPx() }
+        val topExtraPx = with(density) { 16.dp.roundToPx() }
         map.uiSettings.setCompassFadeFacingNorth(false)
         map.uiSettings.setCompassMargins(
             edgeMarginPx,

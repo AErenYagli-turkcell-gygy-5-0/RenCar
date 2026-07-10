@@ -25,6 +25,8 @@ class HomeViewModel @Inject constructor(
 
             HomeIntent.RetryVehiclesClicked -> loadVehicles()
 
+            HomeIntent.RefreshMapClicked -> loadVehicles()
+
             is HomeIntent.LocationPermissionResult ->
                 setState {
                     copy(
