@@ -8,6 +8,26 @@
 
 ---
 
+## 2026-07-11 — İlk Kayıt Selfie'sinin Lokal Profil Fotoğrafı Olarak Kullanılması
+
+**Karar:** `docs/api/openapi.json` içinde `POST /license/upload` yalnızca `front` ve `back`
+multipart alanlarını kabul eder; `GET /auth/me` yanıtındaki `UserResponseDto` içinde profil
+fotoğrafı, avatar veya selfie URL alanı yoktur. Bu nedenle ilk kayıt/ehliyet akışında çekilen
+selfie backend'e gönderilmez; ehliyet yükleme başarılı olduktan sonra kullanıcının `id` değeriyle
+eşleşen JPEG dosyası uygulamanın private `filesDir/profile_photos/` alanında tutulur.
+
+**Gerekçe:** Backend sözleşmesinde selfie/profil fotoğrafı kontratı bulunmadığından API alanı
+uydurulmamıştır. Issue kapsamındaki "backend veya local cache" notu doğrultusunda, profil ekranı
+`GET /auth/me` ile gelen kullanıcı id'si üzerinden lokal cache'teki selfie'yi profil fotoğrafı
+olarak gösterecektir. Cache bulunamazsa mevcut varsayılan profil görseli kullanılmaya devam eder.
+
+**Etkilenen alanlar:**
+- `domain/profile/`, `data/repository/profile/`, `di/RepositoryModule.kt`
+- `presentation/screen/auth/license/`
+- `presentation/screen/profile/`
+
+---
+
 ## 2026-07-11 — Araç Detaydan Rezervasyon Onayına Vehicle ID ile Navigasyon
 
 **Karar:** Araç Detay ekranındaki “Rezerve Et” eylemi MVI akışıyla
