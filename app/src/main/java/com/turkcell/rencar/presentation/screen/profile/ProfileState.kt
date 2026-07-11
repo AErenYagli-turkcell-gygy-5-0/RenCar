@@ -6,6 +6,7 @@ import com.turkcell.rencar.presentation.core.mvi.UiState
 data class ProfileState(
     val fullName: String = "",
     val phone: String = "",
+    val profilePhoto: ByteArray? = null,
     val licenseStatus: LicenseReviewStatus? = null,
     val isLoading: Boolean = false,
     val isLoggingOut: Boolean = false,

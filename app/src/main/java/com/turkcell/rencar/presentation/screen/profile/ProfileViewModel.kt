@@ -7,6 +7,7 @@ import com.turkcell.rencar.domain.auth.AuthResult
 import com.turkcell.rencar.domain.license.LicenseError
 import com.turkcell.rencar.domain.license.LicenseRepository
 import com.turkcell.rencar.domain.license.LicenseResult
+import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val licenseRepository: LicenseRepository
+    private val licenseRepository: LicenseRepository,
+    private val profilePhotoRepository: ProfilePhotoRepository
 ) : MviViewModel<ProfileState, ProfileIntent, ProfileEffect>(ProfileState()) {
 
     override fun onIntent(intent: ProfileIntent) {
@@ -72,10 +74,15 @@ class ProfileViewModel @Inject constructor(
                 return@launch
             }
 
+            val profilePhoto = runCatching {
+                profilePhotoRepository.getProfilePhoto(user.id)
+            }.getOrNull()
+
             setState {
                 copy(
                     fullName = user.fullName,
                     phone = user.phone,
+                    profilePhoto = profilePhoto,
                     licenseStatus = licenseStatus,
                     isLoading = false,
                     hasLoaded = true,
