@@ -8,6 +8,36 @@
 
 ---
 
+## 2026-07-10 — Rezervasyon Onayı: Araç Detayı ve Kiralama API Entegrasyonu
+
+**Karar:** Rezervasyon onayı ekranı, sunum katmanındaki bağlayıcı MVI kurallarına uygun olarak
+`State`, `Intent`, `Effect`, `ViewModel` ve `Screen` dosyalarına ayrılmıştır. Ekran `vehicleId` ile
+başlatılır, `GET /vehicles/{id}` üzerinden aracın plaka, marka, model, tip ve günlük fiyat bilgisini
+yükler. Kullanıcı koşulları onayladıktan sonra `POST /rentals` isteği gönderilir; başarılı sonuç
+`ReservationCreated(rentalId)` effect'i ile ekranın çağırıcısına aktarılır.
+
+**Kiralama planı kararı:** OpenAPI sözleşmesinde yalnızca `pricePerDay` bulunduğu için dakikalık ve
+saatlik planlar eklenmemiştir. Ekranda tek gerçek plan olarak günlük kiralama gösterilir ve API'nin
+zorunlu `endDate` alanı, istek anından bir gün sonrası UTC ISO-8601 değeri olarak oluşturulur. Yakıt,
+vites, koltuk, ücretsiz rezervasyon süresi ve başlangıç ücreti gibi OpenAPI'de bulunmayan tasarım
+alanları eklenmemiştir.
+
+**Hata yönetimi:** `400`, `401`, `403`, `404` ve `409` cevapları domain hata türlerine çevrilir.
+OpenAPI, `409` cevabını hem aracın müsait olmaması hem de kullanıcının aktif kiralaması bulunması
+için kullandığından istemci bu iki durumu uydurma bir ayrımla göstermeyip ortak rezervasyon
+çakışması mesajı sunar.
+
+**Navigasyon kapsamı:** Kullanıcı talebi doğrultusunda `RenCarDestination` ve `RenCarNavHost`
+değiştirilmemiştir. Ekran yalnızca `onNavigateBack` ve `onReservationCreated` callback'lerini sunar;
+çağıran ekranın bağlantısı araç detay ekranı tamamlandığında ayrıca yapılacaktır.
+
+**Bağımlılıklar:** Yeni bir Gradle bağımlılığı eklenmemiştir.
+
+**Etkilenen alanlar:**
+- `domain/vehicle/`, `data/remote/vehicle/`, `data/repository/vehicle/`
+- `domain/rental/`, `data/remote/rental/`, `data/repository/rental/`
+- `presentation/screen/reservation/confirmation/`
+- `di/NetworkModule.kt`, `di/RepositoryModule.kt`
 ## 2026-07-10 — CarDetailScreen: Haritadan Araç Seçimi, Konum İzni Kısıtlaması ve API'de Karşılığı Olmayan Alanların Kaldırılması
 
 **Karar (yeni ekran):** `presentation/screen/cardetail/` altında, mevcut MVI dosya yapısıyla
