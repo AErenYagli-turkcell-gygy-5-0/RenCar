@@ -43,7 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.component.map.DEFAULT_CENTER
@@ -62,7 +62,8 @@ import kotlin.math.sqrt
 fun CarDetailRoute(
     modifier: Modifier = Modifier,
     viewModel: CarDetailViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToReservationConfirmation: (vehicleId: String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -71,6 +72,8 @@ fun CarDetailRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 CarDetailEffect.NavigateBack -> onNavigateBack()
+                is CarDetailEffect.NavigateToReservationConfirmation ->
+                    onNavigateToReservationConfirmation(effect.vehicleId)
             }
         }
     }
@@ -201,13 +204,16 @@ private fun CarDetailSheetContent(
                 }
             }
 
-            else -> CarDetailContent(state = state)
+            else -> CarDetailContent(state = state, onIntent = onIntent)
         }
     }
 }
 
 @Composable
-private fun CarDetailContent(state: CarDetailState) {
+private fun CarDetailContent(
+    state: CarDetailState,
+    onIntent: (CarDetailIntent) -> Unit
+) {
     val distanceText = remember(
         state.myLatitude,
         state.myLongitude,
@@ -298,7 +304,7 @@ private fun CarDetailContent(state: CarDetailState) {
         horizontalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         OutlinedButton(
-            onClick = {},
+            onClick = { onIntent(CarDetailIntent.ReserveClicked) },
             modifier = Modifier.height(56.dp),
             shape = RoundedCornerShape(18.dp)
         ) {

@@ -8,6 +8,33 @@
 
 ---
 
+## 2026-07-11 — Araç Detaydan Rezervasyon Onayına Vehicle ID ile Navigasyon
+
+**Karar:** Araç Detay ekranındaki “Rezerve Et” eylemi MVI akışıyla
+`CarDetailIntent.ReserveClicked` intent'ine, ardından seçilen `vehicleId` değerini taşıyan
+`CarDetailEffect.NavigateToReservationConfirmation` effect'ine bağlanmıştır. NavHost içinde
+`reservation-confirmation/{vehicleId}` rotası tanımlanmış ve Rezervasyon Onayı ekranına yalnızca
+araç kimliği aktarılmıştır.
+
+**Gerekçe:** Araç Detay state'inde bulunan marka, model, plaka ve fiyat değerleri navigasyon
+argümanlarında tekrar edilmemiştir. Rezervasyon Onayı ekranı mevcut `GET /vehicles/{id}` çağrısıyla
+aracın güncel müsaitlik ve fiyat bilgisini yeniden yükler. Böylece iki ekran arasında eski veya
+tutarsız araç verisi taşınmaz.
+
+**Back stack davranışı:** Rezervasyon Onayı ekranındaki geri eylemi Araç Detay ekranına döner.
+`POST /rentals` başarılı olduğunda Home ekranına dönülür ve Araç Detay ile Rezervasyon Onayı
+ekranları back stack'ten çıkarılır.
+
+**Bağımlılıklar:** Yeni bağımlılık eklenmemiştir.
+
+**Etkilenen alanlar:**
+- `presentation/screen/cardetail/`
+- `presentation/navigation/RenCarDestination.kt`
+- `presentation/navigation/RenCarNavHost.kt`
+- `presentation/screen/reservation/confirmation/` (mevcut route yeniden kullanıldı)
+
+---
+
 ## 2026-07-10 — Rezervasyon Onayı: Araç Detayı ve Kiralama API Entegrasyonu
 
 **Karar:** Rezervasyon onayı ekranı, sunum katmanındaki bağlayıcı MVI kurallarına uygun olarak
