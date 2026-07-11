@@ -12,12 +12,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +47,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.component.map.LatLng
 import com.turkcell.rencar.presentation.component.map.RencarMap
@@ -60,9 +58,10 @@ private const val LOCATION_UPDATE_INTERVAL_MS = 5000L
 
 @Composable
 fun HomeRoute(
-    onNavigateToProfile: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    onNavigateToProfile: () -> Unit,
+    onNavigateToCarDetail: (String, Double?, Double?) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -78,9 +77,6 @@ fun HomeRoute(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         val granted = results.values.any { it }
-        // Reddedilip reddedilmediğine değil, sistemin diyaloğu tekrar gösterip gösteremeyeceğine bakılır:
-        // rationale gösterilebiliyorsa henüz kalıcı red yok; aksi halde (ve activity mevcutken)
-        // kullanıcı Ayarlar'a yönlendirilmelidir.
         val canRequestAgain = granted || activity == null || locationPermissions.any {
             ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
         }
@@ -91,9 +87,6 @@ fun HomeRoute(
         permissionLauncher.launch(locationPermissions)
     }
 
-    // İzin, sistem izin diyaloğu yerine Uygulama Ayarları'ndan verilirse permissionLauncher'ın
-    // callback'i hiç tetiklenmez; bu yüzden ekran her ön plana döndüğünde (ör. Ayarlar'dan geri
-    // dönüş) izin durumu ayrıca kontrol edilip state ile senkronize edilir.
     val currentPermissionDenied = rememberUpdatedState(state.permissionDenied)
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -116,11 +109,15 @@ fun HomeRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 HomeEffect.NavigateToProfile -> onNavigateToProfile()
+                is HomeEffect.NavigateToCarDetail -> onNavigateToCarDetail(
+                    effect.vehicleId,
+                    effect.myLocation?.latitude,
+                    effect.myLocation?.longitude
+                )
             }
         }
     }
 
-    // Yalnızca izin durumu (verildi/reddedildi) değiştiğinde konum güncellemelerini yeniden kurar.
     DisposableEffect(state.permissionDenied) {
         var callback: LocationCallback? = null
         val hasPermission = ContextCompat.checkSelfPermission(
@@ -129,8 +126,6 @@ fun HomeRoute(
         ) == PackageManager.PERMISSION_GRANTED
 
         if (state.permissionDenied == false && hasPermission) {
-            // Uygulama ilk açıldığında canlı GPS sabitlenmesini beklemeden, cihazdaki son bilinen
-            // konumla anında zoom yapılabilmesi için önbellekteki konum ayrıca sorgulanır.
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 location?.let {
                     viewModel.onIntent(HomeIntent.MyLocationChanged(LatLng(it.latitude, it.longitude)))
@@ -179,14 +174,29 @@ fun HomeRoute(
         modifier = modifier,
         onIntent = { intent ->
             when (intent) {
-                // İzin sonucu her zaman platform diyaloğu üzerinden geldiğinden Route burada yakalar.
-                // Sistem diyaloğu artık gösterilemiyorsa (kalıcı red) kullanıcı Ayarlar'a yönlendirilir.
                 HomeIntent.RequestLocationPermissionClicked -> {
                     if (state.canRequestPermission) {
                         permissionLauncher.launch(locationPermissions)
                     } else {
                         openAppSettings(context)
                     }
+                }
+
+                HomeIntent.RefreshMapClicked -> {
+                    val hasPermission = locationPermissions.any {
+                        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+                    }
+                    if (hasPermission) {
+                        fusedLocationClient.getCurrentLocation(
+                            Priority.PRIORITY_HIGH_ACCURACY,
+                            CancellationTokenSource().token
+                        ).addOnSuccessListener { location ->
+                            location?.let {
+                                viewModel.onIntent(HomeIntent.MyLocationChanged(LatLng(it.latitude, it.longitude)))
+                            }
+                        }
+                    }
+                    viewModel.onIntent(intent)
                 }
 
                 else -> viewModel.onIntent(intent)
@@ -204,8 +214,8 @@ private fun openAppSettings(context: Context) {
 
 @Composable
 private fun LocationPermissionSettingsDialog(
+    onDismiss: () -> Unit,
     onOpenSettingsClick: () -> Unit,
-    onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -252,7 +262,8 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize(),
                 myLocation = state.myLocation,
                 vehicles = filteredVehicles,
-                onControllerReady = { mapController = it }
+                onControllerReady = { mapController = it },
+                onVehicleClick = { vehicleId -> onIntent(HomeIntent.VehicleMarkerClicked(vehicleId)) }
             )
 
             if (state.isVehiclesLoading && !state.hasLoadedVehicles) {
@@ -262,12 +273,12 @@ fun HomeScreen(
                 )
             }
 
-            HomeSearchBar(
+            HomeRefreshMapFab(
+                onClick = { onIntent(HomeIntent.RefreshMapClicked) },
+                isRefreshing = state.isVehiclesLoading,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .fillMaxWidth()
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 84.dp)
             )
 
             HomeLocateMeFab(

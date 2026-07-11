@@ -28,8 +28,8 @@ class ApiVehicleRepository @Inject constructor(
         VehicleResult.Failure(VehicleError.Unexpected)
     }
 
-    override suspend fun getAvailableVehicle(vehicleId: String): VehicleResult<Vehicle> = try {
-        VehicleResult.Success(apiService.getOne(vehicleId).toDomain())
+    override suspend fun getVehicle(id: String): VehicleResult<Vehicle> = try {
+        VehicleResult.Success(apiService.getOne(id = id).toDomain())
     } catch (error: CancellationException) {
         throw error
     } catch (error: HttpException) {

@@ -38,6 +38,83 @@ değiştirilmemiştir. Ekran yalnızca `onNavigateBack` ve `onReservationCreated
 - `domain/rental/`, `data/remote/rental/`, `data/repository/rental/`
 - `presentation/screen/reservation/confirmation/`
 - `di/NetworkModule.kt`, `di/RepositoryModule.kt`
+## 2026-07-10 — CarDetailScreen: Haritadan Araç Seçimi, Konum İzni Kısıtlaması ve API'de Karşılığı Olmayan Alanların Kaldırılması
+
+**Karar (yeni ekran):** `presentation/screen/cardetail/` altında, mevcut MVI dosya yapısıyla
+(`CarDetailState.kt`, `CarDetailIntent.kt`, `CarDetailEffect.kt`, `CarDetailViewModel.kt`,
+`CarDetailScreen.kt`) yeni bir `CarDetailScreen` eklenmiştir. Kullanıcı Ana Harita'da bir araç
+marker'ına tıkladığında `GET /vehicles/{id}` ile araç detayı çekilip bu ekranda gösterilir.
+
+**Karar (haritada araca tıklama):** `RencarMap.kt` içindeki `SymbolManager`'a
+`OnSymbolClickListener` eklenmiş; her araç marker'ı `SymbolOptions.withData(JsonPrimitive(vehicle.id))`
+ile araç id'sini taşır. `RencarMap` artık `onVehicleClick: (String) -> Unit` parametresi alır.
+`HomeIntent.VehicleMarkerClicked` → `HomeViewModel` → `HomeEffect.NavigateToCarDetail` →
+`HomeRoute`/`RenCarNavHost` zinciriyle `CarDetail` route'una (araç id'si + kullanıcının son bilinen
+konumu query argüman olarak) geçilir.
+
+**Karar (konum izni kısıtlaması):** 2026-07-09 kararındaki `HomeState.permissionDenied` guard
+deseni yeniden kullanılmıştır: `HomeViewModel.onIntent`'te `VehicleMarkerClicked`,
+`permissionDenied == false` olmadığı sürece hiçbir effect göndermez. Böylece konum izni
+verilmeden kullanıcı haritayı gezebilir ve araçları görebilir, ancak bir araca tıklayarak
+CarDetail ekranına geçemez. Yeni bir izin/depolama mekanizması eklenmemiştir.
+
+**Karar (API'de karşılığı olmayan alanların kaldırılması — kullanıcı onayı):** Tasarım kaynağındaki
+(`Rencar.html`, "04 Araç Detay") Yakıt %, Menzil (km), Vites ve Koltuk sayısı kartları ile araç
+fotoğrafı tamamen kaldırılmıştır; `VehicleResponseDto`'da bu alanların karşılığı yoktur ve
+`agents.md` §2.2 gereği uydurulmamıştır (kullanıcı onayı ile). Gösterilen alanlar yalnızca
+backend'de karşılığı olanlarla sınırlıdır: marka/model, plaka, durum rozeti ("MÜSAİT" — `/vehicles/{id}`
+yalnızca AVAILABLE araç döndürdüğünden sabit metin olarak bırakılmıştır, ayrı bir `VehicleStatus`
+enum'ı eklenmemiştir) ve `pricePerDay`.
+
+**Karar (fiyat gösterimi — kullanıcı onayı):** Tasarımdaki dakikalık/saatlik fiyat satırları,
+backend'in tek sağladığı `pricePerDay` üzerinden matematiksel olarak türetilerek korunmuştur
+(`pricePerDay / 1440` dakikalık, `pricePerDay / 24` saatlik). Bu, backend'in kastetmediği bir
+kiralama modelinin varsayılması anlamına gelir; kullanıcı bu türetmeyi açıkça onaylamıştır.
+
+**Karar (mesafe metni):** "~250 m uzaklığında" tarzı metin uydurulmamış; `HomeState.myLocation`
+(kullanıcının son bilinen konumu) ile aracın gerçek `latitude`/`longitude` değerleri arasında
+İstemci tarafında Haversine formülüyle hesaplanmıştır (`CarDetailScreen.kt` içinde özel/private
+fonksiyon). Kullanıcının konumu bilinmiyorsa (`myLatitude`/`myLongitude` null) mesafe satırı hiç
+gösterilmez.
+
+**Karar (CTA butonları — kullanıcı onayı):** "Rezerve Et" ve "Kilidi Aç" butonları bu iterasyonda
+pasiftir (tıklanınca hiçbir şey olmaz); Profil ekranındaki pasif menü satırları örüntüsüyle
+tutarlıdır (bkz. 2026-07-07 kararı). Rezervasyon/kilit açma akışı (`Rencar.html`'deki ayrı "05
+Rezervasyon Onayı" ekranı) bu kararın kapsamı dışındadır, ayrı bir karar gerektirir.
+
+**Karar (arka plan haritası — kullanıcı onayı):** Bottom sheet'in arkasında statik/dekoratif bir
+görsel yerine mevcut `RencarMap` bileşeni yeniden kullanılmış, kamera aracın konumuna
+ortalanmıştır (`myLocation = null` verilerek kullanıcı konum noktası bu ekranda gösterilmez,
+karışıklığı önlemek için). Yeni bir bağımlılık eklenmemiştir.
+
+**Karar (sürükleyerek kapatma):** Compose Material3 `BottomSheetScaffold` +
+`rememberStandardBottomSheetState(skipHiddenState = false)` kullanılmıştır. Sheet tamamen aşağı
+çekilip `SheetValue.Hidden` durumuna geçtiğinde `CarDetailIntent.BackClicked` → `CarDetailEffect
+.NavigateBack` → `NavController.popBackStack()` tetiklenir; sol üstteki geri oku da aynı intent'i
+tetikler. Yeni bir kütüphane gerekmemiştir (proje zaten Compose Material3 BOM 2026.02.01
+kullanıyordu).
+
+**Bilinen sınırlama — ikon:** Tasarımdaki "Kilidi Aç" butonundaki kilit ikonu eklenmemiştir;
+projede mevcut ikonlar yalnızca `res/drawable` altında elle eklenmiş XML vector drawable'lar
+olarak tutulduğundan (bkz. 2026-07-06 kararı) ve yeni bir ikon varlığı eklemek bu kararın onaylanan
+dosya kapsamının dışında kaldığından buton yalnızca metin olarak bırakılmıştır. İkon eklenmesi
+istenirse ayrı bir onay ile `ic_lock.xml` eklenebilir.
+
+**Gerekçe:**
+- `agents.md` §2.2 gereği backend'de karşılığı olmayan veri (yakıt, menzil, vites, koltuk, araç
+  fotoğrafı) uydurulamaz; kullanıcıya seçenekler sunulmuş ve kaldırma yönünde onay alınmıştır.
+- Konum izni kısıtlaması, 2026-07-09 kararındaki "harita dışı ekranlara geçiş konum izni
+  gerektirir" ilkesinin CarDetail'e de genişletilmiş halidir; ayrı bir mekanizma icat edilmemiştir.
+- `Vehicle` domain modeline `plate`/`brand`/`model` eklenmesi, `VehicleResponseDto`'da zaten var
+  olan ama önceden maplenmeyen alanların kullanılması anlamına gelir; uydurma değildir.
+
+**Etkilenen alanlar:**
+- `domain/vehicle/` (`Vehicle.kt`, `VehicleError.kt`, `VehicleRepository.kt`)
+- `data/remote/vehicle/VehicleApiService.kt`, `data/repository/vehicle/ApiVehicleRepository.kt`
+- `presentation/component/map/RencarMap.kt`
+- `presentation/screen/home/` (`HomeIntent.kt`, `HomeEffect.kt`, `HomeViewModel.kt`, `HomeScreen.kt`)
+- `presentation/screen/cardetail/` (yeni)
+- `presentation/navigation/RenCarDestination.kt`, `presentation/navigation/RenCarNavHost.kt`
 - `app/src/main/res/values/strings.xml`
 
 ---

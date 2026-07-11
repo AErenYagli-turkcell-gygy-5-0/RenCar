@@ -11,5 +11,5 @@ interface VehicleApiService {
     suspend fun list(@Query("type") type: String? = null): List<VehicleResponseDto>
 
     @GET("vehicles/{id}")
-    suspend fun getOne(@Path("id") vehicleId: String): VehicleResponseDto
+    suspend fun getOne(@Path("id") id: String): VehicleResponseDto
 }
