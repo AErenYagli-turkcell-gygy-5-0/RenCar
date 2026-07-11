@@ -59,7 +59,7 @@ class ReservationConfirmationViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            when (val result = vehicleRepository.getAvailableVehicle(vehicleId)) {
+            when (val result = vehicleRepository.getVehicle(vehicleId)) {
                 is VehicleResult.Success -> setState {
                     copy(
                         vehicleName = "${result.data.brand} ${result.data.model}".trim(),

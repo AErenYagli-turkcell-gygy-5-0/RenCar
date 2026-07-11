@@ -99,7 +99,7 @@ class ReservationConfirmationViewModelTest {
         override suspend fun listAvailableVehicles(type: VehicleType?): VehicleResult<List<Vehicle>> =
             VehicleResult.Success(listOf(vehicle))
 
-        override suspend fun getAvailableVehicle(vehicleId: String): VehicleResult<Vehicle> =
+        override suspend fun getVehicle(vehicleId: String): VehicleResult<Vehicle> =
             VehicleResult.Success(vehicle)
     }
 
