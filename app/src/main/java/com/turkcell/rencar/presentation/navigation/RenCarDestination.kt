@@ -29,6 +29,13 @@ sealed class RenCarDestination(val route: String) {
         }
     }
 
+    data object ReservationConfirmation : RenCarDestination(
+        "reservation-confirmation/{$ARG_VEHICLE_ID}"
+    ) {
+        fun createRoute(vehicleId: String): String =
+            "reservation-confirmation/${Uri.encode(vehicleId)}"
+    }
+
     companion object {
         const val ARG_PHONE_NUMBER = "phoneNumber"
         const val ARG_VEHICLE_ID = "vehicleId"

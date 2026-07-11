@@ -31,6 +31,16 @@ class CarDetailViewModel @Inject constructor(
 
             CarDetailIntent.RetryClicked -> loadVehicle()
             CarDetailIntent.BackClicked -> sendEffect { CarDetailEffect.NavigateBack }
+            CarDetailIntent.ReserveClicked -> navigateToReservationConfirmation()
+        }
+    }
+
+    private fun navigateToReservationConfirmation() {
+        val currentState = state.value
+        if (!currentState.hasLoaded || currentState.errorMessage != null || currentState.vehicleId.isBlank()) return
+
+        sendEffect {
+            CarDetailEffect.NavigateToReservationConfirmation(currentState.vehicleId)
         }
     }
 

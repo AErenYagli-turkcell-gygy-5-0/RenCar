@@ -14,6 +14,7 @@ import com.turkcell.rencar.presentation.screen.auth.register.RegisterRoute
 import com.turkcell.rencar.presentation.screen.cardetail.CarDetailRoute
 import com.turkcell.rencar.presentation.screen.home.HomeRoute
 import com.turkcell.rencar.presentation.screen.profile.ProfileRoute
+import com.turkcell.rencar.presentation.screen.reservation.confirmation.ReservationConfirmationRoute
 import com.turkcell.rencar.presentation.screen.splash.SplashRoute
 
 @Composable
@@ -116,7 +117,33 @@ fun RenCarNavHost(
             )
         ) {
             CarDetailRoute(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToReservationConfirmation = { vehicleId ->
+                    navController.navigate(
+                        RenCarDestination.ReservationConfirmation.createRoute(vehicleId)
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = RenCarDestination.ReservationConfirmation.route,
+            arguments = listOf(
+                navArgument(RenCarDestination.ARG_VEHICLE_ID) { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val vehicleId = backStackEntry.arguments
+                ?.getString(RenCarDestination.ARG_VEHICLE_ID)
+                .orEmpty()
+
+            ReservationConfirmationRoute(
+                vehicleId = vehicleId,
+                onNavigateBack = { navController.popBackStack() },
+                onReservationCreated = {
+                    navController.popBackStack(RenCarDestination.Home.route, inclusive = false)
+                }
             )
         }
 
