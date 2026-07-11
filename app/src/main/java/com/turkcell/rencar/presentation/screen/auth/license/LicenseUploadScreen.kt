@@ -2,6 +2,7 @@ package com.turkcell.rencar.presentation.screen.auth.license
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +44,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -239,14 +242,14 @@ private fun LicenseContent(
         }
         LicenseUploadBox(
             label = stringResource(R.string.license_front_label),
-            isUploaded = state.frontImageUri != null,
+            imageUri = state.frontImageUri,
             placeholderText = stringResource(R.string.license_front_placeholder),
             onClick = { onIntent(LicenseUploadIntent.FrontUploadClicked) }
         )
         Spacer(Modifier.height(16.dp))
         LicenseUploadBox(
             label = stringResource(R.string.license_back_label),
-            isUploaded = state.backImageUri != null,
+            imageUri = state.backImageUri,
             placeholderText = stringResource(R.string.license_back_placeholder),
             onClick = { onIntent(LicenseUploadIntent.BackUploadClicked) }
         )
@@ -479,10 +482,26 @@ private fun LicenseStep(number: String, label: String, isActive: Boolean) {
 @Composable
 private fun LicenseUploadBox(
     label: String,
-    isUploaded: Boolean,
+    imageUri: Uri?,
     placeholderText: String,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val preview = remember(context, imageUri) {
+        imageUri?.let { uri ->
+            runCatching {
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    BitmapFactory.decodeStream(input)?.asImageBitmap()
+                }
+            }.getOrNull()
+        }
+    }
+    val previewAspectRatio = remember(preview) {
+        preview?.takeIf { it.width > 0 && it.height > 0 }?.let {
+            it.width.toFloat() / it.height.toFloat()
+        }
+    }
+
     Column {
         Text(
             text = label,
@@ -492,24 +511,40 @@ private fun LicenseUploadBox(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(118.dp)
+                .then(
+                    if (previewAspectRatio != null) {
+                        Modifier.aspectRatio(previewAspectRatio)
+                    } else {
+                        Modifier.height(118.dp)
+                    }
+                )
                 .clip(RoundedCornerShape(18.dp))
                 .background(MaterialTheme.colorScheme.surface)
                 .then(
-                    if (isUploaded) Modifier
+                    if (imageUri != null) Modifier
                     else Modifier.dashedBorder(MaterialTheme.colorScheme.outline)
                 )
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            if (isUploaded) {
-                Text(
-                    text = stringResource(R.string.license_uploaded),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.extendedColors.successAccent
-                )
-            } else {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            when {
+                preview != null -> {
+                    Image(
+                        bitmap = preview,
+                        contentDescription = label,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                    UploadedBadge(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                    )
+                }
+
+                imageUri != null -> UploadedBadge()
+
+                else -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         painter = painterResource(R.drawable.ic_camera),
                         contentDescription = null,
@@ -525,6 +560,22 @@ private fun LicenseUploadBox(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun UploadedBadge(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.license_uploaded),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.extendedColors.successAccent
+        )
     }
 }
 

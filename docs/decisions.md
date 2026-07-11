@@ -518,6 +518,11 @@ kullanıcı/ViewModel araya girmeden taşınmış olur.
   içinde kurulur; `LicenseUploadScreen`'in `(state, onIntent)` imzası değişmemiştir — Route,
   kendisine iletilen `onIntent`'i sarmalayarak `FrontUploadClicked`/`BackUploadClicked`
   intent'lerini picker açılışına çevirir, diğer tüm intent'leri doğrudan ViewModel'e iletir.
+- Ehliyet yükleme kutuları seçilen `frontImageUri`/`backImageUri` değerlerini UI katmanında
+  `ContentResolver` ile yerel bitmap önizlemesine çevirir ve görseli kırpmadan tam görünür
+  şekilde gösterir. Görsel yüklüyken kutu sabit yükseklik yerine bitmap en-boy oranını kullanır;
+  bu yüzden fotoğraf dar bir alana sıkıştırılmaz. Bu yalnızca görsel geri bildirimdir;
+  `LicenseUploadState`, ViewModel akışı ve `/license/upload` API sözleşmesi değişmez.
 
 **Hata politikası:**
 - Otp doğrulama: `401` → `AuthError.InvalidOtp` (yeni), diğerleri mevcut Login hata politikasıyla
