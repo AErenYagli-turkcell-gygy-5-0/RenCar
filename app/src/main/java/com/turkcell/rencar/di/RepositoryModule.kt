@@ -4,11 +4,13 @@ import com.turkcell.rencar.data.repository.auth.ApiAuthRepository
 import com.turkcell.rencar.data.repository.license.ApiLicenseRepository
 import com.turkcell.rencar.data.repository.profile.FileProfilePhotoRepository
 import com.turkcell.rencar.data.repository.rental.ApiRentalRepository
+import com.turkcell.rencar.data.repository.reservation.ApiReservationRepository
 import com.turkcell.rencar.data.repository.vehicle.ApiVehicleRepository
 import com.turkcell.rencar.domain.auth.AuthRepository
 import com.turkcell.rencar.domain.license.LicenseRepository
 import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.domain.rental.RentalRepository
+import com.turkcell.rencar.domain.reservation.ReservationRepository
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import dagger.Binds
 import dagger.Module
@@ -41,4 +43,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRentalRepository(implementation: ApiRentalRepository): RentalRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReservationRepository(
+        implementation: ApiReservationRepository
+    ): ReservationRepository
 }

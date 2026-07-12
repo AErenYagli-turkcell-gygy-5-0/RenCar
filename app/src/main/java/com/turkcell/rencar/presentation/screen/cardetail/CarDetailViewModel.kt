@@ -2,6 +2,9 @@ package com.turkcell.rencar.presentation.screen.cardetail
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.turkcell.rencar.domain.rental.RentalRepository
+import com.turkcell.rencar.domain.rental.RentalResult
+import com.turkcell.rencar.domain.rental.RentalStatus
 import com.turkcell.rencar.domain.vehicle.VehicleError
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import com.turkcell.rencar.domain.vehicle.VehicleResult
@@ -14,6 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CarDetailViewModel @Inject constructor(
     private val vehicleRepository: VehicleRepository,
+    private val rentalRepository: RentalRepository,
     savedStateHandle: SavedStateHandle
 ) : MviViewModel<CarDetailState, CarDetailIntent, CarDetailEffect>(
     CarDetailState(
@@ -27,6 +31,7 @@ class CarDetailViewModel @Inject constructor(
         when (intent) {
             CarDetailIntent.ScreenStarted -> {
                 if (!state.value.hasLoaded) loadVehicle()
+                loadCanUnlock()
             }
 
             CarDetailIntent.RetryClicked -> loadVehicle()
@@ -57,7 +62,16 @@ class CarDetailViewModel @Inject constructor(
                         brand = result.data.brand,
                         model = result.data.model,
                         plate = result.data.plate,
+                        type = result.data.type,
                         pricePerDay = result.data.pricePerDay,
+                        pricePerMinute = result.data.pricePerMinute,
+                        pricePerHour = result.data.pricePerHour,
+                        fuelPercent = result.data.fuelPercent,
+                        rangeKm = result.data.rangeKm,
+                        transmission = result.data.transmission,
+                        seats = result.data.seats,
+                        segment = result.data.segment,
+                        status = result.data.status,
                         vehicleLatitude = result.data.latitude,
                         vehicleLongitude = result.data.longitude
                     )
@@ -74,6 +88,24 @@ class CarDetailViewModel @Inject constructor(
         }
     }
 
+    // "Kilidi Aç" yalnızca bu araçta PREPARING/ACTIVE bir kiralamamız varsa aktif olmalı;
+    // hata durumunda sessizce pasif kalır (buton zaten bugün onClick={} — yalnızca kapatılıyor).
+    private fun loadCanUnlock() {
+        viewModelScope.launch {
+            when (val result = rentalRepository.getMyRentals()) {
+                is RentalResult.Success -> setState {
+                    copy(
+                        canUnlock = result.data.any {
+                            it.vehicleId == vehicleId && it.status in UNLOCKABLE_RENTAL_STATUSES
+                        }
+                    )
+                }
+
+                is RentalResult.Failure -> setState { copy(canUnlock = false) }
+            }
+        }
+    }
+
     private fun VehicleError.toMessage(): String = when (this) {
         VehicleError.Unauthorized, VehicleError.Forbidden -> UNAUTHORIZED_MESSAGE
         VehicleError.NotFound -> NOT_FOUND_MESSAGE
@@ -86,5 +118,6 @@ class CarDetailViewModel @Inject constructor(
         const val NOT_FOUND_MESSAGE = "Bu arac artik musait degil."
         const val NETWORK_ERROR_MESSAGE = "Internet baglantinizi kontrol edip tekrar deneyin."
         const val UNEXPECTED_ERROR_MESSAGE = "Arac bilgileri yuklenemedi. Lutfen tekrar deneyin."
+        val UNLOCKABLE_RENTAL_STATUSES = setOf(RentalStatus.PREPARING, RentalStatus.ACTIVE)
     }
 }

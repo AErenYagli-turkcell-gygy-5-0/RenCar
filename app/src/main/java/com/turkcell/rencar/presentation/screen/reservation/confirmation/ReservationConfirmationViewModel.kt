@@ -4,6 +4,9 @@ import androidx.lifecycle.viewModelScope
 import com.turkcell.rencar.domain.rental.RentalError
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
+import com.turkcell.rencar.domain.reservation.ReservationError
+import com.turkcell.rencar.domain.reservation.ReservationRepository
+import com.turkcell.rencar.domain.reservation.ReservationResult
 import com.turkcell.rencar.domain.vehicle.VehicleError
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import com.turkcell.rencar.domain.vehicle.VehicleResult
@@ -19,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ReservationConfirmationViewModel @Inject constructor(
     private val vehicleRepository: VehicleRepository,
-    private val rentalRepository: RentalRepository
+    private val rentalRepository: RentalRepository,
+    private val reservationRepository: ReservationRepository
 ) : MviViewModel<ReservationConfirmationState, ReservationConfirmationIntent, ReservationConfirmationEffect>(
     ReservationConfirmationState()
 ) {
@@ -89,23 +93,38 @@ class ReservationConfirmationViewModel @Inject constructor(
 
         setState { copy(isSubmitting = true, error = null) }
         viewModelScope.launch {
-            when (
-                val result = rentalRepository.createRental(
-                    vehicleId = currentState.vehicleId,
-                    endDate = oneDayFromNowIsoUtc()
-                )
-            ) {
-                is RentalResult.Success -> {
-                    setState { copy(isSubmitting = false) }
-                    sendEffect { ReservationConfirmationEffect.ReservationCreated(result.data.id) }
-                }
+            // Kiralama YALNIZ aktif bir rezervasyon üzerine açılır (409 aksi halde); bu yüzden
+            // POST /rentals'tan önce mutlaka POST /reservations ile 15 dk'lık tutma alınır.
+            when (val reservationResult = reservationRepository.createReservation(currentState.vehicleId)) {
+                is ReservationResult.Success -> completeRental(currentState.vehicleId)
 
-                is RentalResult.Failure -> setState {
+                is ReservationResult.Failure -> setState {
                     copy(
                         isSubmitting = false,
-                        error = result.error.toPresentationError()
+                        error = reservationResult.error.toPresentationError()
                     )
                 }
+            }
+        }
+    }
+
+    private suspend fun completeRental(vehicleId: String) {
+        when (
+            val result = rentalRepository.createRental(
+                vehicleId = vehicleId,
+                endDate = oneDayFromNowIsoUtc()
+            )
+        ) {
+            is RentalResult.Success -> {
+                setState { copy(isSubmitting = false) }
+                sendEffect { ReservationConfirmationEffect.ReservationCreated(result.data.id) }
+            }
+
+            is RentalResult.Failure -> setState {
+                copy(
+                    isSubmitting = false,
+                    error = result.error.toPresentationError()
+                )
             }
         }
     }
@@ -126,6 +145,16 @@ class ReservationConfirmationViewModel @Inject constructor(
         RentalError.Conflict -> ReservationConfirmationError.RESERVATION_CONFLICT
         RentalError.Network -> ReservationConfirmationError.NETWORK
         RentalError.Unexpected -> ReservationConfirmationError.UNEXPECTED
+    }
+
+    private fun ReservationError.toPresentationError(): ReservationConfirmationError = when (this) {
+        ReservationError.InvalidRequest -> ReservationConfirmationError.INVALID_REQUEST
+        ReservationError.Unauthorized -> ReservationConfirmationError.UNAUTHORIZED
+        ReservationError.Forbidden -> ReservationConfirmationError.FORBIDDEN
+        ReservationError.NotFound -> ReservationConfirmationError.VEHICLE_NOT_FOUND
+        ReservationError.Conflict -> ReservationConfirmationError.RESERVATION_CONFLICT
+        ReservationError.Network -> ReservationConfirmationError.NETWORK
+        ReservationError.Unexpected -> ReservationConfirmationError.UNEXPECTED
     }
 
     private fun com.turkcell.rencar.domain.vehicle.VehicleType.toDisplayName(): String =
