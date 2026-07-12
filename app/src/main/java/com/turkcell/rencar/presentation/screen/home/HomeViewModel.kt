@@ -44,8 +44,23 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.CategorySelected ->
                 setState { copy(selectedCategory = intent.category) }
 
-            // Gerçek arama/filtreleme mantığı backend entegrasyonu ile birlikte eklenecektir.
-            HomeIntent.FindNearestClicked -> Unit
+            // Konum izni verilmeden (veya henüz konum alınmadan) en yakın araç aranmaz; buton sessizce hiçbir şey yapmaz.
+            HomeIntent.FindNearestClicked -> {
+                val locationGranted = state.value.permissionDenied == false
+                val myLocation = state.value.myLocation
+                if (locationGranted && myLocation != null) {
+                    val visibleVehicles = state.value.vehicles.filter { vehicle ->
+                        state.value.selectedCategory == null || vehicle.category == state.value.selectedCategory
+                    }
+                    val nearestVehicle = visibleVehicles.minByOrNull { vehicle ->
+                        haversineMeters(myLocation.latitude, myLocation.longitude, vehicle.latitude, vehicle.longitude)
+                    }
+                    // CarDetailScreen açılışta kendi haritasını bu aracın konumuna zoom'lar (bkz. docs/decisions.md, 2026-07-10).
+                    nearestVehicle?.let { vehicle ->
+                        sendEffect { HomeEffect.NavigateToCarDetail(vehicle.id, myLocation) }
+                    }
+                }
+            }
 
             is HomeIntent.NavItemSelected -> {
                 // Konum izni verilmeden harita dışındaki ekranlara geçiş engellenir (bkz. docs/decisions.md).
@@ -113,4 +128,17 @@ class HomeViewModel @Inject constructor(
         const val NETWORK_ERROR_MESSAGE = "Internet baglantinizi kontrol edip tekrar deneyin."
         const val UNEXPECTED_ERROR_MESSAGE = "Araclar yuklenemedi. Lutfen tekrar deneyin."
     }
+}
+
+// CarDetailScreen.kt'deki private haversineMeters ile ayni formul; ekranlar birbirinden bagimsiz
+// oldugundan (bkz. docs/decisions.md) burada da ayni sekilde ozel/private tutulmustur.
+private fun haversineMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val earthRadiusMeters = 6_371_000.0
+    val dLat = Math.toRadians(lat2 - lat1)
+    val dLon = Math.toRadians(lon2 - lon1)
+    val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+        kotlin.math.cos(Math.toRadians(lat1)) * kotlin.math.cos(Math.toRadians(lat2)) *
+        kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
+    val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+    return earthRadiusMeters * c
 }
