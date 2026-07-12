@@ -266,7 +266,7 @@ fun HomeScreen(
                 onVehicleClick = { vehicleId -> onIntent(HomeIntent.VehicleMarkerClicked(vehicleId)) }
             )
 
-            if (state.isVehiclesLoading && !state.hasLoadedVehicles) {
+            if (state.isVehiclesLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = MaterialTheme.colorScheme.primary
