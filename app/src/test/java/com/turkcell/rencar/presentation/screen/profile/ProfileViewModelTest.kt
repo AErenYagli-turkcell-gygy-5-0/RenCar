@@ -13,11 +13,13 @@ import com.turkcell.rencar.domain.license.LicenseResult
 import com.turkcell.rencar.domain.license.LicenseReviewStatus
 import com.turkcell.rencar.domain.license.LicenseStatus
 import com.turkcell.rencar.domain.license.UploadedLicense
+import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.test.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
@@ -33,7 +35,8 @@ class ProfileViewModelTest {
     fun `screen started loads user and approved license status`() = runTest {
         val viewModel = ProfileViewModel(
             authRepository = FakeAuthRepository(),
-            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED)
+            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED),
+            profilePhotoRepository = FakeProfilePhotoRepository()
         )
 
         viewModel.onIntent(ProfileIntent.ScreenStarted)
@@ -49,7 +52,8 @@ class ProfileViewModelTest {
     fun `license status failure keeps user visible and exposes error`() = runTest {
         val viewModel = ProfileViewModel(
             authRepository = FakeAuthRepository(),
-            licenseRepository = FakeLicenseRepository(error = LicenseError.Network)
+            licenseRepository = FakeLicenseRepository(error = LicenseError.Network),
+            profilePhotoRepository = FakeProfilePhotoRepository()
         )
 
         viewModel.onIntent(ProfileIntent.ScreenStarted)
@@ -67,7 +71,8 @@ class ProfileViewModelTest {
     fun `unauthorized user load navigates to login`() = runTest {
         val viewModel = ProfileViewModel(
             authRepository = FakeAuthRepository(userResult = AuthResult.Failure(AuthError.Unauthorized)),
-            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED)
+            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED),
+            profilePhotoRepository = FakeProfilePhotoRepository()
         )
 
         viewModel.onIntent(ProfileIntent.ScreenStarted)
@@ -81,7 +86,8 @@ class ProfileViewModelTest {
         val authRepository = FakeAuthRepository()
         val viewModel = ProfileViewModel(
             authRepository = authRepository,
-            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED)
+            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED),
+            profilePhotoRepository = FakeProfilePhotoRepository()
         )
 
         viewModel.onIntent(ProfileIntent.LogoutClicked)
@@ -102,7 +108,8 @@ class ProfileViewModelTest {
         val authRepository = FakeAuthRepository()
         val viewModel = ProfileViewModel(
             authRepository = authRepository,
-            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED)
+            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED),
+            profilePhotoRepository = FakeProfilePhotoRepository()
         )
 
         viewModel.onIntent(ProfileIntent.LogoutClicked)
@@ -111,6 +118,21 @@ class ProfileViewModelTest {
 
         assertEquals(0, authRepository.logoutCount)
         assertEquals(false, viewModel.state.value.showLogoutConfirmation)
+    }
+
+    @Test
+    fun `screen started loads cached profile photo for current user`() = runTest {
+        val cachedPhoto = byteArrayOf(7, 8, 9)
+        val viewModel = ProfileViewModel(
+            authRepository = FakeAuthRepository(),
+            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED),
+            profilePhotoRepository = FakeProfilePhotoRepository(cachedPhoto)
+        )
+
+        viewModel.onIntent(ProfileIntent.ScreenStarted)
+        advanceUntilIdle()
+
+        assertArrayEquals(cachedPhoto, viewModel.state.value.profilePhoto)
     }
 
     private class FakeAuthRepository(
@@ -171,5 +193,13 @@ class ProfileViewModelTest {
                 )
             )
         }
+    }
+
+    private class FakeProfilePhotoRepository(
+        private val cachedPhoto: ByteArray? = null
+    ) : ProfilePhotoRepository {
+        override suspend fun saveProfilePhoto(userId: String, jpegBytes: ByteArray) = Unit
+
+        override suspend fun getProfilePhoto(userId: String): ByteArray? = cachedPhoto
     }
 }

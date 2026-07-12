@@ -13,11 +13,13 @@ import com.turkcell.rencar.domain.license.LicenseResult
 import com.turkcell.rencar.domain.license.LicenseReviewStatus
 import com.turkcell.rencar.domain.license.LicenseStatus
 import com.turkcell.rencar.domain.license.UploadedLicense
+import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.test.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +33,11 @@ class LicenseUploadViewModelTest {
     @Test
     fun `under review user opens approval step`() = runTest {
         val licenseRepository = FakeLicenseRepository(LicenseReviewStatus.UNDER_REVIEW)
-        val viewModel = LicenseUploadViewModel(licenseRepository, FakeAuthRepository())
+        val viewModel = LicenseUploadViewModel(
+            licenseRepository,
+            FakeAuthRepository(),
+            FakeProfilePhotoRepository()
+        )
 
         advanceUntilIdle()
 
@@ -42,7 +48,11 @@ class LicenseUploadViewModelTest {
     @Test
     fun `license upload is blocked until required images are selected`() = runTest {
         val licenseRepository = FakeLicenseRepository(LicenseReviewStatus.NOT_SUBMITTED)
-        val viewModel = LicenseUploadViewModel(licenseRepository, FakeAuthRepository())
+        val viewModel = LicenseUploadViewModel(
+            licenseRepository,
+            FakeAuthRepository(),
+            FakeProfilePhotoRepository()
+        )
         advanceUntilIdle()
 
         viewModel.onIntent(LicenseUploadIntent.ContinueClicked)
@@ -58,11 +68,32 @@ class LicenseUploadViewModelTest {
     @Test
     fun `approved status refreshes customer session and navigates home`() = runTest {
         val licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED)
-        val viewModel = LicenseUploadViewModel(licenseRepository, FakeAuthRepository())
+        val viewModel = LicenseUploadViewModel(
+            licenseRepository,
+            FakeAuthRepository(),
+            FakeProfilePhotoRepository()
+        )
 
         advanceUntilIdle()
 
         assertEquals(LicenseUploadEffect.NavigateHome, viewModel.effect.first())
+    }
+
+    @Test
+    fun `selfie is stored as profile photo for current user`() = runTest {
+        val profilePhotoRepository = FakeProfilePhotoRepository()
+        val viewModel = LicenseUploadViewModel(
+            FakeLicenseRepository(LicenseReviewStatus.NOT_SUBMITTED),
+            FakeAuthRepository(),
+            profilePhotoRepository
+        )
+        val selfiePreview = byteArrayOf(1, 2, 3)
+        advanceUntilIdle()
+
+        viewModel.saveSelfieAsProfilePhoto(selfiePreview)
+
+        assertEquals("user-1", profilePhotoRepository.savedUserId)
+        assertArrayEquals(selfiePreview, profilePhotoRepository.savedPhoto)
     }
 
     private class FakeLicenseRepository(
@@ -120,9 +151,31 @@ class LicenseUploadViewModelTest {
             )
 
         override suspend fun getCurrentUser(): AuthResult<RegisteredUser> =
-            AuthResult.Failure(AuthError.Unexpected)
+            AuthResult.Success(
+                RegisteredUser(
+                    id = "user-1",
+                    email = "user@example.com",
+                    phone = "+905320000000",
+                    fullName = "Test User",
+                    role = "PENDING",
+                    createdAt = "2026-07-04T10:00:00.000Z",
+                    updatedAt = "2026-07-04T10:00:00.000Z"
+                )
+            )
 
         override suspend fun logout(): AuthResult<Unit> =
             AuthResult.Failure(AuthError.Unexpected)
+    }
+
+    private class FakeProfilePhotoRepository : ProfilePhotoRepository {
+        var savedUserId: String? = null
+        var savedPhoto: ByteArray? = null
+
+        override suspend fun saveProfilePhoto(userId: String, jpegBytes: ByteArray) {
+            savedUserId = userId
+            savedPhoto = jpegBytes
+        }
+
+        override suspend fun getProfilePhoto(userId: String): ByteArray? = null
     }
 }

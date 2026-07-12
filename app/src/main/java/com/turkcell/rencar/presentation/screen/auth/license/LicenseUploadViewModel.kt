@@ -8,6 +8,7 @@ import com.turkcell.rencar.domain.license.LicenseRepository
 import com.turkcell.rencar.domain.license.LicenseResult
 import com.turkcell.rencar.domain.license.LicenseReviewStatus
 import com.turkcell.rencar.domain.license.LicenseStatus
+import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LicenseUploadViewModel @Inject constructor(
     private val licenseRepository: LicenseRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val profilePhotoRepository: ProfilePhotoRepository
 ) : MviViewModel<LicenseUploadState, LicenseUploadIntent, LicenseUploadEffect>(LicenseUploadState()) {
 
     init {
@@ -78,7 +80,8 @@ class LicenseUploadViewModel @Inject constructor(
 
         val frontImageUri = state.value.frontImageUri ?: return
         val backImageUri = state.value.backImageUri ?: return
-        if (state.value.selfiePreview == null) {
+        val selfiePreview = state.value.selfiePreview
+        if (selfiePreview == null) {
             setState { copy(errorMessage = MISSING_SELFIE_MESSAGE) }
             return
         }
@@ -86,7 +89,8 @@ class LicenseUploadViewModel @Inject constructor(
         setState { copy(isUploading = true, errorMessage = null) }
         viewModelScope.launch {
             when (val result = licenseRepository.uploadLicense(frontImageUri, backImageUri)) {
-                is LicenseResult.Success ->
+                is LicenseResult.Success -> {
+                    saveSelfieAsProfilePhoto(selfiePreview)
                     setState {
                         copy(
                             currentStep = LicenseVerificationStep.APPROVAL,
@@ -97,6 +101,7 @@ class LicenseUploadViewModel @Inject constructor(
                             rejectReason = null
                         )
                     }
+                }
 
                 is LicenseResult.Failure -> {
                     if (result.error == LicenseError.AlreadyReviewedOrCustomer) {
@@ -109,6 +114,13 @@ class LicenseUploadViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    internal suspend fun saveSelfieAsProfilePhoto(selfiePreview: ByteArray) {
+        val user = (authRepository.getCurrentUser() as? AuthResult.Success)?.data ?: return
+        runCatching {
+            profilePhotoRepository.saveProfilePhoto(user.id, selfiePreview)
         }
     }
 
