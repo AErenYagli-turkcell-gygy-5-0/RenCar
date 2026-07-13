@@ -7,6 +7,7 @@ import com.turkcell.rencar.domain.auth.AuthResult
 import com.turkcell.rencar.domain.license.LicenseError
 import com.turkcell.rencar.domain.license.LicenseRepository
 import com.turkcell.rencar.domain.license.LicenseResult
+import com.turkcell.rencar.domain.license.LicenseReviewStatus
 import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,10 @@ class ProfileViewModel @Inject constructor(
             }
 
             ProfileIntent.RetryClicked -> loadProfile()
+            ProfileIntent.LicenseStatusClicked -> showLicensePreview()
+            ProfileIntent.LicensePreviewDismissed ->
+                setState { copy(isLicensePreviewVisible = false) }
+
             ProfileIntent.LogoutClicked ->
                 setState { copy(showLogoutConfirmation = true, errorMessage = null) }
 
@@ -61,7 +66,7 @@ class ProfileViewModel @Inject constructor(
             }
 
             val user = (userResult as? AuthResult.Success)?.data
-            val licenseStatus = (licenseResult as? LicenseResult.Success)?.data?.reviewStatus
+            val license = (licenseResult as? LicenseResult.Success)?.data
 
             if (user == null) {
                 setState {
@@ -83,12 +88,22 @@ class ProfileViewModel @Inject constructor(
                     fullName = user.fullName,
                     phone = user.phone,
                     profilePhoto = profilePhoto,
-                    licenseStatus = licenseStatus,
+                    licenseStatus = license?.reviewStatus,
+                    licenseFrontImageUrl = license?.frontImageUrl,
+                    licenseBackImageUrl = license?.backImageUrl,
                     isLoading = false,
                     hasLoaded = true,
                     errorMessage = (licenseResult as? LicenseResult.Failure)?.error?.toMessage()
                 )
             }
+        }
+    }
+
+    private fun showLicensePreview() {
+        val licenseStatus = state.value.licenseStatus
+        val canShowPreview = licenseStatus != null && licenseStatus != LicenseReviewStatus.NOT_SUBMITTED
+        if (canShowPreview) {
+            setState { copy(isLicensePreviewVisible = true) }
         }
     }
 

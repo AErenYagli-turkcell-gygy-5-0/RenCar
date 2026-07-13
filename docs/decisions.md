@@ -8,6 +8,25 @@
 
 ---
 
+## 2026-07-13 - Profil Ekraninda Backend Ehliyet Gorsellerinin Gosterilmesi
+
+**Karar:** Profil ekranindaki ehliyet durum karti, `GET /license/status` cevabindan gelen
+`frontImageUrl` ve `backImageUrl` alanlarini kullanarak kullanicinin yukledigi ehliyetin on ve arka
+yuz gorsellerini modal icinde gosterir. Gorsel URL'leri yoksa uydurma veya lokal fallback gorsel
+kullanilmaz; modal icinde bos durum bilgilendirmesi gosterilir.
+
+**Kapsam:** Bu karar yalnizca profil ekranindaki goruntuleme davranisini kapsar. `POST
+/license/upload` isteginin mevcut `front` ve `back` multipart gonderimi degistirilmemistir; yeni
+backend sozlesmesindeki `selfie` alani bu is kapsaminda istemci upload akisina eklenmemistir.
+
+**Bagimliliklar:** Yeni bagimlilik eklenmemistir. Backend URL'lerinden gorsel gostermek icin
+mevcut Android `BitmapFactory` ve `java.net.URL` API'leri kullanilir.
+
+**Etkilenen alanlar:**
+- `presentation/screen/profile/`
+
+---
+
 ## 2026-07-11 — İlk Kayıt Selfie'sinin Lokal Profil Fotoğrafı Olarak Kullanılması
 
 **Karar:** `docs/api/openapi.json` içinde `POST /license/upload` yalnızca `front` ve `back`

@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -45,6 +46,8 @@ class ProfileViewModelTest {
         assertEquals("Deniz Yilmaz", viewModel.state.value.fullName)
         assertEquals("+905320000000", viewModel.state.value.phone)
         assertEquals(LicenseReviewStatus.APPROVED, viewModel.state.value.licenseStatus)
+        assertEquals("https://example.com/licenses/front.jpg", viewModel.state.value.licenseFrontImageUrl)
+        assertEquals("https://example.com/licenses/back.jpg", viewModel.state.value.licenseBackImageUrl)
         assertFalse(viewModel.state.value.isLoading)
     }
 
@@ -135,6 +138,25 @@ class ProfileViewModelTest {
         assertArrayEquals(cachedPhoto, viewModel.state.value.profilePhoto)
     }
 
+    @Test
+    fun `license status click opens and dismisses preview for submitted license`() = runTest {
+        val viewModel = ProfileViewModel(
+            authRepository = FakeAuthRepository(),
+            licenseRepository = FakeLicenseRepository(LicenseReviewStatus.APPROVED),
+            profilePhotoRepository = FakeProfilePhotoRepository()
+        )
+
+        viewModel.onIntent(ProfileIntent.ScreenStarted)
+        advanceUntilIdle()
+        viewModel.onIntent(ProfileIntent.LicenseStatusClicked)
+
+        assertTrue(viewModel.state.value.isLicensePreviewVisible)
+
+        viewModel.onIntent(ProfileIntent.LicensePreviewDismissed)
+
+        assertFalse(viewModel.state.value.isLicensePreviewVisible)
+    }
+
     private class FakeAuthRepository(
         var userResult: AuthResult<RegisteredUser> = AuthResult.Success(
             RegisteredUser(
@@ -173,6 +195,8 @@ class ProfileViewModelTest {
 
     private class FakeLicenseRepository(
         private val status: LicenseReviewStatus? = null,
+        private val frontImageUrl: String? = "https://example.com/licenses/front.jpg",
+        private val backImageUrl: String? = "https://example.com/licenses/back.jpg",
         private val error: LicenseError? = null
     ) : LicenseRepository {
         override suspend fun uploadLicense(
@@ -186,8 +210,8 @@ class ProfileViewModelTest {
             return LicenseResult.Success(
                 LicenseStatus(
                     reviewStatus = status ?: LicenseReviewStatus.NOT_SUBMITTED,
-                    frontImageUrl = null,
-                    backImageUrl = null,
+                    frontImageUrl = frontImageUrl,
+                    backImageUrl = backImageUrl,
                     rejectReason = null,
                     reviewedAt = null
                 )

@@ -136,6 +136,12 @@
     <string name="profile_license_pending_badge">Beklemede</string>
     <string name="profile_license_rejected_badge">Reddedildi</string>
     <string name="profile_license_missing_badge">Eksik</string>
+    <string name="profile_license_preview_title">Ehliyet fotoğrafları</string>
+    <string name="profile_license_front_image">Ön yüz</string>
+    <string name="profile_license_back_image">Arka yüz</string>
+    <string name="profile_license_preview_empty">Ehliyet fotoğrafı bulunamadı. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="profile_license_preview_load_error">Fotoğraf yüklenemedi.</string>
+    <string name="profile_license_preview_close">Kapat</string>
     <string name="profile_payment_methods">Ödeme yöntemleri</string>
     <string name="profile_settings">Ayarlar</string>
     <string name="profile_help_support">Yardım &amp; destek</string>

@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -57,6 +61,9 @@ import com.turkcell.rencar.presentation.component.navigation.BottomNavBar
 import com.turkcell.rencar.presentation.component.navigation.BottomNavItem
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 import com.turkcell.rencar.presentation.theme.extendedColors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.URL
 
 @Composable
 fun ProfileRoute(
@@ -114,7 +121,10 @@ fun ProfileScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
             } else {
-                LicenseStatusCard(status = state.licenseStatus)
+                LicenseStatusCard(
+                    status = state.licenseStatus,
+                    onClick = { onIntent(ProfileIntent.LicenseStatusClicked) }
+                )
                 Spacer(modifier = Modifier.height(14.dp))
                 ProfileMenuCard()
                 Spacer(modifier = Modifier.height(14.dp))
@@ -154,6 +164,14 @@ fun ProfileScreen(
         LogoutConfirmationDialog(
             onConfirm = { onIntent(ProfileIntent.LogoutConfirmed) },
             onDismiss = { onIntent(ProfileIntent.LogoutConfirmationDismissed) }
+        )
+    }
+
+    if (state.isLicensePreviewVisible) {
+        LicensePreviewDialog(
+            frontImageUrl = state.licenseFrontImageUrl,
+            backImageUrl = state.licenseBackImageUrl,
+            onDismiss = { onIntent(ProfileIntent.LicensePreviewDismissed) }
         )
     }
 }
@@ -239,8 +257,12 @@ private fun ProfilePhoto(
 }
 
 @Composable
-private fun LicenseStatusCard(status: LicenseReviewStatus?) {
+private fun LicenseStatusCard(
+    status: LicenseReviewStatus?,
+    onClick: () -> Unit
+) {
     val colors = MaterialTheme.extendedColors
+    val canOpenPreview = status != null && status != LicenseReviewStatus.NOT_SUBMITTED
     val title = when (status) {
         LicenseReviewStatus.APPROVED -> stringResource(R.string.profile_license_verified)
         LicenseReviewStatus.UNDER_REVIEW -> stringResource(R.string.profile_license_under_review)
@@ -273,6 +295,7 @@ private fun LicenseStatusCard(status: LicenseReviewStatus?) {
             .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
+            .clickable(enabled = canOpenPreview) { onClick() }
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -313,6 +336,138 @@ private fun LicenseStatusCard(status: LicenseReviewStatus?) {
         )
     }
 }
+
+@Composable
+private fun LicensePreviewDialog(
+    frontImageUrl: String?,
+    backImageUrl: String?,
+    onDismiss: () -> Unit
+) {
+    val hasImage = !frontImageUrl.isNullOrBlank() || !backImageUrl.isNullOrBlank()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.profile_license_preview_title),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                if (hasImage) {
+                    frontImageUrl?.takeIf(String::isNotBlank)?.let { url ->
+                        LicensePreviewImage(
+                            label = stringResource(R.string.profile_license_front_image),
+                            imageUrl = url
+                        )
+                    }
+                    if (!frontImageUrl.isNullOrBlank() && !backImageUrl.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
+                    backImageUrl?.takeIf(String::isNotBlank)?.let { url ->
+                        LicensePreviewImage(
+                            label = stringResource(R.string.profile_license_back_image),
+                            imageUrl = url
+                        )
+                    }
+                } else {
+                    Text(
+                        text = stringResource(R.string.profile_license_preview_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.profile_license_preview_close))
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface
+    )
+}
+
+@Composable
+private fun LicensePreviewImage(
+    label: String,
+    imageUrl: String
+) {
+    val imageState by produceState<RemoteImageState>(
+        initialValue = RemoteImageState.Loading,
+        key1 = imageUrl
+    ) {
+        value = loadRemoteImage(imageUrl)
+    }
+
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+        color = MaterialTheme.colorScheme.onSurface
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(190.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
+            .padding(8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        when (val currentState = imageState) {
+            RemoteImageState.Loading ->
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp
+                )
+
+            is RemoteImageState.Success ->
+                Image(
+                    bitmap = currentState.image,
+                    contentDescription = label,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+
+            RemoteImageState.Error ->
+                Text(
+                    text = stringResource(R.string.profile_license_preview_load_error),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+        }
+    }
+}
+
+private sealed interface RemoteImageState {
+    data object Loading : RemoteImageState
+    data class Success(val image: ImageBitmap) : RemoteImageState
+    data object Error : RemoteImageState
+}
+
+private suspend fun loadRemoteImage(imageUrl: String): RemoteImageState =
+    withContext(Dispatchers.IO) {
+        runCatching {
+            URL(imageUrl).openStream().use { input ->
+                BitmapFactory.decodeStream(input)?.asImageBitmap()
+            }
+        }.fold(
+            onSuccess = { image ->
+                if (image != null) RemoteImageState.Success(image) else RemoteImageState.Error
+            },
+            onFailure = { RemoteImageState.Error }
+        )
+    }
 
 @Composable
 private fun ProfileMenuCard() {
