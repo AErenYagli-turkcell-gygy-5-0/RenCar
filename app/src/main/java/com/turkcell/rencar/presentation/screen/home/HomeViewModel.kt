@@ -1,6 +1,9 @@
 package com.turkcell.rencar.presentation.screen.home
 
 import androidx.lifecycle.viewModelScope
+import com.turkcell.rencar.domain.reservation.ReservationError
+import com.turkcell.rencar.domain.reservation.ReservationRepository
+import com.turkcell.rencar.domain.reservation.ReservationResult
 import com.turkcell.rencar.domain.vehicle.Vehicle
 import com.turkcell.rencar.domain.vehicle.VehicleError
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
@@ -14,18 +17,35 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val reservationRepository: ReservationRepository
 ) : MviViewModel<HomeState, HomeIntent, HomeEffect>(HomeState()) {
 
     override fun onIntent(intent: HomeIntent) {
         when (intent) {
             HomeIntent.ScreenStarted -> {
-                if (!state.value.hasLoadedVehicles) loadVehicles()
+                if (!state.value.hasCheckedActiveReservation) {
+                    checkActiveReservation()
+                } else if (!state.value.hasLoadedVehicles && state.value.activeReservationErrorMessage == null) {
+                    loadVehicles()
+                }
             }
 
-            HomeIntent.RetryVehiclesClicked -> loadVehicles()
+            HomeIntent.RetryVehiclesClicked -> {
+                if (state.value.activeReservationErrorMessage != null) {
+                    checkActiveReservation()
+                } else {
+                    loadVehicles()
+                }
+            }
 
-            HomeIntent.RefreshMapClicked -> loadVehicles()
+            HomeIntent.RefreshMapClicked -> {
+                if (state.value.activeReservationErrorMessage != null) {
+                    checkActiveReservation()
+                } else {
+                    loadVehicles()
+                }
+            }
 
             is HomeIntent.LocationPermissionResult ->
                 setState {
@@ -109,6 +129,56 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun checkActiveReservation() {
+        if (state.value.isCheckingActiveReservation) return
+
+        setState {
+            copy(
+                isCheckingActiveReservation = true,
+                activeReservationErrorMessage = null,
+                vehiclesErrorMessage = null
+            )
+        }
+        viewModelScope.launch {
+            when (val result = reservationRepository.getActiveReservation()) {
+                is ReservationResult.Success -> {
+                    setState {
+                        copy(
+                            isCheckingActiveReservation = false,
+                            hasCheckedActiveReservation = true
+                        )
+                    }
+                    sendEffect {
+                        HomeEffect.NavigateToActiveReservationCarDetail(result.data.vehicleId)
+                    }
+                }
+
+                is ReservationResult.Failure -> {
+                    if (result.error == ReservationError.NotFound) {
+                        setState {
+                            copy(
+                                isCheckingActiveReservation = false,
+                                hasCheckedActiveReservation = true,
+                                activeReservationErrorMessage = null
+                            )
+                        }
+                        loadVehicles()
+                    } else {
+                        setState {
+                            copy(
+                                isCheckingActiveReservation = false,
+                                hasCheckedActiveReservation = true,
+                                hasLoadedVehicles = true,
+                                isVehiclesLoading = false,
+                                activeReservationErrorMessage = result.error.toMessage()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun Vehicle.toMarker() = VehicleMarker(
         id = id,
         latitude = latitude,
@@ -123,10 +193,21 @@ class HomeViewModel @Inject constructor(
         VehicleError.NotFound, VehicleError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
     }
 
+    private fun ReservationError.toMessage(): String = when (this) {
+        ReservationError.Unauthorized, ReservationError.Forbidden -> UNAUTHORIZED_MESSAGE
+        ReservationError.Network -> NETWORK_ERROR_MESSAGE
+        ReservationError.InvalidRequest,
+        ReservationError.Conflict,
+        ReservationError.NotFound,
+        ReservationError.Unexpected -> ACTIVE_RESERVATION_ERROR_MESSAGE
+    }
+
     private companion object {
         const val UNAUTHORIZED_MESSAGE = "Oturumunuz sona ermis. Lutfen tekrar giris yapin."
         const val NETWORK_ERROR_MESSAGE = "Internet baglantinizi kontrol edip tekrar deneyin."
         const val UNEXPECTED_ERROR_MESSAGE = "Araclar yuklenemedi. Lutfen tekrar deneyin."
+        const val ACTIVE_RESERVATION_ERROR_MESSAGE =
+            "Aktif rezervasyon durumu kontrol edilemedi. Lutfen tekrar deneyin."
     }
 }
 

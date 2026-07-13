@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -61,7 +61,8 @@ fun HomeRoute(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToProfile: () -> Unit,
-    onNavigateToCarDetail: (String, Double?, Double?) -> Unit
+    onNavigateToCarDetail: (String, Double?, Double?) -> Unit,
+    onNavigateToActiveReservationCarDetail: (String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -114,6 +115,8 @@ fun HomeRoute(
                     effect.myLocation?.latitude,
                     effect.myLocation?.longitude
                 )
+                is HomeEffect.NavigateToActiveReservationCarDetail ->
+                    onNavigateToActiveReservationCarDetail(effect.vehicleId)
             }
         }
     }
@@ -266,7 +269,7 @@ fun HomeScreen(
                 onVehicleClick = { vehicleId -> onIntent(HomeIntent.VehicleMarkerClicked(vehicleId)) }
             )
 
-            if (state.isVehiclesLoading) {
+            if (state.isVehiclesLoading || state.isCheckingActiveReservation) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = MaterialTheme.colorScheme.primary
@@ -275,7 +278,7 @@ fun HomeScreen(
 
             HomeRefreshMapFab(
                 onClick = { onIntent(HomeIntent.RefreshMapClicked) },
-                isRefreshing = state.isVehiclesLoading,
+                isRefreshing = state.isVehiclesLoading || state.isCheckingActiveReservation,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 84.dp)
@@ -313,7 +316,7 @@ fun HomeScreen(
                 onFindNearestClicked = { onIntent(HomeIntent.FindNearestClicked) }
             )
 
-            state.vehiclesErrorMessage?.let { message ->
+            (state.activeReservationErrorMessage ?: state.vehiclesErrorMessage)?.let { message ->
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Text(
                         text = message,
