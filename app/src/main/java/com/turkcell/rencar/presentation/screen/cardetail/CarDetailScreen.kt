@@ -10,11 +10,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +51,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.component.map.DEFAULT_CENTER
 import com.turkcell.rencar.presentation.component.map.LatLng
+import com.turkcell.rencar.domain.vehicle.Transmission
+import com.turkcell.rencar.domain.vehicle.VehicleSegment
+import com.turkcell.rencar.domain.vehicle.VehicleStatus
+import com.turkcell.rencar.domain.vehicle.VehicleType
 import com.turkcell.rencar.presentation.component.map.RencarMap
 import com.turkcell.rencar.presentation.component.map.RencarMapController
 import com.turkcell.rencar.presentation.theme.extendedColors
@@ -167,6 +174,8 @@ private fun CarDetailSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = SHEET_PEEK_HEIGHT)
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 22.dp, vertical = 4.dp)
     ) {
         when {
@@ -231,6 +240,8 @@ private fun CarDetailContent(
         }
     }
 
+    val statusPresentation = state.status.toPresentation()
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = "${state.brand} ${state.model}".trim(),
@@ -241,12 +252,12 @@ private fun CarDetailContent(
             modifier = Modifier
                 .padding(start = 8.dp)
                 .clip(RoundedCornerShape(7.dp))
-                .background(MaterialTheme.extendedColors.successContainer)
+                .background(statusPresentation.containerColor)
                 .padding(horizontal = 8.dp, vertical = 3.dp)
         ) {
             Text(
-                text = stringResource(R.string.car_detail_status_available),
-                color = MaterialTheme.extendedColors.success,
+                text = stringResource(statusPresentation.labelRes),
+                color = statusPresentation.contentColor,
                 style = MaterialTheme.typography.labelSmall
             )
         }
@@ -268,9 +279,6 @@ private fun CarDetailContent(
         color = MaterialTheme.colorScheme.outline
     )
 
-    val perMinute = state.pricePerDay / MINUTES_PER_DAY
-    val perHour = state.pricePerDay / HOURS_PER_DAY
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -280,7 +288,7 @@ private fun CarDetailContent(
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = formatCurrency(perMinute),
+                text = formatCurrency(state.pricePerMinute),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -290,17 +298,60 @@ private fun CarDetailContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Text(
-            text = stringResource(R.string.car_detail_price_per_hour, formatCurrency(perHour)),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = stringResource(R.string.car_detail_price_per_hour, formatCurrency(state.pricePerHour)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = stringResource(R.string.car_detail_price_per_day, formatCurrency(state.pricePerDay)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+
+    Text(
+        text = stringResource(R.string.car_detail_specs_title),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(top = 18.dp, bottom = 10.dp)
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SpecChip(text = stringResource(state.type.labelRes()), modifier = Modifier.weight(1f))
+        SpecChip(text = stringResource(state.segment.labelRes()), modifier = Modifier.weight(1f))
+        SpecChip(text = stringResource(state.transmission.labelRes()), modifier = Modifier.weight(1f))
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SpecChip(
+            text = stringResource(R.string.car_detail_spec_seats, state.seats),
+            modifier = Modifier.weight(1f)
+        )
+        SpecChip(
+            text = stringResource(R.string.car_detail_spec_fuel, state.fuelPercent.roundToInt()),
+            modifier = Modifier.weight(1f)
+        )
+        SpecChip(
+            text = stringResource(R.string.car_detail_spec_range, state.rangeKm.roundToInt()),
+            modifier = Modifier.weight(1f)
         )
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 14.dp, bottom = 12.dp),
+            .padding(top = 18.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         OutlinedButton(
@@ -315,6 +366,7 @@ private fun CarDetailContent(
         }
         Button(
             onClick = {},
+            enabled = state.canUnlock,
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
@@ -327,6 +379,75 @@ private fun CarDetailContent(
             )
         }
     }
+}
+
+@Composable
+private fun SpecChip(text: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+private data class StatusPresentation(
+    val labelRes: Int,
+    val contentColor: Color,
+    val containerColor: Color
+)
+
+@Composable
+private fun VehicleStatus.toPresentation(): StatusPresentation = when (this) {
+    VehicleStatus.AVAILABLE -> StatusPresentation(
+        labelRes = R.string.car_detail_status_available,
+        contentColor = MaterialTheme.extendedColors.success,
+        containerColor = MaterialTheme.extendedColors.successContainer
+    )
+
+    VehicleStatus.RESERVED -> StatusPresentation(
+        labelRes = R.string.car_detail_status_reserved,
+        contentColor = MaterialTheme.extendedColors.warning,
+        containerColor = MaterialTheme.extendedColors.warning.copy(alpha = STATUS_CONTAINER_ALPHA)
+    )
+
+    VehicleStatus.RENTED -> StatusPresentation(
+        labelRes = R.string.car_detail_status_rented,
+        contentColor = MaterialTheme.extendedColors.warning,
+        containerColor = MaterialTheme.extendedColors.warning.copy(alpha = STATUS_CONTAINER_ALPHA)
+    )
+
+    VehicleStatus.MAINTENANCE -> StatusPresentation(
+        labelRes = R.string.car_detail_status_maintenance,
+        contentColor = MaterialTheme.colorScheme.error,
+        containerColor = MaterialTheme.colorScheme.errorContainer
+    )
+}
+
+private fun VehicleType.labelRes(): Int = when (this) {
+    VehicleType.SEDAN -> R.string.home_filter_sedan
+    VehicleType.SUV -> R.string.home_filter_suv
+    VehicleType.HATCHBACK -> R.string.home_filter_hatchback
+    VehicleType.STATION -> R.string.home_filter_station
+    VehicleType.MINIVAN -> R.string.home_filter_minivan
+}
+
+private fun VehicleSegment.labelRes(): Int = when (this) {
+    VehicleSegment.ECONOMY -> R.string.car_detail_segment_economy
+    VehicleSegment.COMFORT -> R.string.car_detail_segment_comfort
+    VehicleSegment.SUV -> R.string.car_detail_segment_suv
+}
+
+private fun Transmission.labelRes(): Int = when (this) {
+    Transmission.MANUAL -> R.string.car_detail_transmission_manual
+    Transmission.AUTOMATIC -> R.string.car_detail_transmission_automatic
 }
 
 private fun haversineMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -351,6 +472,5 @@ private fun formatCurrency(value: Double): String =
 private val SHEET_PEEK_HEIGHT = 420.dp
 private val TURKISH_LOCALE: Locale = Locale.forLanguageTag("tr-TR")
 private const val MAP_SCRIM_ALPHA = 0.35f
-private const val MINUTES_PER_DAY = 1440.0
-private const val HOURS_PER_DAY = 24.0
+private const val STATUS_CONTAINER_ALPHA = 0.15f
 private const val METERS_IN_KILOMETER = 1000.0

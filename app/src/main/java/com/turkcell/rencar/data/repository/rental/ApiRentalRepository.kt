@@ -3,10 +3,13 @@ package com.turkcell.rencar.data.repository.rental
 import com.turkcell.rencar.data.remote.rental.RentalApiService
 import com.turkcell.rencar.data.remote.rental.dto.CreateRentalRequestDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalResponseDto
+import com.turkcell.rencar.data.remote.rental.dto.RentalSummaryResponseDto
 import com.turkcell.rencar.domain.rental.Rental
 import com.turkcell.rencar.domain.rental.RentalError
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
+import com.turkcell.rencar.domain.rental.RentalStatus
+import com.turkcell.rencar.domain.rental.RentalSummary
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
@@ -19,6 +22,18 @@ class ApiRentalRepository @Inject constructor(
     override suspend fun createRental(vehicleId: String, endDate: String): RentalResult<Rental> = try {
         val request = CreateRentalRequestDto(vehicleId = vehicleId, endDate = endDate)
         RentalResult.Success(apiService.create(request).toDomain())
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: HttpException) {
+        RentalResult.Failure(error.code().toRentalError())
+    } catch (error: IOException) {
+        RentalResult.Failure(RentalError.Network)
+    } catch (error: Exception) {
+        RentalResult.Failure(RentalError.Unexpected)
+    }
+
+    override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> = try {
+        RentalResult.Success(apiService.listMine().mapNotNull { it.toDomainOrNull() })
     } catch (error: CancellationException) {
         throw error
     } catch (error: HttpException) {
@@ -57,3 +72,15 @@ private fun RentalResponseDto.toDomain() = Rental(
     status = status,
     createdAt = createdAt
 )
+
+private fun RentalSummaryResponseDto.toDomainOrNull(): RentalSummary? {
+    val resolvedVehicleId = vehicleId ?: return null
+    return RentalSummary(
+        id = id,
+        vehicleId = resolvedVehicleId,
+        status = status.toRentalStatusOrDefault()
+    )
+}
+
+private fun String?.toRentalStatusOrDefault(): RentalStatus =
+    this?.let { runCatching { RentalStatus.valueOf(it) }.getOrNull() } ?: RentalStatus.COMPLETED

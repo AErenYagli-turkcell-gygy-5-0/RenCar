@@ -7,6 +7,14 @@ data class Vehicle(
     val model: String,
     val type: VehicleType,
     val pricePerDay: Double,
+    val pricePerMinute: Double,
+    val pricePerHour: Double,
+    val fuelPercent: Double,
+    val rangeKm: Double,
+    val transmission: Transmission,
+    val seats: Int,
+    val segment: VehicleSegment,
+    val status: VehicleStatus,
     val latitude: Double,
     val longitude: Double
 )
