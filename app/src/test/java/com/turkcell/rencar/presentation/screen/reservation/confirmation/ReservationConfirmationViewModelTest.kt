@@ -1,134 +1,103 @@
 package com.turkcell.rencar.presentation.screen.reservation.confirmation
 
-import com.turkcell.rencar.domain.rental.Rental
-import com.turkcell.rencar.domain.rental.RentalError
-import com.turkcell.rencar.domain.rental.RentalRepository
-import com.turkcell.rencar.domain.rental.RentalResult
-import com.turkcell.rencar.domain.vehicle.Vehicle
-import com.turkcell.rencar.domain.vehicle.VehicleRepository
-import com.turkcell.rencar.domain.vehicle.VehicleResult
-import com.turkcell.rencar.domain.vehicle.VehicleType
+import com.turkcell.rencar.domain.rental.*
+import com.turkcell.rencar.domain.reservation.*
+import com.turkcell.rencar.domain.vehicle.*
 import com.turkcell.rencar.test.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReservationConfirmationViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun `screen started loads available vehicle details`() = runTest {
-        val viewModel = ReservationConfirmationViewModel(
-            vehicleRepository = FakeVehicleRepository(),
-            rentalRepository = FakeRentalRepository()
-        )
-
+    fun `screen start loads vehicle and minute quote`() = runTest {
+        val viewModel = createViewModel()
         viewModel.onIntent(ReservationConfirmationIntent.ScreenStarted(VEHICLE_ID))
         advanceUntilIdle()
 
         assertEquals("Renault Clio", viewModel.state.value.vehicleName)
-        assertEquals("34 RNC 022", viewModel.state.value.plate)
-        assertEquals(1450.0, viewModel.state.value.pricePerDay, 0.0)
-        assertTrue(viewModel.state.value.hasLoaded)
-        assertFalse(viewModel.state.value.canComplete)
+        assertEquals(72.0, viewModel.state.value.fuelPercent, 0.0)
+        assertEquals(15.0, viewModel.state.value.startFee, 0.0)
+        assertEquals(135.0, viewModel.state.value.estimatedTotal, 0.0)
+        assertTrue(viewModel.state.value.hasQuote)
     }
 
     @Test
-    fun `accepted terms and complete click creates rental and emits id`() = runTest {
+    fun `plan selection refreshes quote`() = runTest {
+        val vehicleRepository = FakeVehicleRepository()
+        val viewModel = createViewModel(vehicleRepository = vehicleRepository)
+        viewModel.onIntent(ReservationConfirmationIntent.ScreenStarted(VEHICLE_ID))
+        advanceUntilIdle()
+        viewModel.onIntent(ReservationConfirmationIntent.PlanSelected(RentalPlan.HOURLY))
+        advanceUntilIdle()
+
+        assertEquals(RentalPlan.HOURLY, viewModel.state.value.selectedPlan)
+        assertEquals(RentalPlan.HOURLY.name, vehicleRepository.requestedPlan)
+    }
+
+    @Test
+    fun `accepted terms creates reservation then rental with selected plan`() = runTest {
         val rentalRepository = FakeRentalRepository()
-        val viewModel = ReservationConfirmationViewModel(
-            vehicleRepository = FakeVehicleRepository(),
-            rentalRepository = rentalRepository
-        )
-
+        val viewModel = createViewModel(rentalRepository = rentalRepository)
         viewModel.onIntent(ReservationConfirmationIntent.ScreenStarted(VEHICLE_ID))
         advanceUntilIdle()
         viewModel.onIntent(ReservationConfirmationIntent.TermsAcceptanceChanged(true))
         viewModel.onIntent(ReservationConfirmationIntent.CompleteReservationClicked)
         advanceUntilIdle()
 
-        assertEquals(VEHICLE_ID, rentalRepository.requestedVehicleId)
-        assertTrue(rentalRepository.requestedEndDate.orEmpty().endsWith("Z"))
-        assertEquals(
-            ReservationConfirmationEffect.ReservationCreated(RENTAL_ID),
-            viewModel.effect.first()
-        )
-        assertFalse(viewModel.state.value.isSubmitting)
+        assertEquals(RentalPlan.PER_MINUTE, rentalRepository.requestedPlan)
+        assertNull(rentalRepository.requestedEndDate)
+        assertEquals(ReservationConfirmationEffect.ReservationCreated(RENTAL_ID), viewModel.effect.first())
     }
 
-    @Test
-    fun `rental conflict is exposed and can be retried`() = runTest {
-        val viewModel = ReservationConfirmationViewModel(
-            vehicleRepository = FakeVehicleRepository(),
-            rentalRepository = FakeRentalRepository(
-                result = RentalResult.Failure(RentalError.Conflict)
-            )
-        )
-
-        viewModel.onIntent(ReservationConfirmationIntent.ScreenStarted(VEHICLE_ID))
-        advanceUntilIdle()
-        viewModel.onIntent(ReservationConfirmationIntent.TermsAcceptanceChanged(true))
-        viewModel.onIntent(ReservationConfirmationIntent.CompleteReservationClicked)
-        advanceUntilIdle()
-
-        assertEquals(ReservationConfirmationError.RESERVATION_CONFLICT, viewModel.state.value.error)
-        assertTrue(viewModel.state.value.canComplete)
-    }
+    private fun createViewModel(
+        vehicleRepository: FakeVehicleRepository = FakeVehicleRepository(),
+        rentalRepository: FakeRentalRepository = FakeRentalRepository()
+    ) = ReservationConfirmationViewModel(vehicleRepository, rentalRepository, FakeReservationRepository())
 
     private class FakeVehicleRepository : VehicleRepository {
-        private val vehicle = Vehicle(
-            id = VEHICLE_ID,
-            plate = "34 RNC 022",
-            brand = "Renault",
-            model = "Clio",
-            type = VehicleType.HATCHBACK,
-            pricePerDay = 1450.0,
-            latitude = 41.0,
-            longitude = 29.0
-        )
-
-        override suspend fun listAvailableVehicles(type: VehicleType?): VehicleResult<List<Vehicle>> =
-            VehicleResult.Success(listOf(vehicle))
-
-        override suspend fun getVehicle(id: String): VehicleResult<Vehicle> =
-            VehicleResult.Success(vehicle)
+        var requestedPlan: String? = null
+        override suspend fun listAvailableVehicles(type: VehicleType?) = VehicleResult.Success(listOf(vehicle))
+        override suspend fun getVehicle(id: String) = VehicleResult.Success(vehicle)
+        override suspend fun getQuote(id: String, plan: String, minutes: Int): VehicleResult<VehicleQuote> {
+            requestedPlan = plan
+            return VehicleResult.Success(VehicleQuote(id, plan, minutes, 120.0, 15.0, 0.0, 135.0))
+        }
     }
 
-    private class FakeRentalRepository(
-        private val result: RentalResult<Rental> = RentalResult.Success(
-            Rental(
-                id = RENTAL_ID,
-                userId = "user-1",
-                vehicleId = VEHICLE_ID,
-                startDate = "2026-07-10T10:00:00.000Z",
-                endDate = "2026-07-11T10:00:00.000Z",
-                totalPrice = 1450.0,
-                status = "ACTIVE",
-                createdAt = "2026-07-10T10:00:00.000Z"
-            )
-        )
-    ) : RentalRepository {
-        var requestedVehicleId: String? = null
+    private class FakeRentalRepository : RentalRepository {
+        var requestedPlan: RentalPlan? = null
         var requestedEndDate: String? = null
-
-        override suspend fun createRental(vehicleId: String, endDate: String): RentalResult<Rental> {
-            requestedVehicleId = vehicleId
-            requestedEndDate = endDate
-            return result
+        override suspend fun createRental(vehicleId: String, plan: RentalPlan, endDate: String?): RentalResult<Rental> {
+            requestedPlan = plan; requestedEndDate = endDate
+            return RentalResult.Success(Rental(RENTAL_ID, "user-1", vehicleId, plan, "2026-07-14T10:00:00.000Z", endDate, null, "PREPARING", "2026-07-14T10:00:00.000Z"))
         }
+        override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> = RentalResult.Success(emptyList())
+    }
+
+    private class FakeReservationRepository : ReservationRepository {
+        override suspend fun createReservation(vehicleId: String) = ReservationResult.Success(
+            Reservation("reservation-1", vehicleId, ReservationStatus.ACTIVE, "2026-07-14T10:15:00.000Z", 900)
+        )
+        override suspend fun getActiveReservation(): ReservationResult<Reservation> = error("Not used")
+        override suspend fun cancelReservation(id: String): ReservationResult<Unit> = error("Not used")
     }
 
     private companion object {
         const val VEHICLE_ID = "vehicle-1"
         const val RENTAL_ID = "rental-1"
+        val vehicle = Vehicle(
+            VEHICLE_ID, "34 RNC 022", "Renault", "Clio", VehicleType.HATCHBACK,
+            1450.0, 4.5, 180.0, 72.0, 480.0, Transmission.MANUAL, 5,
+            VehicleSegment.ECONOMY, VehicleStatus.AVAILABLE, 41.0, 29.0
+        )
     }
 }

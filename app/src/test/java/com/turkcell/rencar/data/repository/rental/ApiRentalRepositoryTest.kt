@@ -4,6 +4,8 @@ import com.turkcell.rencar.data.remote.rental.RentalApiService
 import com.turkcell.rencar.data.remote.rental.dto.CreateRentalRequestDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalResponseDto
 import com.turkcell.rencar.domain.rental.RentalResult
+import com.turkcell.rencar.domain.rental.RentalPlan
+import com.turkcell.rencar.data.remote.rental.dto.RentalSummaryResponseDto
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -18,15 +20,16 @@ class ApiRentalRepositoryTest {
 
         val result = repository.createRental(
             vehicleId = VEHICLE_ID,
+            plan = RentalPlan.DAILY,
             endDate = END_DATE
         )
 
-        assertEquals(CreateRentalRequestDto(VEHICLE_ID, END_DATE), apiService.receivedRequest)
+        assertEquals(CreateRentalRequestDto(VEHICLE_ID, RentalPlan.DAILY.name, END_DATE), apiService.receivedRequest)
         assertTrue(result is RentalResult.Success)
         val rental = (result as RentalResult.Success).data
         assertEquals(RENTAL_ID, rental.id)
         assertEquals(VEHICLE_ID, rental.vehicleId)
-        assertEquals(1450.0, rental.totalPrice, 0.0)
+        assertEquals(1450.0, rental.totalPrice ?: 0.0, 0.0)
     }
 
     private class FakeRentalApiService : RentalApiService {
@@ -38,6 +41,7 @@ class ApiRentalRepositoryTest {
                 id = RENTAL_ID,
                 userId = "user-1",
                 vehicleId = request.vehicleId,
+                plan = request.plan,
                 startDate = "2026-07-10T10:00:00.000Z",
                 endDate = request.endDate,
                 totalPrice = 1450.0,
@@ -45,6 +49,8 @@ class ApiRentalRepositoryTest {
                 createdAt = "2026-07-10T10:00:00.000Z"
             )
         }
+
+        override suspend fun listMine(): List<RentalSummaryResponseDto> = emptyList()
     }
 
     private companion object {

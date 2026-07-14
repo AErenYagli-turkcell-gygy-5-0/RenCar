@@ -2,11 +2,13 @@ package com.turkcell.rencar.data.repository.vehicle
 
 import com.turkcell.rencar.data.remote.vehicle.VehicleApiService
 import com.turkcell.rencar.data.remote.vehicle.dto.VehicleResponseDto
+import com.turkcell.rencar.data.remote.vehicle.dto.QuoteResponseDto
 import com.turkcell.rencar.domain.vehicle.Transmission
 import com.turkcell.rencar.domain.vehicle.Vehicle
 import com.turkcell.rencar.domain.vehicle.VehicleError
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import com.turkcell.rencar.domain.vehicle.VehicleResult
+import com.turkcell.rencar.domain.vehicle.VehicleQuote
 import com.turkcell.rencar.domain.vehicle.VehicleSegment
 import com.turkcell.rencar.domain.vehicle.VehicleStatus
 import com.turkcell.rencar.domain.vehicle.VehicleType
@@ -33,6 +35,22 @@ class ApiVehicleRepository @Inject constructor(
 
     override suspend fun getVehicle(id: String): VehicleResult<Vehicle> = try {
         VehicleResult.Success(apiService.getOne(id = id).toDomain())
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: HttpException) {
+        VehicleResult.Failure(error.code().toVehicleError())
+    } catch (error: IOException) {
+        VehicleResult.Failure(VehicleError.Network)
+    } catch (error: Exception) {
+        VehicleResult.Failure(VehicleError.Unexpected)
+    }
+
+    override suspend fun getQuote(
+        id: String,
+        plan: String,
+        minutes: Int
+    ): VehicleResult<VehicleQuote> = try {
+        VehicleResult.Success(apiService.quote(id = id, plan = plan, minutes = minutes).toDomain())
     } catch (error: CancellationException) {
         throw error
     } catch (error: HttpException) {
@@ -74,6 +92,16 @@ private fun VehicleResponseDto.toDomain() = Vehicle(
     status = status.toVehicleStatusOrDefault(),
     latitude = latitude,
     longitude = longitude
+)
+
+private fun QuoteResponseDto.toDomain() = VehicleQuote(
+    vehicleId = vehicleId,
+    plan = plan,
+    minutes = minutes,
+    usageFee = usageFee,
+    startFee = startFee,
+    serviceFee = serviceFee,
+    estimatedTotal = estimatedTotal
 )
 
 // Bilinmeyen/eksik enum değeri tüm araç listesini çökertmesin diye valueOf() yerine
