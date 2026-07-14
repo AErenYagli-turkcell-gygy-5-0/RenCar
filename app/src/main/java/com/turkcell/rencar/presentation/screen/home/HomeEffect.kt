@@ -6,4 +6,5 @@ import com.turkcell.rencar.presentation.core.mvi.UiEffect
 sealed interface HomeEffect : UiEffect {
     data object NavigateToProfile : HomeEffect
     data class NavigateToCarDetail(val vehicleId: String, val myLocation: LatLng?) : HomeEffect
+    data class NavigateToActiveReservationCarDetail(val vehicleId: String) : HomeEffect
 }

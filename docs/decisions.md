@@ -8,6 +8,38 @@
 
 ---
 
+## 2026-07-13 - Aktif Rezervasyonlu Kullanicinin Arac Detayindan Baslamasi
+
+**Karar:** Home ekrani acilirken arac listesi yuklenmeden once `GET /reservations/active` ile
+kullanicinin aktif rezervasyonu kontrol edilir. Endpoint aktif rezervasyon dondururse Home haritasi
+ve diger arac marker'lari yuklenmez; kullanici aktif rezervasyondaki `vehicleId` ile CarDetail
+ekranina yonlendirilir. Bu yonlendirme aktif rezervasyon kaynakli oldugu icin Home route'u back
+stack'ten cikarilir.
+
+**Aktif rezervasyon yok durumu:** `GET /reservations/active` icin yalnizca `404` cevabi "aktif
+rezervasyon yok" kabul edilir ve mevcut Home harita akisi normal sekilde devam eder. `401`, `403`,
+network veya beklenmeyen hatalarda harita akisina dusulmez; kullanici retry durumunda tutulur.
+
+**Arac detay kaynagi:** OpenAPI sozlesmesinde `GET /vehicles/{id}` musait olmayan araci yalnizca
+aktif kiralamasi olan kullanici icin gorunur tarif ettigi icin aktif rezervasyonlu RESERVED aracta
+`404` alma riski vardir. Bu durumda CarDetail, `GET /reservations/active` cevabindaki `vehicle`
+ozetini fallback kaynak olarak kullanir. Bu ozette bulunmayan saatlik/gunluk fiyat, yakit, menzil,
+vites, koltuk ve segment alanlari ekranda varsayilan degerlerle gosterilmez.
+
+**Kapsam siniri:** Uygulamada token hala bellek-ici `SessionTokenHolder` ile tutulur. Process tamamen
+kapanip tekrar acildiginda otomatik oturum geri yukleme bu karar kapsaminda eklenmemistir; bunun
+icin ayri bir kalici session/token karari gerekir.
+
+**Bagimliliklar:** Yeni bagimlilik eklenmemistir.
+
+**Etkilenen alanlar:**
+- `data/remote/reservation/`, `data/repository/reservation/`, `domain/reservation/`
+- `presentation/screen/home/`
+- `presentation/screen/cardetail/`
+- `presentation/navigation/RenCarNavHost.kt`
+
+---
+
 ## 2026-07-13 - Profil Ekraninda Backend Ehliyet Gorsellerinin Gosterilmesi
 
 **Karar:** Profil ekranindaki ehliyet durum karti, `GET /license/status` cevabindan gelen

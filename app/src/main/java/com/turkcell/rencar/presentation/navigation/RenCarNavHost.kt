@@ -98,6 +98,16 @@ fun RenCarNavHost(
                     ) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToActiveReservationCarDetail = { vehicleId ->
+                    navController.navigate(
+                        RenCarDestination.CarDetail.createRoute(vehicleId, latitude = null, longitude = null)
+                    ) {
+                        popUpTo(RenCarDestination.Home.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }

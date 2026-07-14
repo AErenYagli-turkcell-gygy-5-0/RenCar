@@ -25,6 +25,8 @@ data class CarDetailState(
     val status: VehicleStatus = VehicleStatus.AVAILABLE,
     val vehicleLatitude: Double = 0.0,
     val vehicleLongitude: Double = 0.0,
+    val hasFullVehicleDetails: Boolean = false,
+    val isActiveReservationVehicle: Boolean = false,
     val isLoading: Boolean = false,
     val hasLoaded: Boolean = false,
     val errorMessage: String? = null,

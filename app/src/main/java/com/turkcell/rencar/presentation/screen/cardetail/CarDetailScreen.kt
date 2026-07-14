@@ -299,53 +299,57 @@ private fun CarDetailContent(
             )
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = stringResource(R.string.car_detail_price_per_hour, formatCurrency(state.pricePerHour)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = stringResource(R.string.car_detail_price_per_day, formatCurrency(state.pricePerDay)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (state.hasFullVehicleDetails) {
+                Text(
+                    text = stringResource(R.string.car_detail_price_per_hour, formatCurrency(state.pricePerHour)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = stringResource(R.string.car_detail_price_per_day, formatCurrency(state.pricePerDay)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 
-    Text(
-        text = stringResource(R.string.car_detail_specs_title),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(top = 18.dp, bottom = 10.dp)
-    )
+    if (state.hasFullVehicleDetails) {
+        Text(
+            text = stringResource(R.string.car_detail_specs_title),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 18.dp, bottom = 10.dp)
+        )
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        SpecChip(text = stringResource(state.type.labelRes()), modifier = Modifier.weight(1f))
-        SpecChip(text = stringResource(state.segment.labelRes()), modifier = Modifier.weight(1f))
-        SpecChip(text = stringResource(state.transmission.labelRes()), modifier = Modifier.weight(1f))
-    }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SpecChip(text = stringResource(state.type.labelRes()), modifier = Modifier.weight(1f))
+            SpecChip(text = stringResource(state.segment.labelRes()), modifier = Modifier.weight(1f))
+            SpecChip(text = stringResource(state.transmission.labelRes()), modifier = Modifier.weight(1f))
+        }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        SpecChip(
-            text = stringResource(R.string.car_detail_spec_seats, state.seats),
-            modifier = Modifier.weight(1f)
-        )
-        SpecChip(
-            text = stringResource(R.string.car_detail_spec_fuel, state.fuelPercent.roundToInt()),
-            modifier = Modifier.weight(1f)
-        )
-        SpecChip(
-            text = stringResource(R.string.car_detail_spec_range, state.rangeKm.roundToInt()),
-            modifier = Modifier.weight(1f)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SpecChip(
+                text = stringResource(R.string.car_detail_spec_seats, state.seats),
+                modifier = Modifier.weight(1f)
+            )
+            SpecChip(
+                text = stringResource(R.string.car_detail_spec_fuel, state.fuelPercent.roundToInt()),
+                modifier = Modifier.weight(1f)
+            )
+            SpecChip(
+                text = stringResource(R.string.car_detail_spec_range, state.rangeKm.roundToInt()),
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 
     Row(
@@ -356,6 +360,7 @@ private fun CarDetailContent(
     ) {
         OutlinedButton(
             onClick = { onIntent(CarDetailIntent.ReserveClicked) },
+            enabled = !state.isActiveReservationVehicle,
             modifier = Modifier.height(56.dp),
             shape = RoundedCornerShape(18.dp)
         ) {
