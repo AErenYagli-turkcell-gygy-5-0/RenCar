@@ -5,6 +5,11 @@ import com.turkcell.rencar.domain.vehicle.Vehicle
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import com.turkcell.rencar.domain.vehicle.VehicleResult
 import com.turkcell.rencar.domain.vehicle.VehicleType
+import com.turkcell.rencar.domain.vehicle.VehicleQuote
+import com.turkcell.rencar.domain.vehicle.VehicleSegment
+import com.turkcell.rencar.domain.vehicle.VehicleStatus
+import com.turkcell.rencar.domain.vehicle.Transmission
+import com.turkcell.rencar.domain.rental.*
 import com.turkcell.rencar.presentation.navigation.RenCarDestination
 import com.turkcell.rencar.test.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +30,7 @@ class CarDetailViewModelTest {
     fun `reserve click emits selected vehicle id after vehicle loads`() = runTest {
         val viewModel = CarDetailViewModel(
             vehicleRepository = FakeVehicleRepository(),
+            rentalRepository = FakeRentalRepository(),
             savedStateHandle = SavedStateHandle(
                 mapOf(RenCarDestination.ARG_VEHICLE_ID to VEHICLE_ID)
             )
@@ -41,6 +47,14 @@ class CarDetailViewModelTest {
         )
     }
 
+    private class FakeRentalRepository : RentalRepository {
+        override suspend fun createRental(vehicleId: String, plan: RentalPlan, endDate: String?): RentalResult<Rental> =
+            error("Create rental is not used by car detail")
+
+        override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> =
+            RentalResult.Success(emptyList())
+    }
+
     private class FakeVehicleRepository : VehicleRepository {
         private val vehicle = Vehicle(
             id = VEHICLE_ID,
@@ -49,6 +63,14 @@ class CarDetailViewModelTest {
             model = "Clio",
             type = VehicleType.HATCHBACK,
             pricePerDay = 1450.0,
+            pricePerMinute = 4.5,
+            pricePerHour = 180.0,
+            fuelPercent = 72.0,
+            rangeKm = 480.0,
+            transmission = Transmission.MANUAL,
+            seats = 5,
+            segment = VehicleSegment.ECONOMY,
+            status = VehicleStatus.AVAILABLE,
             latitude = 41.0,
             longitude = 29.0
         )
@@ -58,6 +80,9 @@ class CarDetailViewModelTest {
 
         override suspend fun getVehicle(id: String): VehicleResult<Vehicle> =
             VehicleResult.Success(vehicle)
+
+        override suspend fun getQuote(id: String, plan: String, minutes: Int): VehicleResult<VehicleQuote> =
+            error("Quote is not used by car detail")
     }
 
     private companion object {

@@ -157,6 +157,17 @@
     <string name="reservation_confirmation_title">Rezervasyon Onayı</string>
     <string name="reservation_rental_plan">Kiralama planı</string>
     <string name="reservation_daily">Günlük</string>
+    <string name="reservation_per_minute">Dakikalık</string>
+    <string name="reservation_hourly">Saatlik</string>
+    <string name="reservation_price_per_minute">%1$s/dk</string>
+    <string name="reservation_price_per_hour">%1$s/sa</string>
+    <string name="reservation_seats">%1$d kişi</string>
+    <string name="reservation_fuel">Yakıt %%%1$d</string>
+    <string name="reservation_free_hold">Ücretsiz rezervasyon</string>
+    <string name="reservation_free_hold_duration">15 dk</string>
+    <string name="reservation_start_fee">Başlangıç ücreti</string>
+    <string name="reservation_estimated_duration">Tahmini ücret (%1$d dk)</string>
+    <string name="reservation_calculating">Hesaplanıyor…</string>
     <string name="reservation_price_per_day">%1$s/gün</string>
     <string name="reservation_daily_fee">Günlük ücret</string>
     <string name="reservation_estimated_total">Tahmini toplam</string>

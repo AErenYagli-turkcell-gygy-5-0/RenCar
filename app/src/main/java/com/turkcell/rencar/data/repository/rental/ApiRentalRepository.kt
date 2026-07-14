@@ -8,6 +8,7 @@ import com.turkcell.rencar.domain.rental.Rental
 import com.turkcell.rencar.domain.rental.RentalError
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
+import com.turkcell.rencar.domain.rental.RentalPlan
 import com.turkcell.rencar.domain.rental.RentalStatus
 import com.turkcell.rencar.domain.rental.RentalSummary
 import kotlinx.coroutines.CancellationException
@@ -19,8 +20,16 @@ class ApiRentalRepository @Inject constructor(
     private val apiService: RentalApiService
 ) : RentalRepository {
 
-    override suspend fun createRental(vehicleId: String, endDate: String): RentalResult<Rental> = try {
-        val request = CreateRentalRequestDto(vehicleId = vehicleId, endDate = endDate)
+    override suspend fun createRental(
+        vehicleId: String,
+        plan: RentalPlan,
+        endDate: String?
+    ): RentalResult<Rental> = try {
+        val request = CreateRentalRequestDto(
+            vehicleId = vehicleId,
+            plan = plan.name,
+            endDate = endDate.takeIf { plan == RentalPlan.DAILY }
+        )
         RentalResult.Success(apiService.create(request).toDomain())
     } catch (error: CancellationException) {
         throw error
@@ -66,12 +75,16 @@ private fun RentalResponseDto.toDomain() = Rental(
     id = id,
     userId = userId,
     vehicleId = vehicleId,
+    plan = plan.toRentalPlanOrDefault(),
     startDate = startDate,
     endDate = endDate,
     totalPrice = totalPrice,
     status = status,
     createdAt = createdAt
 )
+
+private fun String?.toRentalPlanOrDefault(): RentalPlan =
+    this?.let { runCatching { RentalPlan.valueOf(it) }.getOrNull() } ?: RentalPlan.DAILY
 
 private fun RentalSummaryResponseDto.toDomainOrNull(): RentalSummary? {
     val resolvedVehicleId = vehicleId ?: return null

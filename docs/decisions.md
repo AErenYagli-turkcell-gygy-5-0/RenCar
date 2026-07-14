@@ -8,6 +8,36 @@
 
 ---
 
+## 2026-07-14 - Mobil Uygulamanin RenCar V2 API Adresine Tasinmasi
+
+**Karar:** Android uygulamasinin `BuildConfig.API_BASE_URL` degeri
+`https://rencarv2.halitkalayci.com/` olarak guncellenmistir. Swagger arayuzunun `/api/docs`
+altinda yayinlanmasi API endpoint'lerinin `/api/` on eki kullandigi anlamina gelmez; canli
+`/health` endpoint'i 200, `/api/health` endpoint'i 404 dondugu icin Retrofit base URL kok alan
+adi olarak belirlenmistir.
+
+**Gerekce:** Eski `https://rencar.halitkalayci.com/` sunucusu guncel arac fiyat, yakit,
+sanziman ve koltuk alanlarini ve `/vehicles/{id}/quote` endpoint'ini sunmadigi icin istemci yeni
+alanlari sifir olarak gosteriyor ve fiyat onizlemesinde 404 aliyordu.
+
+**Bagimliliklar:** Yeni bagimlilik eklenmemistir.
+
+**Etkilenen dosya:**
+- `app/build.gradle.kts`
+
+---
+
+## 2026-07-14 - Rezervasyon Onayinda Plan Secimi ve Sunucu Fiyat Onizlemesi
+
+**Karar:** Rezervasyon onay ekrani arac detayini `GET /vehicles/{id}` ile yuklemeye devam eder;
+dakikalik, saatlik ve gunluk plan fiyatlarini bu yanittan gosterir. Secili planin tahmini ucret
+dokumu istemcide hesaplanmaz, `GET /vehicles/{id}/quote` ucundan 30 dakikalik kullanim icin alinir.
+Plan degistiginde quote yeniden yuklenir. Kiralama olusturulurken secili plan `POST /rentals`
+govdesine eklenir; `endDate` yalnizca `DAILY` planda gonderilir.
+
+**Gerekce:** Acilis ve servis ucreti dahil fiyat formulleri backend tarafindan yonetilmektedir.
+Sunucu quote sonucu, onay ekraninda gosterilen tahmini tutar ile yolculuk sonunda uygulanacak
+fiyatlandirmanin ayni kurallara dayanmasini saglar.
 ## 2026-07-13 - Aktif Rezervasyonlu Kullanicinin Arac Detayindan Baslamasi
 
 **Karar:** Home ekrani acilirken arac listesi yuklenmeden once `GET /reservations/active` ile
@@ -33,6 +63,9 @@ icin ayri bir kalici session/token karari gerekir.
 **Bagimliliklar:** Yeni bagimlilik eklenmemistir.
 
 **Etkilenen alanlar:**
+- `domain/vehicle/`, `data/remote/vehicle/`, `data/repository/vehicle/`
+- `domain/rental/`, `data/remote/rental/`, `data/repository/rental/`
+- `presentation/screen/reservation/confirmation/`
 - `data/remote/reservation/`, `data/repository/reservation/`, `domain/reservation/`
 - `presentation/screen/home/`
 - `presentation/screen/cardetail/`
