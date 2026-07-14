@@ -123,6 +123,34 @@ fun HomeLocationPermissionBanner(
 }
 
 @Composable
+fun HomeActiveRentalBanner(
+    vehicleName: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.primary)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = if (vehicleName.isNotBlank()) {
+                stringResource(R.string.active_rental_status_active_with_vehicle, vehicleName)
+            } else {
+                stringResource(R.string.active_rental_title)
+            },
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
+
+@Composable
 fun HomeFilterChipRow(
     selectedCategory: VehicleType?,
     onCategorySelected: (VehicleType?) -> Unit,

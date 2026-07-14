@@ -18,6 +18,8 @@ sealed class RenCarDestination(val route: String) {
 
     data object Home : RenCarDestination("home")
 
+    data object History : RenCarDestination("history")
+
     data object Profile : RenCarDestination("profile")
 
     data object CarDetail : RenCarDestination(

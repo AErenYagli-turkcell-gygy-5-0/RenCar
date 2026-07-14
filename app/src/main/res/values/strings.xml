@@ -201,12 +201,23 @@
     <string name="rental_photo_source_gallery">Galeriden seç</string>
     <string name="rental_photo_source_cancel">Vazgeç</string>
     <!-- Active Rental Screen (Aktif Kiralama) -->
-    <string name="active_rental_status_active">Kiralama aktif</string>
     <string name="active_rental_status_active_with_vehicle">Kiralama aktif · %1$s</string>
+    <string name="active_rental_title">Aktif Yolculuk</string>
+    <string name="active_rental_subtitle">Süre ve ücret canlı işliyor</string>
+    <string name="active_rental_start_label">Başlangıç: %1$s</string>
+    <string name="active_rental_start_fee_note">Anlık ücrete %1$s başlangıç ücreti dahildir; kesin tutar kiralama bitince hesaplanır.</string>
+    <string name="active_rental_plan_per_minute">Dakikalık</string>
+    <string name="active_rental_plan_hourly">Saatlik</string>
+    <string name="active_rental_plan_daily">Günlük</string>
     <string name="active_rental_elapsed_label">Geçen süre</string>
     <string name="active_rental_current_cost_label">Anlık ücret</string>
     <string name="active_rental_distance_label">Mesafe</string>
     <string name="active_rental_distance_km">%1$s km</string>
     <string name="active_rental_lock_unlock">Kilitle / Aç</string>
     <string name="active_rental_finish_action">Kiralamayı Bitir</string>
+    <!-- History Screen (Kiralama Geçmişi) -->
+    <string name="history_title">Kiralamalarım</string>
+    <string name="history_subtitle">Bu ay %1$d yolculuk · %2$s harcama</string>
+    <string name="history_empty">Henüz tamamlanmış kiralamanız yok.</string>
+    <string name="history_duration_minutes">%1$d dk</string>
 </resources>

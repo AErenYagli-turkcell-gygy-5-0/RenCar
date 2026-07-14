@@ -2,12 +2,14 @@ package com.turkcell.rencar.di
 
 import com.turkcell.rencar.data.repository.auth.ApiAuthRepository
 import com.turkcell.rencar.data.repository.license.ApiLicenseRepository
+import com.turkcell.rencar.data.repository.location.ApiLocationRepository
 import com.turkcell.rencar.data.repository.profile.FileProfilePhotoRepository
 import com.turkcell.rencar.data.repository.rental.ApiRentalRepository
 import com.turkcell.rencar.data.repository.reservation.ApiReservationRepository
 import com.turkcell.rencar.data.repository.vehicle.ApiVehicleRepository
 import com.turkcell.rencar.domain.auth.AuthRepository
 import com.turkcell.rencar.domain.license.LicenseRepository
+import com.turkcell.rencar.domain.location.LocationRepository
 import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.reservation.ReservationRepository
@@ -49,4 +51,8 @@ abstract class RepositoryModule {
     abstract fun bindReservationRepository(
         implementation: ApiReservationRepository
     ): ReservationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLocationRepository(implementation: ApiLocationRepository): LocationRepository
 }

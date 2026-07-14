@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.maplibre.android.sdk)
     implementation(libs.maplibre.android.plugin.annotation)
     implementation(libs.play.services.location)
+    implementation(libs.socket.io.client)
     ksp(libs.hilt.android.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -16,4 +16,5 @@ sealed interface HomeIntent : UiIntent {
     data class NavItemSelected(val item: BottomNavItem) : HomeIntent
     data class VehicleMarkerClicked(val vehicleId: String) : HomeIntent
     data object RefreshMapClicked : HomeIntent
+    data object ActiveRentalBannerClicked : HomeIntent
 }
