@@ -36,10 +36,26 @@ sealed class RenCarDestination(val route: String) {
             "reservation-confirmation/${Uri.encode(vehicleId)}"
     }
 
+    data object RentalPhotoUpload : RenCarDestination(
+        "rental-photo-upload/{$ARG_RENTAL_ID}/{$ARG_VEHICLE_ID}/{$ARG_PHOTO_MODE}"
+    ) {
+        fun createRoute(rentalId: String, vehicleId: String, mode: String): String =
+            "rental-photo-upload/${Uri.encode(rentalId)}/${Uri.encode(vehicleId)}/${Uri.encode(mode)}"
+    }
+
+    data object ActiveRental : RenCarDestination(
+        "active-rental/{$ARG_RENTAL_ID}/{$ARG_VEHICLE_ID}"
+    ) {
+        fun createRoute(rentalId: String, vehicleId: String): String =
+            "active-rental/${Uri.encode(rentalId)}/${Uri.encode(vehicleId)}"
+    }
+
     companion object {
         const val ARG_PHONE_NUMBER = "phoneNumber"
         const val ARG_VEHICLE_ID = "vehicleId"
         const val ARG_MY_LATITUDE = "myLatitude"
         const val ARG_MY_LONGITUDE = "myLongitude"
+        const val ARG_RENTAL_ID = "rentalId"
+        const val ARG_PHOTO_MODE = "photoMode"
     }
 }

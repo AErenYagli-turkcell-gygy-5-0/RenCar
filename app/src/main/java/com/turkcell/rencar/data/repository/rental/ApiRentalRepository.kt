@@ -1,22 +1,34 @@
 package com.turkcell.rencar.data.repository.rental
 
+import android.content.Context
+import android.net.Uri
 import com.turkcell.rencar.data.remote.rental.RentalApiService
+import com.turkcell.rencar.data.remote.rental.dto.ActiveRentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.CreateRentalRequestDto
+import com.turkcell.rencar.data.remote.rental.dto.RentalPhotosStateResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalSummaryResponseDto
+import com.turkcell.rencar.domain.rental.ActiveRental
 import com.turkcell.rencar.domain.rental.Rental
 import com.turkcell.rencar.domain.rental.RentalError
+import com.turkcell.rencar.domain.rental.RentalPhotoSide
+import com.turkcell.rencar.domain.rental.RentalPhotosState
+import com.turkcell.rencar.domain.rental.RentalPlan
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
-import com.turkcell.rencar.domain.rental.RentalPlan
 import com.turkcell.rencar.domain.rental.RentalStatus
 import com.turkcell.rencar.domain.rental.RentalSummary
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
 class ApiRentalRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val apiService: RentalApiService
 ) : RentalRepository {
 
@@ -53,6 +65,56 @@ class ApiRentalRepository @Inject constructor(
         RentalResult.Failure(RentalError.Unexpected)
     }
 
+    override suspend fun uploadRentalPhoto(
+        rentalId: String,
+        side: RentalPhotoSide,
+        imageUri: Uri
+    ): RentalResult<RentalPhotosState> = runRequest {
+        val sidePart = MultipartBody.Part.createFormData(SIDE_FIELD_NAME, side.name)
+        val filePart = imageUri.toMultipartPart(FILE_FIELD_NAME)
+        apiService.uploadPhoto(id = rentalId, side = sidePart, file = filePart).toDomain()
+    }
+
+    override suspend fun getRentalPhotos(rentalId: String): RentalResult<RentalPhotosState> = runRequest {
+        apiService.getPhotos(id = rentalId).toDomain()
+    }
+
+    override suspend fun startRental(rentalId: String): RentalResult<Rental> = runRequest {
+        apiService.start(id = rentalId).toDomain()
+    }
+
+    override suspend fun cancelRental(rentalId: String): RentalResult<Unit> = runRequest {
+        apiService.cancel(id = rentalId)
+    }
+
+    override suspend fun getActiveRental(): RentalResult<ActiveRental> = runRequest {
+        apiService.getActive().toDomain()
+    }
+
+    override suspend fun finishRental(rentalId: String): RentalResult<Rental> = runRequest {
+        apiService.finish(id = rentalId).toDomain()
+    }
+
+    private suspend fun <T> runRequest(request: suspend () -> T): RentalResult<T> = try {
+        RentalResult.Success(request())
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: HttpException) {
+        RentalResult.Failure(error.code().toRentalError())
+    } catch (error: IOException) {
+        RentalResult.Failure(RentalError.Network)
+    } catch (error: Exception) {
+        RentalResult.Failure(RentalError.Unexpected)
+    }
+
+    private fun Uri.toMultipartPart(fieldName: String): MultipartBody.Part {
+        val bytes = context.contentResolver.openInputStream(this)?.use { it.readBytes() }
+            ?: throw IOException("Görsel okunamadı.")
+        val mimeType = context.contentResolver.getType(this) ?: DEFAULT_MIME_TYPE
+        val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+        return MultipartBody.Part.createFormData(fieldName, "$fieldName.jpg", requestBody)
+    }
+
     private fun Int.toRentalError(): RentalError = when (this) {
         HTTP_BAD_REQUEST -> RentalError.InvalidRequest
         HTTP_UNAUTHORIZED -> RentalError.Unauthorized
@@ -63,6 +125,9 @@ class ApiRentalRepository @Inject constructor(
     }
 
     private companion object {
+        const val SIDE_FIELD_NAME = "side"
+        const val FILE_FIELD_NAME = "file"
+        const val DEFAULT_MIME_TYPE = "image/jpeg"
         const val HTTP_BAD_REQUEST = 400
         const val HTTP_UNAUTHORIZED = 401
         const val HTTP_FORBIDDEN = 403
@@ -71,7 +136,7 @@ class ApiRentalRepository @Inject constructor(
     }
 }
 
-private fun RentalResponseDto.toDomain() = Rental(
+internal fun RentalResponseDto.toDomain() = Rental(
     id = id,
     userId = userId,
     vehicleId = vehicleId,
@@ -86,7 +151,7 @@ private fun RentalResponseDto.toDomain() = Rental(
 private fun String?.toRentalPlanOrDefault(): RentalPlan =
     this?.let { runCatching { RentalPlan.valueOf(it) }.getOrNull() } ?: RentalPlan.DAILY
 
-private fun RentalSummaryResponseDto.toDomainOrNull(): RentalSummary? {
+internal fun RentalSummaryResponseDto.toDomainOrNull(): RentalSummary? {
     val resolvedVehicleId = vehicleId ?: return null
     return RentalSummary(
         id = id,
@@ -95,5 +160,24 @@ private fun RentalSummaryResponseDto.toDomainOrNull(): RentalSummary? {
     )
 }
 
+internal fun RentalPhotosStateResponseDto.toDomain() = RentalPhotosState(
+    rentalId = rentalId,
+    uploadedSides = photos.mapNotNull { it.side.toRentalPhotoSideOrNull() }.toSet(),
+    remainingSides = remainingSides.mapNotNull { it.toRentalPhotoSideOrNull() }.toSet(),
+    photosComplete = photosComplete
+)
+
+internal fun ActiveRentalResponseDto.toDomain() = ActiveRental(
+    id = id,
+    vehicleId = vehicleId,
+    status = status.toRentalStatusOrDefault(),
+    elapsedSeconds = elapsedSeconds,
+    currentCost = currentCost,
+    distanceKm = distanceKm
+)
+
 private fun String?.toRentalStatusOrDefault(): RentalStatus =
     this?.let { runCatching { RentalStatus.valueOf(it) }.getOrNull() } ?: RentalStatus.COMPLETED
+
+private fun String.toRentalPhotoSideOrNull(): RentalPhotoSide? =
+    runCatching { RentalPhotoSide.valueOf(this) }.getOrNull()

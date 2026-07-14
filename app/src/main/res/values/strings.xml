@@ -182,4 +182,31 @@
     <string name="reservation_error_invalid_request">Rezervasyon bilgileri geçersiz. Lütfen tekrar deneyin.</string>
     <string name="reservation_error_network">İnternet bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="reservation_error_unexpected">Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.</string>
+    <!-- Rental Photo Upload Screen (Araç Teslim Fotoğrafı) -->
+    <string name="rental_photo_title">Araç durumu</string>
+    <string name="rental_photo_subtitle_start">Başlamadan önce 4 yönü çek</string>
+    <string name="rental_photo_subtitle_return">Bitirmeden önce 4 yönü çek</string>
+    <string name="rental_photo_counter">%1$d / %2$d çekildi</string>
+    <string name="rental_photo_side_front">Ön</string>
+    <string name="rental_photo_side_back">Arka</string>
+    <string name="rental_photo_side_left">Sol</string>
+    <string name="rental_photo_side_right">Sağ</string>
+    <string name="rental_photo_capture_hint">Fotoğraf çek</string>
+    <string name="rental_photo_warning">Hasarları net çek — teslim sonrası anlaşmazlığı önler.</string>
+    <string name="rental_photo_start_action">Kiralamayı Başlat</string>
+    <string name="rental_photo_finish_action">Kiralamayı Bitir</string>
+    <string name="rental_photo_action_with_remaining">%1$s · %2$d foto kaldı</string>
+    <string name="rental_photo_source_title">Fotoğraf ekle</string>
+    <string name="rental_photo_source_camera">Kamerayla çek</string>
+    <string name="rental_photo_source_gallery">Galeriden seç</string>
+    <string name="rental_photo_source_cancel">Vazgeç</string>
+    <!-- Active Rental Screen (Aktif Kiralama) -->
+    <string name="active_rental_status_active">Kiralama aktif</string>
+    <string name="active_rental_status_active_with_vehicle">Kiralama aktif · %1$s</string>
+    <string name="active_rental_elapsed_label">Geçen süre</string>
+    <string name="active_rental_current_cost_label">Anlık ücret</string>
+    <string name="active_rental_distance_label">Mesafe</string>
+    <string name="active_rental_distance_km">%1$s km</string>
+    <string name="active_rental_lock_unlock">Kilitle / Aç</string>
+    <string name="active_rental_finish_action">Kiralamayı Bitir</string>
 </resources>

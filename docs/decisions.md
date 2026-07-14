@@ -8,6 +8,124 @@
 
 ---
 
+## 2026-07-14 - Aktif Kiralaması Olan Kullanıcının da Kaldığı Yerden Devam Etmesi
+
+**Karar:** 2026-07-13 kararı yalnızca "aktif rezervasyon" (`GET /reservations/active`) durumunu
+kapsıyordu; ancak rezervasyon bir kiralamaya dönüştüğünde (`POST /rentals`) CONVERTED olarak
+işaretlendiğinden artık "aktif rezervasyon" olarak görünmez. Bu nedenle kullanıcı foto yükleme
+(PREPARING) veya süren yolculuk (ACTIVE) aşamasındayken uygulamayı kapatıp tekrar açarsa Home
+önceki haliyle bunu yakalayamıyor, normal harita/araç listesini gösteriyordu.
+
+`HomeViewModel`'e `RentalRepository` enjekte edildi. `checkActiveReservation()` "aktif
+rezervasyon yok" (404) sonucunu artık doğrudan `loadVehicles()`'e değil, yeni
+`checkActiveRental()` fonksiyonuna yönlendirir. Bu fonksiyon `GET /rentals` (`getMyRentals()`)
+ile PREPARING/ACTIVE durumundaki bir kiralama arar (`CarDetailViewModel.loadCanUnlock()` ile
+aynı desen/eşik kümesi — `RESUMABLE_RENTAL_STATUSES`); bulunursa PREPARING için Araç Teslim
+Fotoğrafı (START_TRIP), ACTIVE için Aktif Kiralama ekranına yönlendirilir ve Home back stack'ten
+çıkarılır (`popUpTo(Home, inclusive = true)`), araç listesi hiç yüklenmez. Bulunamazsa veya
+`getMyRentals()` hata dönerse (network vb.) sessizce `loadVehicles()`'e düşülür — bu, aynı
+`CarDetailViewModel.loadCanUnlock()`'taki "hata durumunda sessizce pasif kal" ilkesiyle
+tutarlıdır; ikincil bir kontrolün ağ hatası tüm Home ekranını kilitlememelidir.
+
+**Gerekçe:** Kullanıcı talebi doğrultusunda, PREPARING/ACTIVE kontrolü rezervasyon kontrolüyle
+aynı önceliğe (uygulamaya yeniden girişte, araç listesinden önce) alınmıştır. Rezervasyon ve
+kiralama durumları backend'de birbirini dışladığından (rezervasyon dönüşünce CONVERTED olur) iki
+kontrol sıralı ve tek seferlik yapılmıştır; paralel/tekrarlayan bir polling eklenmemiştir.
+
+**Bilinen sınırlama:** Bu akış için otomatik test eklenmemiştir (projede hâlihazırda
+`HomeViewModelTest.kt` yoktu); yalnızca derleme ve mevcut test paketiyle doğrulanmıştır.
+
+**Etkilenen alanlar:**
+- `presentation/screen/home/` (`HomeState.kt`, `HomeEffect.kt`, `HomeViewModel.kt`, `HomeScreen.kt`)
+- `presentation/navigation/RenCarNavHost.kt`
+
+---
+
+## 2026-07-14 - Araç Teslim Fotoğrafı Ekranına Kamera Seçeneği Eklenmesi
+
+**Karar:** Araç Teslim Fotoğrafı ekranındaki (`presentation/screen/rental/photo/`) her foto
+karesine dokunulduğunda artık yalnızca galeri değil, "Kameradan çek / Galeriden seç" seçenekli
+bir diyalog gösterilir. Kamera seçeneği `ActivityResultContracts.TakePicture()` ile
+uygulanmıştır (License ekranındaki selfie akışında kullanılan `TakePicturePreview()`'dan farklı
+olarak tam çözünürlüklü dosya üretir — "Hasarları net çek" uyarısı düşük çözünürlüklü önizleme
+ile çelişeceğinden bilinçli olarak farklı bir contract seçilmiştir). `TakePicture()` sonucu bir
+hedef `Uri` gerektirdiğinden, projeye ilk kez bir `FileProvider` eklenmiştir
+(`AndroidManifest.xml` içine `<provider>` tanımı + yeni `res/xml/file_paths.xml`,
+`cache-path="rental_photos/"`). Geçici dosyalar uygulamanın `cacheDir` altında oluşturulur;
+kalıcı depolama veya harici depolama izni gerekmez.
+
+**Gerekçe:** `android.permission.CAMERA` çalışma zamanı izni EKLENMEMİŞTİR — `TakePicture()`
+implicit `ACTION_IMAGE_CAPTURE` intent'i ile sistem kamera uygulamasına delege eder, izin
+sistem kamera uygulaması tarafından yönetilir. Yeni bir Gradle bağımlılığı gerekmemiştir
+(`FileProvider` `androidx.core` içinde, proje zaten `core-ktx` kullanıyor).
+
+**Etkilenen alanlar:**
+- `app/src/main/AndroidManifest.xml`, `app/src/main/res/xml/file_paths.xml` (yeni)
+- `presentation/screen/rental/photo/RentalPhotoUploadScreen.kt`
+- `app/src/main/res/values/strings.xml`
+
+---
+
+## 2026-07-14 - Kiralama Başlatma (Foto Akışı) ve Kiralama Bitirme Ekranlarının Eklenmesi
+
+**Karar:** `Rencar.html` içindeki "Araç Teslim Fotoğrafı · 4 yön" ekranı (adım 12) incelendi;
+alt butonu "Kiralamayı Başlat · N foto kaldı" olduğundan bu ekranın backend'deki
+`POST /rentals` (plan PER_MINUTE/HOURLY → PREPARING) → `POST /rentals/:id/photos` (4 yön) →
+`POST /rentals/:id/start` akışına karşılık geldiği tespit edildi. Bu akış için istemciye
+`RentalApiService`/`ApiRentalRepository` üzerinden `uploadPhoto`, `getPhotos`, `start`,
+`getActive`, `finish`, `cancel` uçları eklendi (`domain/rental/RentalPhotoSide.kt`,
+`RentalPhotosState.kt`, `ActiveRental.kt` yeni domain modelleri ile). Rezervasyon onayı
+tamamlandığında (`ReservationConfirmationEffect.ReservationCreated` artık `vehicleId` ve
+backend'in döndürdüğü `status`'tan türetilen `isPreparing` alanlarını da taşır) plan
+PER_MINUTE/HOURLY ise yeni `presentation/screen/rental/photo/` (Araç Teslim Fotoğrafı) ekranına,
+plan DAILY ise (backend'de foto adımı olmadığından, anında ACTIVE döndüğü için) doğrudan yeni
+`presentation/screen/rental/active/` (Aktif Kiralama) ekranına yönlendirilir.
+
+**Karar (bitiş fotoğrafı — kullanıcı onayı):** Aktif Kiralama ekranındaki "Kiralamayı Bitir"
+butonu da aynı 4-foto ekranını (`RentalPhotoUploadMode.RETURN_TRIP`) kullanır; ancak OpenAPI
+sözleşmesinde yolculuk BİTİŞİNDE fotoğraf zorunluluğunu destekleyen bir endpoint yoktur —
+`POST /rentals/:id/photos` yalnızca PREPARING aşamasında çalışır (ACTIVE'de 409), `POST
+/rentals/:id/finish` hiçbir gövde/fotoğraf almaz. Bu nedenle RETURN_TRIP modunda seçilen 4
+fotoğraf yalnızca yerelde (`Uri`) tutulur, hiçbir endpoint'e yüklenmez — yalnızca yerel bir
+zorunluluk kapısı olarak davranır; 4/4 seçilince asıl bitirme `POST /rentals/:id/finish` ile
+yapılır. Bu, `agents.md` §2.2 gereği var olmayan bir endpoint icat etmemek için kullanıcı ile
+netleştirilerek onaylanmış bir tasarım kararıdır (backend'de gerçek bir bitiş-fotoğrafı
+endpoint'i eklenirse RETURN_TRIP modu ileride kolayca gerçek yüklemeye çevrilebilir; ViewModel
+zaten mod bazlı ayrıştırılmıştır).
+
+**Karar (CarDetail "Kilidi Aç" bağlama):** `CarDetailScreen.kt` içinde önceden boş bırakılan
+(`onClick = {}`) "Kilidi Aç" butonu `CarDetailIntent.UnlockClicked`'e bağlandı.
+`CarDetailViewModel.loadCanUnlock()` artık yalnızca `canUnlock: Boolean` değil, eşleşen
+kiralamanın `unlockRentalId`/`unlockRentalStatus` (PREPARING/ACTIVE) bilgisini de state'e yazar;
+`UnlockClicked` bu duruma göre foto ekranına (PREPARING) veya Aktif Kiralama ekranına (ACTIVE)
+yönlendirir.
+
+**Kapsam dışı (icat edilmedi):**
+- Mockup'taki "Kilitle/Aç" butonunun fiziksel kilit işlevi — backend'de karşılığı olmadığından
+  Aktif Kiralama ekranında dekoratif/pasif bırakıldı (2026-07-10 kararındaki aynı ilke: API'de
+  karşılığı olmayan davranış icat edilmez).
+- Aktif Kiralama ekranında canlı harita/rota gösterimi — mockup'ta var ama bu kararın kapsamı
+  dışında tutuldu, sade bir kart düzeni kullanıldı.
+- `POST /rentals/:id/pay` ödeme akışı (finish sonrası) — bu kararın kapsamı yalnızca foto
+  zorunluluğu ve bitirme çağrısını kapsar.
+- Rezervasyon onayı ekranındaki plan seçimi/quote mantığına dokunulmadı (önceki bir karar/PR ile
+  zaten eklenmişti); yalnızca "rezervasyon tamamlandı" sonrası yönlendirme genişletildi.
+
+**Bağımlılıklar:** Yeni bir Gradle bağımlılığı eklenmemiştir. Fotoğraf önizlemesi mevcut
+`ApiLicenseRepository`/`LicenseUploadScreen` deseniyle (`ContentResolver` + `BitmapFactory` +
+`Image(bitmap=...)`) yapılmıştır; proje Coil kullanmadığından yeni bir görsel yükleme
+kütüphanesi eklenmemiştir.
+
+**Etkilenen alanlar:**
+- `domain/rental/`, `data/remote/rental/`, `data/repository/rental/`
+- `presentation/screen/rental/photo/` (yeni), `presentation/screen/rental/active/` (yeni)
+- `presentation/screen/reservation/confirmation/`
+- `presentation/screen/cardetail/`
+- `presentation/navigation/RenCarDestination.kt`, `presentation/navigation/RenCarNavHost.kt`
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-14 - Mobil Uygulamanin RenCar V2 API Adresine Tasinmasi
 
 **Karar:** Android uygulamasinin `BuildConfig.API_BASE_URL` degeri

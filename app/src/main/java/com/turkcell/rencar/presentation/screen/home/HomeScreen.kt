@@ -62,7 +62,9 @@ fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToProfile: () -> Unit,
     onNavigateToCarDetail: (String, Double?, Double?) -> Unit,
-    onNavigateToActiveReservationCarDetail: (String) -> Unit
+    onNavigateToActiveReservationCarDetail: (String) -> Unit,
+    onNavigateToActiveRentalPhotoUpload: (rentalId: String, vehicleId: String) -> Unit,
+    onNavigateToActiveRentalScreen: (rentalId: String, vehicleId: String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -117,6 +119,12 @@ fun HomeRoute(
                 )
                 is HomeEffect.NavigateToActiveReservationCarDetail ->
                     onNavigateToActiveReservationCarDetail(effect.vehicleId)
+
+                is HomeEffect.NavigateToActiveRentalPhotoUpload ->
+                    onNavigateToActiveRentalPhotoUpload(effect.rentalId, effect.vehicleId)
+
+                is HomeEffect.NavigateToActiveRentalScreen ->
+                    onNavigateToActiveRentalScreen(effect.rentalId, effect.vehicleId)
             }
         }
     }

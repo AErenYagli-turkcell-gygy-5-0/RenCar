@@ -1,5 +1,6 @@
 package com.turkcell.rencar.presentation.screen.cardetail
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import com.turkcell.rencar.domain.vehicle.Vehicle
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
@@ -10,6 +11,9 @@ import com.turkcell.rencar.domain.vehicle.VehicleSegment
 import com.turkcell.rencar.domain.vehicle.VehicleStatus
 import com.turkcell.rencar.domain.vehicle.Transmission
 import com.turkcell.rencar.domain.rental.*
+import com.turkcell.rencar.domain.reservation.Reservation
+import com.turkcell.rencar.domain.reservation.ReservationRepository
+import com.turkcell.rencar.domain.reservation.ReservationResult
 import com.turkcell.rencar.presentation.navigation.RenCarDestination
 import com.turkcell.rencar.test.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +35,7 @@ class CarDetailViewModelTest {
         val viewModel = CarDetailViewModel(
             vehicleRepository = FakeVehicleRepository(),
             rentalRepository = FakeRentalRepository(),
+            reservationRepository = FakeReservationRepository(),
             savedStateHandle = SavedStateHandle(
                 mapOf(RenCarDestination.ARG_VEHICLE_ID to VEHICLE_ID)
             )
@@ -53,6 +58,35 @@ class CarDetailViewModelTest {
 
         override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> =
             RentalResult.Success(emptyList())
+
+        override suspend fun uploadRentalPhoto(rentalId: String, side: RentalPhotoSide, imageUri: Uri): RentalResult<RentalPhotosState> =
+            error("Not used by car detail")
+
+        override suspend fun getRentalPhotos(rentalId: String): RentalResult<RentalPhotosState> =
+            error("Not used by car detail")
+
+        override suspend fun startRental(rentalId: String): RentalResult<Rental> =
+            error("Not used by car detail")
+
+        override suspend fun cancelRental(rentalId: String): RentalResult<Unit> =
+            error("Not used by car detail")
+
+        override suspend fun getActiveRental(): RentalResult<ActiveRental> =
+            error("Not used by car detail")
+
+        override suspend fun finishRental(rentalId: String): RentalResult<Rental> =
+            error("Not used by car detail")
+    }
+
+    private class FakeReservationRepository : ReservationRepository {
+        override suspend fun createReservation(vehicleId: String): ReservationResult<Reservation> =
+            error("Not used by this test")
+
+        override suspend fun getActiveReservation(): ReservationResult<Reservation> =
+            error("Not used by this test")
+
+        override suspend fun cancelReservation(id: String): ReservationResult<Unit> =
+            error("Not used by this test")
     }
 
     private class FakeVehicleRepository : VehicleRepository {

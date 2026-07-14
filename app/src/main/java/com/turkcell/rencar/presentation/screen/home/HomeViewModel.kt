@@ -1,6 +1,9 @@
 package com.turkcell.rencar.presentation.screen.home
 
 import androidx.lifecycle.viewModelScope
+import com.turkcell.rencar.domain.rental.RentalRepository
+import com.turkcell.rencar.domain.rental.RentalResult
+import com.turkcell.rencar.domain.rental.RentalStatus
 import com.turkcell.rencar.domain.reservation.ReservationError
 import com.turkcell.rencar.domain.reservation.ReservationRepository
 import com.turkcell.rencar.domain.reservation.ReservationResult
@@ -18,7 +21,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val vehicleRepository: VehicleRepository,
-    private val reservationRepository: ReservationRepository
+    private val reservationRepository: ReservationRepository,
+    private val rentalRepository: RentalRepository
 ) : MviViewModel<HomeState, HomeIntent, HomeEffect>(HomeState()) {
 
     override fun onIntent(intent: HomeIntent) {
@@ -26,6 +30,8 @@ class HomeViewModel @Inject constructor(
             HomeIntent.ScreenStarted -> {
                 if (!state.value.hasCheckedActiveReservation) {
                     checkActiveReservation()
+                } else if (!state.value.hasCheckedActiveRental && state.value.activeReservationErrorMessage == null) {
+                    checkActiveRental()
                 } else if (!state.value.hasLoadedVehicles && state.value.activeReservationErrorMessage == null) {
                     loadVehicles()
                 }
@@ -162,7 +168,7 @@ class HomeViewModel @Inject constructor(
                                 activeReservationErrorMessage = null
                             )
                         }
-                        loadVehicles()
+                        checkActiveRental()
                     } else {
                         setState {
                             copy(
@@ -174,6 +180,40 @@ class HomeViewModel @Inject constructor(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // Rezervasyon kiralamaya donusunce "aktif rezervasyon" kalmaz; bu nedenle rezervasyon
+    // bulunamadiginda da kullanicinin yarim kalan foto akisi (PREPARING) veya suren yolculugu
+    // (ACTIVE) olup olmadigi kontrol edilir. Hata durumunda sessizce arac listesine dusulur
+    // (bkz. CarDetailViewModel.loadCanUnlock ile ayni orunku).
+    private fun checkActiveRental() {
+        if (state.value.isCheckingActiveRental) return
+
+        setState { copy(isCheckingActiveRental = true) }
+        viewModelScope.launch {
+            when (val result = rentalRepository.getMyRentals()) {
+                is RentalResult.Success -> {
+                    val match = result.data.firstOrNull { it.status in RESUMABLE_RENTAL_STATUSES }
+                    setState { copy(isCheckingActiveRental = false, hasCheckedActiveRental = true) }
+                    when (match?.status) {
+                        RentalStatus.PREPARING -> sendEffect {
+                            HomeEffect.NavigateToActiveRentalPhotoUpload(match.id, match.vehicleId)
+                        }
+
+                        RentalStatus.ACTIVE -> sendEffect {
+                            HomeEffect.NavigateToActiveRentalScreen(match.id, match.vehicleId)
+                        }
+
+                        else -> loadVehicles()
+                    }
+                }
+
+                is RentalResult.Failure -> {
+                    setState { copy(isCheckingActiveRental = false, hasCheckedActiveRental = true) }
+                    loadVehicles()
                 }
             }
         }
@@ -208,6 +248,7 @@ class HomeViewModel @Inject constructor(
         const val UNEXPECTED_ERROR_MESSAGE = "Araclar yuklenemedi. Lutfen tekrar deneyin."
         const val ACTIVE_RESERVATION_ERROR_MESSAGE =
             "Aktif rezervasyon durumu kontrol edilemedi. Lutfen tekrar deneyin."
+        val RESUMABLE_RENTAL_STATUSES = setOf(RentalStatus.PREPARING, RentalStatus.ACTIVE)
     }
 }
 

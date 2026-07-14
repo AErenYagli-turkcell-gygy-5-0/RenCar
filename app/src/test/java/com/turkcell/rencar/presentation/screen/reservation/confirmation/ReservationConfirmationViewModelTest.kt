@@ -1,5 +1,6 @@
 package com.turkcell.rencar.presentation.screen.reservation.confirmation
 
+import android.net.Uri
 import com.turkcell.rencar.domain.rental.*
 import com.turkcell.rencar.domain.reservation.*
 import com.turkcell.rencar.domain.vehicle.*
@@ -55,7 +56,10 @@ class ReservationConfirmationViewModelTest {
 
         assertEquals(RentalPlan.PER_MINUTE, rentalRepository.requestedPlan)
         assertNull(rentalRepository.requestedEndDate)
-        assertEquals(ReservationConfirmationEffect.ReservationCreated(RENTAL_ID), viewModel.effect.first())
+        assertEquals(
+            ReservationConfirmationEffect.ReservationCreated(RENTAL_ID, VEHICLE_ID, isPreparing = true),
+            viewModel.effect.first()
+        )
     }
 
     private fun createViewModel(
@@ -81,11 +85,34 @@ class ReservationConfirmationViewModelTest {
             return RentalResult.Success(Rental(RENTAL_ID, "user-1", vehicleId, plan, "2026-07-14T10:00:00.000Z", endDate, null, "PREPARING", "2026-07-14T10:00:00.000Z"))
         }
         override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> = RentalResult.Success(emptyList())
+        override suspend fun uploadRentalPhoto(rentalId: String, side: RentalPhotoSide, imageUri: Uri): RentalResult<RentalPhotosState> =
+            error("Not used")
+        override suspend fun getRentalPhotos(rentalId: String): RentalResult<RentalPhotosState> = error("Not used")
+        override suspend fun startRental(rentalId: String): RentalResult<Rental> = error("Not used")
+        override suspend fun cancelRental(rentalId: String): RentalResult<Unit> = error("Not used")
+        override suspend fun getActiveRental(): RentalResult<ActiveRental> = error("Not used")
+        override suspend fun finishRental(rentalId: String): RentalResult<Rental> = error("Not used")
     }
 
     private class FakeReservationRepository : ReservationRepository {
         override suspend fun createReservation(vehicleId: String) = ReservationResult.Success(
-            Reservation("reservation-1", vehicleId, ReservationStatus.ACTIVE, "2026-07-14T10:15:00.000Z", 900)
+            Reservation(
+                id = "reservation-1",
+                vehicleId = vehicleId,
+                vehicle = ReservationVehicleSummary(
+                    id = vehicleId,
+                    plate = vehicle.plate,
+                    brand = vehicle.brand,
+                    model = vehicle.model,
+                    type = vehicle.type,
+                    latitude = vehicle.latitude,
+                    longitude = vehicle.longitude,
+                    pricePerMinute = vehicle.pricePerMinute
+                ),
+                status = ReservationStatus.ACTIVE,
+                expiresAt = "2026-07-14T10:15:00.000Z",
+                remainingSeconds = 900
+            )
         )
         override suspend fun getActiveReservation(): ReservationResult<Reservation> = error("Not used")
         override suspend fun cancelReservation(id: String): ReservationResult<Unit> = error("Not used")

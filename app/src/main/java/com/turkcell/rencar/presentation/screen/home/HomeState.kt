@@ -16,6 +16,8 @@ data class HomeState(
     val isCheckingActiveReservation: Boolean = false,
     val hasCheckedActiveReservation: Boolean = false,
     val activeReservationErrorMessage: String? = null,
+    val isCheckingActiveRental: Boolean = false,
+    val hasCheckedActiveRental: Boolean = false,
     val isVehiclesLoading: Boolean = false,
     val hasLoadedVehicles: Boolean = false,
     val vehiclesErrorMessage: String? = null,

@@ -42,6 +42,23 @@ class CarDetailViewModel @Inject constructor(
             CarDetailIntent.RetryClicked -> loadVehicle()
             CarDetailIntent.BackClicked -> sendEffect { CarDetailEffect.NavigateBack }
             CarDetailIntent.ReserveClicked -> navigateToReservationConfirmation()
+            CarDetailIntent.UnlockClicked -> handleUnlockClicked()
+        }
+    }
+
+    private fun handleUnlockClicked() {
+        val currentState = state.value
+        val rentalId = currentState.unlockRentalId ?: return
+        when (currentState.unlockRentalStatus) {
+            RentalStatus.PREPARING -> sendEffect {
+                CarDetailEffect.NavigateToRentalPhotoUpload(rentalId, currentState.vehicleId)
+            }
+
+            RentalStatus.ACTIVE -> sendEffect {
+                CarDetailEffect.NavigateToActiveRental(rentalId, currentState.vehicleId)
+            }
+
+            else -> Unit
         }
     }
 
@@ -157,15 +174,23 @@ class CarDetailViewModel @Inject constructor(
     private fun loadCanUnlock() {
         viewModelScope.launch {
             when (val result = rentalRepository.getMyRentals()) {
-                is RentalResult.Success -> setState {
-                    copy(
-                        canUnlock = result.data.any {
-                            it.vehicleId == vehicleId && it.status in UNLOCKABLE_RENTAL_STATUSES
-                        }
-                    )
+                is RentalResult.Success -> {
+                    val currentVehicleId = state.value.vehicleId
+                    val match = result.data.firstOrNull {
+                        it.vehicleId == currentVehicleId && it.status in UNLOCKABLE_RENTAL_STATUSES
+                    }
+                    setState {
+                        copy(
+                            canUnlock = match != null,
+                            unlockRentalId = match?.id,
+                            unlockRentalStatus = match?.status
+                        )
+                    }
                 }
 
-                is RentalResult.Failure -> setState { copy(canUnlock = false) }
+                is RentalResult.Failure -> setState {
+                    copy(canUnlock = false, unlockRentalId = null, unlockRentalStatus = null)
+                }
             }
         }
     }

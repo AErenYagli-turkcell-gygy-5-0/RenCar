@@ -132,7 +132,13 @@ class ReservationConfirmationViewModel @Inject constructor(
         when (val result = rentalRepository.createRental(currentState.vehicleId, currentState.selectedPlan, endDate)) {
             is RentalResult.Success -> {
                 setState { copy(isSubmitting = false) }
-                sendEffect { ReservationConfirmationEffect.ReservationCreated(result.data.id) }
+                sendEffect {
+                    ReservationConfirmationEffect.ReservationCreated(
+                        rentalId = result.data.id,
+                        vehicleId = currentState.vehicleId,
+                        isPreparing = result.data.status == RENTAL_STATUS_PREPARING
+                    )
+                }
             }
             is RentalResult.Failure -> setState {
                 copy(isSubmitting = false, error = result.error.toPresentationError())
@@ -177,5 +183,6 @@ class ReservationConfirmationViewModel @Inject constructor(
 
     private companion object {
         const val ISO_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        const val RENTAL_STATUS_PREPARING = "PREPARING"
     }
 }
