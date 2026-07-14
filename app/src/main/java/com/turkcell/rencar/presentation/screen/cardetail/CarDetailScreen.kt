@@ -70,7 +70,9 @@ fun CarDetailRoute(
     modifier: Modifier = Modifier,
     viewModel: CarDetailViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToReservationConfirmation: (vehicleId: String) -> Unit
+    onNavigateToReservationConfirmation: (vehicleId: String) -> Unit,
+    onNavigateToRentalPhotoUpload: (rentalId: String, vehicleId: String) -> Unit,
+    onNavigateToActiveRental: (rentalId: String, vehicleId: String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -81,6 +83,12 @@ fun CarDetailRoute(
                 CarDetailEffect.NavigateBack -> onNavigateBack()
                 is CarDetailEffect.NavigateToReservationConfirmation ->
                     onNavigateToReservationConfirmation(effect.vehicleId)
+
+                is CarDetailEffect.NavigateToRentalPhotoUpload ->
+                    onNavigateToRentalPhotoUpload(effect.rentalId, effect.vehicleId)
+
+                is CarDetailEffect.NavigateToActiveRental ->
+                    onNavigateToActiveRental(effect.rentalId, effect.vehicleId)
             }
         }
     }
@@ -370,7 +378,7 @@ private fun CarDetailContent(
             )
         }
         Button(
-            onClick = {},
+            onClick = { onIntent(CarDetailIntent.UnlockClicked) },
             enabled = state.canUnlock,
             modifier = Modifier
                 .weight(1f)

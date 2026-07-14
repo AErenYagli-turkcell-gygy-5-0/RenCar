@@ -1,5 +1,7 @@
 package com.turkcell.rencar.domain.rental
 
+import android.net.Uri
+
 interface RentalRepository {
     suspend fun createRental(
         vehicleId: String,
@@ -8,4 +10,20 @@ interface RentalRepository {
     ): RentalResult<Rental>
 
     suspend fun getMyRentals(): RentalResult<List<RentalSummary>>
+
+    suspend fun uploadRentalPhoto(
+        rentalId: String,
+        side: RentalPhotoSide,
+        imageUri: Uri
+    ): RentalResult<RentalPhotosState>
+
+    suspend fun getRentalPhotos(rentalId: String): RentalResult<RentalPhotosState>
+
+    suspend fun startRental(rentalId: String): RentalResult<Rental>
+
+    suspend fun cancelRental(rentalId: String): RentalResult<Unit>
+
+    suspend fun getActiveRental(): RentalResult<ActiveRental>
+
+    suspend fun finishRental(rentalId: String): RentalResult<Rental>
 }
