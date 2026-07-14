@@ -22,7 +22,7 @@ android {
         buildConfigField(
             type = "String",
             name = "API_BASE_URL",
-            value = "\"https://rencar.halitkalayci.com/\""
+            value = "\"https://rencarv2.halitkalayci.com/\""
         )
     }
 
