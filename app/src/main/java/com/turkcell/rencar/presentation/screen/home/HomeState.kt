@@ -13,6 +13,9 @@ data class HomeState(
     // false: izin kalıcı reddedildi, sistem diyaloğu artık gösterilemez; Ayarlar'a yönlendirilmeli.
     val canRequestPermission: Boolean = true,
     val vehicles: List<VehicleMarker> = emptyList(),
+    val isCheckingActiveReservation: Boolean = false,
+    val hasCheckedActiveReservation: Boolean = false,
+    val activeReservationErrorMessage: String? = null,
     val isVehiclesLoading: Boolean = false,
     val hasLoadedVehicles: Boolean = false,
     val vehiclesErrorMessage: String? = null,

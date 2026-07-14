@@ -3,11 +3,14 @@ package com.turkcell.rencar.data.repository.reservation
 import com.turkcell.rencar.data.remote.reservation.ReservationApiService
 import com.turkcell.rencar.data.remote.reservation.dto.CreateReservationRequestDto
 import com.turkcell.rencar.data.remote.reservation.dto.ReservationResponseDto
+import com.turkcell.rencar.data.remote.reservation.dto.ReservationVehicleSummaryDto
 import com.turkcell.rencar.domain.reservation.Reservation
 import com.turkcell.rencar.domain.reservation.ReservationError
 import com.turkcell.rencar.domain.reservation.ReservationRepository
 import com.turkcell.rencar.domain.reservation.ReservationResult
 import com.turkcell.rencar.domain.reservation.ReservationStatus
+import com.turkcell.rencar.domain.reservation.ReservationVehicleSummary
+import com.turkcell.rencar.domain.vehicle.VehicleType
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
@@ -76,10 +79,25 @@ class ApiReservationRepository @Inject constructor(
 private fun ReservationResponseDto.toDomain() = Reservation(
     id = id,
     vehicleId = vehicleId,
+    vehicle = vehicle.toDomain(),
     status = status.toReservationStatusOrDefault(),
     expiresAt = expiresAt,
     remainingSeconds = remainingSeconds
 )
 
+private fun ReservationVehicleSummaryDto.toDomain() = ReservationVehicleSummary(
+    id = id,
+    plate = plate,
+    brand = brand,
+    model = model,
+    type = type.toVehicleTypeOrDefault(),
+    latitude = latitude,
+    longitude = longitude,
+    pricePerMinute = pricePerMinute
+)
+
 private fun String?.toReservationStatusOrDefault(): ReservationStatus =
     this?.let { runCatching { ReservationStatus.valueOf(it) }.getOrNull() } ?: ReservationStatus.EXPIRED
+
+private fun String?.toVehicleTypeOrDefault(): VehicleType =
+    this?.let { runCatching { VehicleType.valueOf(it) }.getOrNull() } ?: VehicleType.SEDAN

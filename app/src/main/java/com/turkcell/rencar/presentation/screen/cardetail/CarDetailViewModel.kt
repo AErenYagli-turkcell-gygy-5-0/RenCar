@@ -5,9 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
 import com.turkcell.rencar.domain.rental.RentalStatus
+import com.turkcell.rencar.domain.reservation.Reservation
+import com.turkcell.rencar.domain.reservation.ReservationRepository
+import com.turkcell.rencar.domain.reservation.ReservationResult
 import com.turkcell.rencar.domain.vehicle.VehicleError
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import com.turkcell.rencar.domain.vehicle.VehicleResult
+import com.turkcell.rencar.domain.vehicle.VehicleStatus
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import com.turkcell.rencar.presentation.navigation.RenCarDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +22,7 @@ import javax.inject.Inject
 class CarDetailViewModel @Inject constructor(
     private val vehicleRepository: VehicleRepository,
     private val rentalRepository: RentalRepository,
+    private val reservationRepository: ReservationRepository,
     savedStateHandle: SavedStateHandle
 ) : MviViewModel<CarDetailState, CarDetailIntent, CarDetailEffect>(
     CarDetailState(
@@ -42,7 +47,14 @@ class CarDetailViewModel @Inject constructor(
 
     private fun navigateToReservationConfirmation() {
         val currentState = state.value
-        if (!currentState.hasLoaded || currentState.errorMessage != null || currentState.vehicleId.isBlank()) return
+        if (
+            !currentState.hasLoaded ||
+            currentState.errorMessage != null ||
+            currentState.vehicleId.isBlank() ||
+            currentState.isActiveReservationVehicle
+        ) {
+            return
+        }
 
         sendEffect {
             CarDetailEffect.NavigateToReservationConfirmation(currentState.vehicleId)
@@ -73,23 +85,75 @@ class CarDetailViewModel @Inject constructor(
                         segment = result.data.segment,
                         status = result.data.status,
                         vehicleLatitude = result.data.latitude,
-                        vehicleLongitude = result.data.longitude
+                        vehicleLongitude = result.data.longitude,
+                        hasFullVehicleDetails = true,
+                        isActiveReservationVehicle = false
                     )
                 }
 
-                is VehicleResult.Failure -> setState {
-                    copy(
-                        isLoading = false,
-                        hasLoaded = true,
-                        errorMessage = result.error.toMessage()
-                    )
+                is VehicleResult.Failure -> {
+                    if (result.error == VehicleError.NotFound) {
+                        loadActiveReservationVehicleSummary()
+                    } else {
+                        setState {
+                            copy(
+                                isLoading = false,
+                                hasLoaded = true,
+                                errorMessage = result.error.toMessage()
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 
-    // "Kilidi Aç" yalnızca bu araçta PREPARING/ACTIVE bir kiralamamız varsa aktif olmalı;
-    // hata durumunda sessizce pasif kalır (buton zaten bugün onClick={} — yalnızca kapatılıyor).
+    private suspend fun loadActiveReservationVehicleSummary() {
+        when (val result = reservationRepository.getActiveReservation()) {
+            is ReservationResult.Success -> {
+                val reservation = result.data
+                if (reservation.vehicleId == state.value.vehicleId) {
+                    setState { applyActiveReservation(reservation) }
+                } else {
+                    setState {
+                        copy(
+                            isLoading = false,
+                            hasLoaded = true,
+                            errorMessage = VehicleError.NotFound.toMessage()
+                        )
+                    }
+                }
+            }
+
+            is ReservationResult.Failure -> setState {
+                copy(
+                    isLoading = false,
+                    hasLoaded = true,
+                    errorMessage = VehicleError.NotFound.toMessage()
+                )
+            }
+        }
+    }
+
+    private fun CarDetailState.applyActiveReservation(reservation: Reservation): CarDetailState =
+        copy(
+            isLoading = false,
+            hasLoaded = true,
+            errorMessage = null,
+            brand = reservation.vehicle.brand,
+            model = reservation.vehicle.model,
+            plate = reservation.vehicle.plate,
+            type = reservation.vehicle.type,
+            pricePerMinute = reservation.vehicle.pricePerMinute,
+            status = VehicleStatus.RESERVED,
+            vehicleLatitude = reservation.vehicle.latitude,
+            vehicleLongitude = reservation.vehicle.longitude,
+            hasFullVehicleDetails = false,
+            isActiveReservationVehicle = true
+        )
+
+    // "Kilidi Aç" yalnızca bu araçta PREPARING/ACTIVE bir kiralamamız varsa aktif olmalı.
+    // Hata durumunda sessizce pasif kalır.
     private fun loadCanUnlock() {
         viewModelScope.launch {
             when (val result = rentalRepository.getMyRentals()) {
