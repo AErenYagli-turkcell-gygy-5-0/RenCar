@@ -104,7 +104,8 @@ class LicenseUploadViewModelTest {
 
         override suspend fun uploadLicense(
             frontImageUri: android.net.Uri,
-            backImageUri: android.net.Uri
+            backImageUri: android.net.Uri,
+            selfieJpegBytes: ByteArray
         ): LicenseResult<UploadedLicense> {
             uploadCount++
             status = LicenseReviewStatus.UNDER_REVIEW

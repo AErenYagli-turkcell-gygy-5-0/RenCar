@@ -8,6 +8,28 @@
 
 ---
 
+## 2026-07-15 - Ehliyet Yuklemede Selfie Multipart Alaninin API Sozlesmesine Eklenmesi
+
+**Karar:** Guncel `docs/api/openapi.json` sozlesmesine gore `POST /license/upload` artik
+`front`, `back` ve `selfie` multipart alanlarini zorunlu kabul eder. Bu nedenle ehliyet dogrulama
+akisi, Selfie adiminda `TakePicturePreview()` ile uretilen JPEG byte dizisini `selfie` alan adiyla
+backend'e gonderir. `front` ve `back` alan adlari korunur.
+
+**Gerekce:** Onceki kararlarda backend'in selfie alani saglamadigi kabul edilmisti; guncel OpenAPI
+bu varsayimi degistirmistir. Selfie'nin yalnizca lokal profil fotografi olarak tutulmasi yeni
+backend sozlesmesiyle eksik multipart istegi olusturur ve `400` hata cevabina yol acabilir.
+
+**Kapsam disi:** Register akisi bu kararda degistirilmedi. `POST /auth/register` zorunlu request
+alanlari mevcut istemciyle uyumludur; opsiyonel `referralCode` ve register sonrasi token/OTP urun
+karari ayri kapsamda degerlendirilecektir.
+
+**Etkilenen alanlar:**
+- `domain/license/`, `data/remote/license/`, `data/repository/license/`
+- `presentation/screen/auth/license/`
+- `presentation/screen/profile/` test fake'leri
+
+---
+
 ## 2026-07-14 - Aktif Kiralama Ekranı Yeniden Tasarımı, Harita Takibi ve Ana Sayfa Bildirim Çipi
 
 **Karar (ekran yeniden tasarımı):** Kullanıcının paylaştığı ekran görüntüsüne (`img.png`) göre

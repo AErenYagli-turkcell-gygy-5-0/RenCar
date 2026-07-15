@@ -201,7 +201,8 @@ class ProfileViewModelTest {
     ) : LicenseRepository {
         override suspend fun uploadLicense(
             frontImageUri: android.net.Uri,
-            backImageUri: android.net.Uri
+            backImageUri: android.net.Uri,
+            selfieJpegBytes: ByteArray
         ): LicenseResult<UploadedLicense> =
             LicenseResult.Failure(LicenseError.Unexpected)
 
