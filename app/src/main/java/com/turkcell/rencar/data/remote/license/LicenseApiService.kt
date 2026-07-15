@@ -14,7 +14,8 @@ interface LicenseApiService {
     @POST("license/upload")
     suspend fun upload(
         @Part front: MultipartBody.Part,
-        @Part back: MultipartBody.Part
+        @Part back: MultipartBody.Part,
+        @Part selfie: MultipartBody.Part
     ): LicenseResponseDto
 
     @GET("license/status")
