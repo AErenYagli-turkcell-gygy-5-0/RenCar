@@ -101,6 +101,9 @@ class ApiRentalRepositoryTest {
             id = RENTAL_ID,
             vehicleId = VEHICLE_ID,
             status = "ACTIVE",
+            plan = RentalPlan.PER_MINUTE.name,
+            startFee = 15.0,
+            startedAt = "2026-07-10T10:00:00.000Z",
             elapsedSeconds = 1264L,
             currentCost = 156.5,
             distanceKm = 12.4
@@ -108,6 +111,9 @@ class ApiRentalRepositoryTest {
 
         assertEquals(RENTAL_ID, activeRental.id)
         assertEquals(RentalStatus.ACTIVE, activeRental.status)
+        assertEquals(RentalPlan.PER_MINUTE, activeRental.plan)
+        assertEquals(15.0, activeRental.startFee, 0.0)
+        assertEquals("2026-07-10T10:00:00.000Z", activeRental.startedAt)
         assertEquals(1264L, activeRental.elapsedSeconds)
         assertEquals(156.5, activeRental.currentCost, 0.0)
         assertEquals(12.4, activeRental.distanceKm, 0.0)
