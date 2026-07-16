@@ -173,9 +173,15 @@ private fun PriceCard(state: ReservationConfirmationState) {
     CardSurface {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 15.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             PriceRow(stringResource(R.string.reservation_free_hold), stringResource(R.string.reservation_free_hold_duration))
+            PriceRow(stringResource(R.string.reservation_usage_fee), state.usageFee.toTryPrice())
             PriceRow(stringResource(R.string.reservation_start_fee), state.startFee.toTryPrice())
+            PriceRow(stringResource(R.string.reservation_service_fee), state.serviceFee.toTryPrice())
             PriceRow(
-                stringResource(R.string.reservation_estimated_duration, state.quoteMinutes),
+                when (state.selectedPlan) {
+                    RentalPlan.PER_MINUTE -> stringResource(R.string.reservation_estimated_minutes, state.quoteMinutes)
+                    RentalPlan.HOURLY -> stringResource(R.string.reservation_estimated_first_hour)
+                    RentalPlan.DAILY -> stringResource(R.string.reservation_estimated_one_day)
+                },
                 if (state.isQuoteLoading) stringResource(R.string.reservation_calculating) else stringResource(R.string.reservation_estimated_price, state.estimatedTotal.toTryPrice()),
                 true
             )
@@ -252,7 +258,8 @@ private fun Double.toTryPrice(): String = "₺" + NumberFormat.getNumberInstance
 private val previewState = ReservationConfirmationState(
     vehicleId = "vehicle-1", vehicleName = "Renault Clio", plate = "34 RNC 022", seats = 5,
     fuelPercent = 72.0, pricePerMinute = 4.5, pricePerHour = 180.0, pricePerDay = 1450.0,
-    startFee = 15.0, estimatedTotal = 135.0, hasLoaded = true, hasQuote = true, termsAccepted = true
+    usageFee = 120.0, startFee = 15.0, serviceFee = 6.0, estimatedTotal = 141.0,
+    hasLoaded = true, hasQuote = true, termsAccepted = true
 )
 
 @Preview(showBackground = true) @Composable private fun LightPreview() = RenCarTheme(false) { ReservationConfirmationScreen(previewState, {}) }

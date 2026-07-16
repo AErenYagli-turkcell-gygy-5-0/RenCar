@@ -26,7 +26,9 @@ class ReservationConfirmationViewModelTest {
 
         assertEquals("Renault Clio", viewModel.state.value.vehicleName)
         assertEquals(72.0, viewModel.state.value.fuelPercent, 0.0)
+        assertEquals(120.0, viewModel.state.value.usageFee, 0.0)
         assertEquals(15.0, viewModel.state.value.startFee, 0.0)
+        assertEquals(0.0, viewModel.state.value.serviceFee, 0.0)
         assertEquals(135.0, viewModel.state.value.estimatedTotal, 0.0)
         assertTrue(viewModel.state.value.hasQuote)
     }
@@ -42,6 +44,11 @@ class ReservationConfirmationViewModelTest {
 
         assertEquals(RentalPlan.HOURLY, viewModel.state.value.selectedPlan)
         assertEquals(RentalPlan.HOURLY.name, vehicleRepository.requestedPlan)
+        assertEquals(30, vehicleRepository.requestedMinutes)
+        assertEquals(120.0, viewModel.state.value.usageFee, 0.0)
+        assertEquals(15.0, viewModel.state.value.startFee, 0.0)
+        assertEquals(0.0, viewModel.state.value.serviceFee, 0.0)
+        assertEquals(135.0, viewModel.state.value.estimatedTotal, 0.0)
     }
 
     @Test
@@ -69,10 +76,12 @@ class ReservationConfirmationViewModelTest {
 
     private class FakeVehicleRepository : VehicleRepository {
         var requestedPlan: String? = null
+        var requestedMinutes: Int? = null
         override suspend fun listAvailableVehicles(type: VehicleType?) = VehicleResult.Success(listOf(vehicle))
         override suspend fun getVehicle(id: String) = VehicleResult.Success(vehicle)
         override suspend fun getQuote(id: String, plan: String, minutes: Int): VehicleResult<VehicleQuote> {
             requestedPlan = plan
+            requestedMinutes = minutes
             return VehicleResult.Success(VehicleQuote(id, plan, minutes, 120.0, 15.0, 0.0, 135.0))
         }
     }
@@ -85,6 +94,10 @@ class ReservationConfirmationViewModelTest {
             return RentalResult.Success(Rental(RENTAL_ID, "user-1", vehicleId, plan, "2026-07-14T10:00:00.000Z", endDate, null, "PREPARING", "2026-07-14T10:00:00.000Z"))
         }
         override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> = RentalResult.Success(emptyList())
+        override suspend fun getRentalHistory(): RentalResult<List<RentalHistoryItem>> =
+            RentalResult.Success(emptyList())
+        override suspend fun getRentalStats(): RentalResult<RentalStats> =
+            RentalResult.Success(RentalStats(0, 0.0, 0.0, 0.0))
         override suspend fun uploadRentalPhoto(rentalId: String, side: RentalPhotoSide, imageUri: Uri): RentalResult<RentalPhotosState> =
             error("Not used")
         override suspend fun getRentalPhotos(rentalId: String): RentalResult<RentalPhotosState> = error("Not used")

@@ -96,7 +96,9 @@ class ReservationConfirmationViewModel @Inject constructor(
                 is VehicleResult.Success -> if (state.value.selectedPlan == plan) {
                     setState {
                         copy(
+                            usageFee = result.data.usageFee,
                             startFee = result.data.startFee,
+                            serviceFee = result.data.serviceFee,
                             estimatedTotal = result.data.estimatedTotal,
                             isQuoteLoading = false,
                             hasQuote = true,

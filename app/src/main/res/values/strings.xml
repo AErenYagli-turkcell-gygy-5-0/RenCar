@@ -166,7 +166,11 @@
     <string name="reservation_free_hold">Ücretsiz rezervasyon</string>
     <string name="reservation_free_hold_duration">15 dk</string>
     <string name="reservation_start_fee">Başlangıç ücreti</string>
-    <string name="reservation_estimated_duration">Tahmini ücret (%1$d dk)</string>
+    <string name="reservation_usage_fee">Kullanım ücreti</string>
+    <string name="reservation_service_fee">Servis ücreti</string>
+    <string name="reservation_estimated_minutes">%1$d dakika için tahmini toplam</string>
+    <string name="reservation_estimated_first_hour">İlk saat için tahmini toplam</string>
+    <string name="reservation_estimated_one_day">1 gün için tahmini toplam</string>
     <string name="reservation_calculating">Hesaplanıyor…</string>
     <string name="reservation_price_per_day">%1$s/gün</string>
     <string name="reservation_daily_fee">Günlük ücret</string>
