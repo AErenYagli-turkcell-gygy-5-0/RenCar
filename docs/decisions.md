@@ -8,6 +8,51 @@
 
 ---
 
+## 2026-07-16 - Aktif Rezervasyonun Home'da Gorunmesi ve Yeni Rezervasyon Engeli
+
+**Karar:** Kullanici aktif rezervasyona sahipse Home ekrani artik otomatik olarak arac detayina
+yonlendirmez. Aktif rezervasyon state'te tutulur; `GET /vehicles` yalnizca musait araclari dondurse
+bile rezerve edilen arac `GET /reservations/active` yanitindaki arac ozetiyle harita marker listesine
+eklenir ve "Rezerve" etiketiyle ayrilir. Home'da aktif rezervasyon banner'i gosterilir; banner veya
+marker tiklandiginda rezerve edilen aracin detayina gidilir.
+
+**Yeni rezervasyon engeli:** Aktif rezervasyon baska bir araca aitse CarDetail ekraninda `Rezerve Et`
+pasif kalir ve kullaniciya aktif rezervasyonu varken baska arac rezerve edemeyecegi aciklanir. Backend
+409 korumasi yine asil sozlesme guvencesidir; istemci bu durumu daha erken ve anlasilir gosterir.
+
+**Etkilenen alanlar:**
+- `presentation/screen/home/`
+- `presentation/component/map/`
+- `presentation/screen/cardetail/`
+
+---
+
+## 2026-07-16 - Rezervasyondan Sonra Kilidi Ac ile Kiralamayi Baslatma
+
+**Karar:** Rezervasyon onayi artik `POST /reservations` sonrasinda hemen `POST /rentals`
+cagirmayacak. Basarili rezervasyon sonrasi kullanici, rezerve ettigi aracin detay ekranina geri
+yonlendirilir. Bu ekranda `Kilidi Ac` butonu aktif olur; kullanici bu butona bastiginda secili plan
+ile `POST /rentals` cagrilir. Donen kiralama `PREPARING` ise mevcut arac teslim fotografi ekranina,
+`ACTIVE` ise mevcut aktif kiralama ekranina gidilir.
+
+**Gerekce:** `openapi.json` sozlesmesine gore PER_MINUTE/HOURLY kiralama PREPARING durumunda
+olusturulur, 4 fotograf yuklenip `POST /rentals/:id/start` cagrildiktan sonra ACTIVE olur. Bu nedenle
+rezervasyon tamamlanir tamamlanmaz fotograf ekranina gecmek, kullanicinin "once arac detayini gor,
+sonra kilidi ac" beklentisini karsilamaz.
+
+**Plan bilgisi siniri:** `ReservationResponseDto` secilen kiralama planini dondurmez. Bu nedenle
+rezervasyon onayi ekraninda secilen plan, istemci tarafinda `CarDetail` rotasina opsiyonel query
+parametresi olarak tasinir. Uygulama yeniden acildiginda yalnizca `GET /reservations/active` ile
+bulunan rezervasyonlarda plan backend'den okunamadigi icin kilit acma plani ayrica urun/backend
+kararina ihtiyac duyar; istemci bu bilgiyi uydurmaz.
+
+**Etkilenen alanlar:**
+- `presentation/screen/reservation/confirmation/`
+- `presentation/screen/cardetail/`
+- `presentation/navigation/`
+
+---
+
 ## 2026-07-16 - Kiralama Geçmişi Görsel Hiyerarşisinin Güçlendirilmesi
 
 **Karar:** Geçmiş ekranının domain, repository ve MVI sözleşmeleri değiştirilmeden sunum katmanı
