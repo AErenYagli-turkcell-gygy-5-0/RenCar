@@ -88,7 +88,7 @@ class LicenseUploadViewModel @Inject constructor(
 
         setState { copy(isUploading = true, errorMessage = null) }
         viewModelScope.launch {
-            when (val result = licenseRepository.uploadLicense(frontImageUri, backImageUri)) {
+            when (val result = licenseRepository.uploadLicense(frontImageUri, backImageUri, selfiePreview)) {
                 is LicenseResult.Success -> {
                     saveSelfieAsProfilePhoto(selfiePreview)
                     setState {
