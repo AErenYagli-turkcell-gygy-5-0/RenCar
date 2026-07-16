@@ -41,6 +41,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -335,7 +336,7 @@ private fun CarDetailContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SpecChip(text = stringResource(state.type.labelRes()), modifier = Modifier.weight(1f))
-            SpecChip(text = stringResource(state.segment.labelRes()), modifier = Modifier.weight(1f))
+            SegmentSpecChip(segment = state.segment, modifier = Modifier.weight(1f))
             SpecChip(text = stringResource(state.transmission.labelRes()), modifier = Modifier.weight(1f))
         }
 
@@ -349,8 +350,9 @@ private fun CarDetailContent(
                 text = stringResource(R.string.car_detail_spec_seats, state.seats),
                 modifier = Modifier.weight(1f)
             )
-            SpecChip(
+            FuelSpecChip(
                 text = stringResource(R.string.car_detail_spec_fuel, state.fuelPercent.roundToInt()),
+                fuelPercent = state.fuelPercent,
                 modifier = Modifier.weight(1f)
             )
             SpecChip(
@@ -411,6 +413,54 @@ private fun SpecChip(text: String, modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+private fun SegmentSpecChip(segment: VehicleSegment, modifier: Modifier = Modifier) {
+    val segmentColor = segment.chipColor()
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(segmentColor.copy(alpha = STATUS_CONTAINER_ALPHA))
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(segment.labelRes()),
+            style = MaterialTheme.typography.labelMedium,
+            color = segmentColor
+        )
+    }
+}
+
+@Composable
+private fun FuelSpecChip(text: String, fuelPercent: Double, modifier: Modifier = Modifier) {
+    val fillColor = when {
+        fuelPercent <= FUEL_CRITICAL_THRESHOLD -> MaterialTheme.colorScheme.error
+        fuelPercent <= FUEL_LOW_THRESHOLD -> MaterialTheme.extendedColors.warning
+        else -> MaterialTheme.extendedColors.success
+    }
+    val fillFraction = (fuelPercent / 100.0).coerceIn(0.0, 1.0).toFloat()
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .drawBehind {
+                drawRect(
+                    color = fillColor,
+                    size = size.copy(width = size.width * fillFraction)
+                )
+            }
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
 private data class StatusPresentation(
     val labelRes: Int,
     val contentColor: Color,
@@ -458,6 +508,13 @@ private fun VehicleSegment.labelRes(): Int = when (this) {
     VehicleSegment.SUV -> R.string.car_detail_segment_suv
 }
 
+@Composable
+private fun VehicleSegment.chipColor(): Color = when (this) {
+    VehicleSegment.ECONOMY -> MaterialTheme.extendedColors.categoryEconomic
+    VehicleSegment.COMFORT -> MaterialTheme.extendedColors.categoryPremium
+    VehicleSegment.SUV -> MaterialTheme.extendedColors.categorySuv
+}
+
 private fun Transmission.labelRes(): Int = when (this) {
     Transmission.MANUAL -> R.string.car_detail_transmission_manual
     Transmission.AUTOMATIC -> R.string.car_detail_transmission_automatic
@@ -487,3 +544,5 @@ private val TURKISH_LOCALE: Locale = Locale.forLanguageTag("tr-TR")
 private const val MAP_SCRIM_ALPHA = 0.35f
 private const val STATUS_CONTAINER_ALPHA = 0.15f
 private const val METERS_IN_KILOMETER = 1000.0
+private const val FUEL_LOW_THRESHOLD = 50.0
+private const val FUEL_CRITICAL_THRESHOLD = 15.0
