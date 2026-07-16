@@ -3,6 +3,7 @@ package com.turkcell.rencar.presentation.screen.wallet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -42,6 +44,7 @@ import com.turkcell.rencar.domain.cards.Card
 import com.turkcell.rencar.domain.cards.CardBrand
 import com.turkcell.rencar.domain.wallet.WalletTransaction
 import com.turkcell.rencar.domain.wallet.WalletTransactionType
+import com.turkcell.rencar.presentation.component.card.CardBrandBadge
 import com.turkcell.rencar.presentation.component.navigation.BottomNavBar
 import java.text.NumberFormat
 import java.util.Locale
@@ -118,7 +121,16 @@ fun WalletScreen(
                             .height(46.dp),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text(text = stringResource(R.string.wallet_topup_action), fontWeight = FontWeight.Bold)
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.wallet_topup_action),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 6.dp)
+                        )
                     }
                 }
             }
@@ -133,13 +145,24 @@ fun WalletScreen(
                     text = stringResource(R.string.wallet_cards_title),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
-                Text(
-                    text = stringResource(R.string.wallet_add_card_action),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { onIntent(WalletIntent.AddCardClicked) }
-                )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_add),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.wallet_add_card_action),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
             }
 
             if (state.cards.isEmpty()) {
@@ -235,9 +258,10 @@ private fun CardRow(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            CardBrandBadge(brand = card.brand, modifier = Modifier.padding(end = 12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${card.brand.name} •••• ${card.last4}",
+                    text = "•••• ${card.last4}",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                 )
                 Text(
@@ -332,18 +356,43 @@ private fun DeleteCardConfirmDialog(
 
 @Composable
 private fun TransactionRow(transaction: WalletTransaction) {
+    val isCredit = transaction.type != WalletTransactionType.RENTAL_PAYMENT
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 11.dp)
+            .padding(vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .background(
+                    color = if (isCredit) {
+                        RenCarSuccessColor.copy(alpha = 0.14f)
+                    } else {
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.14f)
+                    },
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = if (isCredit) R.drawable.ic_add else R.drawable.ic_rencar_car),
+                contentDescription = null,
+                tint = if (isCredit) RenCarSuccessColor else MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 12.dp)
+        ) {
             Text(
                 text = transaction.description,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
             )
         }
-        val isCredit = transaction.type != WalletTransactionType.RENTAL_PAYMENT
         Text(
             text = "${if (isCredit) "+" else ""}${transaction.amount.toTryPrice()}",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),

@@ -266,7 +266,7 @@
     <string name="wallet_balance_label">Rencar bakiyesi</string>
     <string name="wallet_topup_action">Bakiye Yükle</string>
     <string name="wallet_cards_title">Kayıtlı kartlar</string>
-    <string name="wallet_add_card_action">+ Ekle</string>
+    <string name="wallet_add_card_action">Ekle</string>
     <string name="wallet_no_cards_message">Kayıtlı kartınız yok.</string>
     <string name="wallet_transactions_title">Son işlemler</string>
     <string name="wallet_no_transactions_message">Henüz işlem yok.</string>

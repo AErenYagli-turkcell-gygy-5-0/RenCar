@@ -45,6 +45,7 @@ import com.turkcell.rencar.R
 import com.turkcell.rencar.domain.cards.Card
 import com.turkcell.rencar.domain.cards.CardBrand
 import com.turkcell.rencar.domain.rental.PaymentMethod
+import com.turkcell.rencar.presentation.component.card.CardBrandBadge
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -353,7 +354,24 @@ private fun WalletMethodRow(balance: Double, sufficient: Boolean, modifier: Modi
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_wallet),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp)
+            ) {
                 Text(
                     text = stringResource(R.string.payment_wallet_balance_label, balance.toTryPrice()),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
@@ -390,10 +408,13 @@ private fun CardMethodRow(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (card != null) {
+                CardBrandBadge(brand = card.brand, modifier = Modifier.padding(end = 12.dp))
+            }
             Column(modifier = Modifier.weight(1f)) {
                 if (card != null) {
                     Text(
-                        text = "${card.brand.name} •••• ${card.last4}",
+                        text = "•••• ${card.last4}",
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 } else {
@@ -493,14 +514,19 @@ private fun CardPickerDialog(
         text = {
             Column {
                 cards.forEach { card ->
-                    Text(
-                        text = "${card.brand.name} •••• ${card.last4}",
-                        style = MaterialTheme.typography.bodyLarge,
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onCardSelected(card.id) }
-                            .padding(vertical = 12.dp)
-                    )
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CardBrandBadge(brand = card.brand, modifier = Modifier.padding(end = 12.dp))
+                        Text(
+                            text = "•••• ${card.last4}",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
                 Text(
                     text = stringResource(R.string.payment_add_card_action),
