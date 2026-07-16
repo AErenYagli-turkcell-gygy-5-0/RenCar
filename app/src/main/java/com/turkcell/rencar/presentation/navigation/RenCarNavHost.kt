@@ -317,6 +317,11 @@ fun RenCarNavHost(
                         launchSingleTop = true
                     }
                 },
+                onNavigateToHistory = {
+                    navController.navigate(RenCarDestination.History.route) {
+                        launchSingleTop = true
+                    }
+                },
                 onNavigateToLogin = {
                     navController.navigate(RenCarDestination.Login.route) {
                         popUpTo(RenCarDestination.Home.route) {
