@@ -112,9 +112,11 @@
     <string name="car_detail_reserve_button">Rezerve Et</string>
     <string name="car_detail_unlock_button">Kilidi Aç</string>
     <string name="car_detail_specs_title">Araç Özellikleri</string>
-    <string name="car_detail_spec_seats">%1$d Koltuk</string>
-    <string name="car_detail_spec_fuel">%%%1$d Yakıt</string>
-    <string name="car_detail_spec_range">%1$d km menzil</string>
+    <string name="car_detail_spec_seats_value">%1$d kişi</string>
+    <string name="car_detail_spec_fuel_label">Yakıt</string>
+    <string name="car_detail_spec_fuel_value">%%%1$d</string>
+    <string name="car_detail_spec_range_label">Menzil</string>
+    <string name="car_detail_spec_range_value">%1$d km</string>
     <string name="car_detail_transmission_manual">Manuel</string>
     <string name="car_detail_transmission_automatic">Otomatik</string>
     <string name="car_detail_segment_economy">Ekonomik</string>

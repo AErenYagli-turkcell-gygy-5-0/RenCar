@@ -1,5 +1,6 @@
 package com.turkcell.rencar.presentation.screen.cardetail
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,8 +43,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +66,7 @@ import com.turkcell.rencar.domain.vehicle.VehicleStatus
 import com.turkcell.rencar.domain.vehicle.VehicleType
 import com.turkcell.rencar.presentation.component.map.RencarMap
 import com.turkcell.rencar.presentation.component.map.RencarMapController
+import com.turkcell.rencar.presentation.component.map.color
 import com.turkcell.rencar.presentation.theme.extendedColors
 import java.util.Locale
 import kotlin.math.atan2
@@ -335,9 +344,21 @@ private fun CarDetailContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SpecChip(text = stringResource(state.type.labelRes()), modifier = Modifier.weight(1f))
-            SegmentSpecChip(segment = state.segment, modifier = Modifier.weight(1f))
-            SpecChip(text = stringResource(state.transmission.labelRes()), modifier = Modifier.weight(1f))
+            CategoryChip(
+                label = stringResource(state.type.labelRes()),
+                color = state.type.color(MaterialTheme.extendedColors),
+                modifier = Modifier.weight(1f)
+            )
+            CategoryChip(
+                label = stringResource(state.segment.labelRes()),
+                color = state.segment.chipColor(),
+                modifier = Modifier.weight(1f)
+            )
+            IconTextChip(
+                drawIcon = { color -> drawGearboxIcon(color) },
+                text = stringResource(state.transmission.labelRes()),
+                modifier = Modifier.weight(1f)
+            )
         }
 
         Row(
@@ -346,17 +367,31 @@ private fun CarDetailContent(
                 .padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SpecChip(
-                text = stringResource(R.string.car_detail_spec_seats, state.seats),
+            IconTextChip(
+                drawIcon = { color -> drawSeatIcon(color) },
+                text = stringResource(R.string.car_detail_spec_seats_value, state.seats),
                 modifier = Modifier.weight(1f)
             )
-            FuelSpecChip(
-                text = stringResource(R.string.car_detail_spec_fuel, state.fuelPercent.roundToInt()),
-                fuelPercent = state.fuelPercent,
+
+            val fuelFraction = (state.fuelPercent / 100.0).coerceIn(0.0, 1.0).toFloat()
+            val fuelColor = when {
+                state.fuelPercent <= FUEL_CRITICAL_THRESHOLD -> MaterialTheme.colorScheme.error
+                state.fuelPercent <= FUEL_LOW_THRESHOLD -> MaterialTheme.extendedColors.warning
+                else -> MaterialTheme.extendedColors.success
+            }
+            StatCard(
+                drawIcon = { color -> drawFuelIcon(color) },
+                label = stringResource(R.string.car_detail_spec_fuel_label),
+                value = stringResource(R.string.car_detail_spec_fuel_value, state.fuelPercent.roundToInt()),
+                progressFraction = fuelFraction,
+                progressColor = fuelColor,
                 modifier = Modifier.weight(1f)
             )
-            SpecChip(
-                text = stringResource(R.string.car_detail_spec_range, state.rangeKm.roundToInt()),
+
+            StatCard(
+                drawIcon = { color -> drawRouteIcon(color) },
+                label = stringResource(R.string.car_detail_spec_range_label),
+                value = stringResource(R.string.car_detail_spec_range_value, state.rangeKm.roundToInt()),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -384,7 +419,13 @@ private fun CarDetailContent(
             enabled = state.canUnlock,
             modifier = Modifier
                 .weight(1f)
-                .height(56.dp),
+                .height(56.dp)
+                .shadow(
+                    elevation = 14.dp,
+                    shape = RoundedCornerShape(18.dp),
+                    ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                    spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                ),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
@@ -397,67 +438,96 @@ private fun CarDetailContent(
 }
 
 @Composable
-private fun SpecChip(text: String, modifier: Modifier = Modifier) {
+private fun CategoryChip(label: String, color: Color, modifier: Modifier = Modifier) {
     Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(color.copy(alpha = STATUS_CONTAINER_ALPHA))
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = color
+        )
+    }
+}
+
+@Composable
+private fun IconTextChip(
+    drawIcon: DrawScope.(color: Color) -> Unit,
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    val contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 10.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
+        Canvas(modifier = Modifier.size(14.dp)) { drawIcon(contentColor) }
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = contentColor,
+            modifier = Modifier.padding(start = 6.dp)
         )
     }
 }
 
 @Composable
-private fun SegmentSpecChip(segment: VehicleSegment, modifier: Modifier = Modifier) {
-    val segmentColor = segment.chipColor()
-    Box(
+private fun StatCard(
+    drawIcon: DrawScope.(color: Color) -> Unit,
+    label: String,
+    value: String,
+    progressFraction: Float? = null,
+    progressColor: Color? = null,
+    modifier: Modifier = Modifier
+) {
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(segmentColor.copy(alpha = STATUS_CONTAINER_ALPHA))
-            .padding(horizontal = 10.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = stringResource(segment.labelRes()),
-            style = MaterialTheme.typography.labelMedium,
-            color = segmentColor
-        )
-    }
-}
-
-@Composable
-private fun FuelSpecChip(text: String, fuelPercent: Double, modifier: Modifier = Modifier) {
-    val fillColor = when {
-        fuelPercent <= FUEL_CRITICAL_THRESHOLD -> MaterialTheme.colorScheme.error
-        fuelPercent <= FUEL_LOW_THRESHOLD -> MaterialTheme.extendedColors.warning
-        else -> MaterialTheme.extendedColors.success
-    }
-    val fillFraction = (fuelPercent / 100.0).coerceIn(0.0, 1.0).toFloat()
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .drawBehind {
-                drawRect(
-                    color = fillColor,
-                    size = size.copy(width = size.width * fillFraction)
+            .padding(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Canvas(modifier = Modifier.size(14.dp)) { drawIcon(labelColor) }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = labelColor,
+                modifier = Modifier.padding(start = 6.dp)
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 5.dp)
+        )
+        if (progressFraction != null && progressColor != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 7.dp)
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(progressFraction)
+                        .background(progressColor)
                 )
             }
-            .padding(horizontal = 10.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        }
     }
 }
 
@@ -518,6 +588,87 @@ private fun VehicleSegment.chipColor(): Color = when (this) {
 private fun Transmission.labelRes(): Int = when (this) {
     Transmission.MANUAL -> R.string.car_detail_transmission_manual
     Transmission.AUTOMATIC -> R.string.car_detail_transmission_automatic
+}
+
+private fun DrawScope.drawFuelIcon(color: Color) {
+    val stroke = Stroke(width = 1.4.dp.toPx(), cap = StrokeCap.Round)
+    val bodyWidth = size.width * 0.55f
+    val bodyHeight = size.height * 0.85f
+    val bodyTop = size.height - bodyHeight
+
+    drawRect(
+        color = color,
+        topLeft = Offset(0f, bodyTop),
+        size = Size(bodyWidth, bodyHeight),
+        style = stroke
+    )
+
+    val hoseStartX = bodyWidth
+    val hoseY = bodyTop + bodyHeight * 0.25f
+    drawLine(
+        color = color,
+        start = Offset(hoseStartX, hoseY),
+        end = Offset(size.width * 0.92f, hoseY),
+        strokeWidth = stroke.width,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(size.width * 0.92f, hoseY),
+        end = Offset(size.width * 0.92f, hoseY + bodyHeight * 0.35f),
+        strokeWidth = stroke.width,
+        cap = StrokeCap.Round
+    )
+}
+
+private fun DrawScope.drawRouteIcon(color: Color) {
+    val stroke = Stroke(width = 1.4.dp.toPx(), cap = StrokeCap.Round)
+    val centerX = size.width / 2f
+    val circleCenterY = size.height * 0.36f
+    val circleRadius = size.width * 0.34f
+
+    val tailPath = Path().apply {
+        moveTo(centerX - circleRadius * 0.8f, circleCenterY + circleRadius * 0.6f)
+        lineTo(centerX, size.height * 0.95f)
+        lineTo(centerX + circleRadius * 0.8f, circleCenterY + circleRadius * 0.6f)
+        close()
+    }
+    drawPath(path = tailPath, color = color)
+    drawCircle(color = color, radius = circleRadius, center = Offset(centerX, circleCenterY), style = stroke)
+    drawCircle(color = color, radius = circleRadius * 0.35f, center = Offset(centerX, circleCenterY))
+}
+
+private fun DrawScope.drawGearboxIcon(color: Color) {
+    val stroke = Stroke(width = 1.4.dp.toPx(), cap = StrokeCap.Round)
+    val leftX = size.width * 0.22f
+    val rightX = size.width * 0.78f
+    val topY = size.height * 0.12f
+    val bottomY = size.height * 0.88f
+    val midY = size.height * 0.5f
+
+    drawLine(color = color, start = Offset(leftX, topY), end = Offset(leftX, bottomY), strokeWidth = stroke.width, cap = StrokeCap.Round)
+    drawLine(color = color, start = Offset(rightX, topY), end = Offset(rightX, bottomY), strokeWidth = stroke.width, cap = StrokeCap.Round)
+    drawLine(color = color, start = Offset(leftX, midY), end = Offset(rightX, midY), strokeWidth = stroke.width, cap = StrokeCap.Round)
+    drawCircle(color = color, radius = size.minDimension * 0.09f, center = Offset(leftX, topY))
+    drawCircle(color = color, radius = size.minDimension * 0.09f, center = Offset(rightX, topY))
+}
+
+private fun DrawScope.drawSeatIcon(color: Color) {
+    val stroke = Stroke(width = 1.4.dp.toPx(), cap = StrokeCap.Round)
+    val backPath = Path().apply {
+        moveTo(size.width * 0.3f, size.height * 0.15f)
+        lineTo(size.width * 0.3f, size.height * 0.65f)
+        lineTo(size.width * 0.85f, size.height * 0.65f)
+        lineTo(size.width * 0.85f, size.height * 0.85f)
+    }
+    drawPath(path = backPath, color = color, style = stroke)
+    drawLine(
+        color = color,
+        start = Offset(size.width * 0.15f, size.height * 0.85f),
+        end = Offset(size.width * 0.85f, size.height * 0.85f),
+        strokeWidth = stroke.width,
+        cap = StrokeCap.Round
+    )
 }
 
 private fun haversineMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
