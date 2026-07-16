@@ -99,6 +99,9 @@
     <string name="home_location_permission_permanently_denied_confirm">Ayarları Aç</string>
     <string name="home_location_permission_permanently_denied_dismiss">Kapat</string>
     <string name="home_vehicles_retry">Tekrar dene</string>
+    <string name="home_active_reservation_title">Aktif rezervasyonunuz var</string>
+    <string name="home_active_reservation_title_with_vehicle">Rezervasyonunuz: %1$s</string>
+    <string name="home_active_reservation_subtitle">Araç kiralama başlayana kadar sizin için tutuluyor.</string>
 
     <!-- Car Detail Screen -->
     <string name="car_detail_status_available">MÜSAİT</string>
@@ -111,6 +114,7 @@
     <string name="car_detail_price_per_day">Günlük %1$s</string>
     <string name="car_detail_reserve_button">Rezerve Et</string>
     <string name="car_detail_unlock_button">Kilidi Aç</string>
+    <string name="car_detail_active_reservation_blocks_reserve">Aktif rezervasyonunuz varken başka bir araç rezerve edemezsiniz.</string>
     <string name="car_detail_specs_title">Araç Özellikleri</string>
     <string name="car_detail_spec_seats">%1$d Koltuk</string>
     <string name="car_detail_spec_fuel">%%%1$d Yakıt</string>

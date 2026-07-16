@@ -249,6 +249,8 @@ private fun CarDetailContent(
     }
 
     val statusPresentation = state.status.toPresentation()
+    val hasAnotherActiveReservation =
+        state.activeReservationVehicleId != null && !state.isActiveReservationVehicle
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
@@ -368,7 +370,7 @@ private fun CarDetailContent(
     ) {
         OutlinedButton(
             onClick = { onIntent(CarDetailIntent.ReserveClicked) },
-            enabled = !state.isActiveReservationVehicle,
+            enabled = !state.isActiveReservationVehicle && !hasAnotherActiveReservation,
             modifier = Modifier.height(56.dp),
             shape = RoundedCornerShape(18.dp)
         ) {
@@ -379,18 +381,44 @@ private fun CarDetailContent(
         }
         Button(
             onClick = { onIntent(CarDetailIntent.UnlockClicked) },
-            enabled = state.canUnlock,
+            enabled = state.canUnlock && !state.isUnlocking,
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text(
-                text = stringResource(R.string.car_detail_unlock_button),
-                fontWeight = FontWeight.Bold
-            )
+            if (state.isUnlocking) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(22.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.car_detail_unlock_button),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
+    }
+
+    if (hasAnotherActiveReservation) {
+        Text(
+            text = stringResource(R.string.car_detail_active_reservation_blocks_reserve),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+    }
+
+    state.unlockErrorMessage?.let { message ->
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
     }
 }
 

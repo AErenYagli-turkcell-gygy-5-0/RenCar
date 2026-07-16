@@ -151,6 +151,41 @@ fun HomeActiveRentalBanner(
 }
 
 @Composable
+fun HomeActiveReservationBanner(
+    vehicleName: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = if (vehicleName.isNotBlank()) {
+                    stringResource(R.string.home_active_reservation_title_with_vehicle, vehicleName)
+                } else {
+                    stringResource(R.string.home_active_reservation_title)
+                },
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = stringResource(R.string.home_active_reservation_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+@Composable
 fun HomeFilterChipRow(
     selectedCategory: VehicleType?,
     onCategorySelected: (VehicleType?) -> Unit,

@@ -36,7 +36,7 @@ import kotlin.math.roundToInt
 fun ReservationConfirmationRoute(
     vehicleId: String,
     onNavigateBack: () -> Unit,
-    onReservationCreated: (rentalId: String, vehicleId: String, isPreparing: Boolean) -> Unit,
+    onReservationCreated: (vehicleId: String, rentalPlan: RentalPlan) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ReservationConfirmationViewModel = hiltViewModel()
 ) {
@@ -47,7 +47,7 @@ fun ReservationConfirmationRoute(
             when (effect) {
                 ReservationConfirmationEffect.NavigateBack -> onNavigateBack()
                 is ReservationConfirmationEffect.ReservationCreated ->
-                    onReservationCreated(effect.rentalId, effect.vehicleId, effect.isPreparing)
+                    onReservationCreated(effect.vehicleId, effect.rentalPlan)
             }
         }
     }

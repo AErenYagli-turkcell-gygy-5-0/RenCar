@@ -1,5 +1,6 @@
 package com.turkcell.rencar.presentation.screen.cardetail
 
+import com.turkcell.rencar.domain.rental.RentalPlan
 import com.turkcell.rencar.domain.rental.RentalStatus
 import com.turkcell.rencar.domain.vehicle.Transmission
 import com.turkcell.rencar.domain.vehicle.VehicleSegment
@@ -28,10 +29,14 @@ data class CarDetailState(
     val vehicleLongitude: Double = 0.0,
     val hasFullVehicleDetails: Boolean = false,
     val isActiveReservationVehicle: Boolean = false,
+    val activeReservationVehicleId: String? = null,
     val isLoading: Boolean = false,
     val hasLoaded: Boolean = false,
     val errorMessage: String? = null,
     val canUnlock: Boolean = false,
+    val reservationUnlockPlan: RentalPlan? = null,
     val unlockRentalId: String? = null,
-    val unlockRentalStatus: RentalStatus? = null
+    val unlockRentalStatus: RentalStatus? = null,
+    val isUnlocking: Boolean = false,
+    val unlockErrorMessage: String? = null
 ) : UiState

@@ -7,6 +7,7 @@ import com.turkcell.rencar.domain.rental.RentalStatus
 import com.turkcell.rencar.domain.reservation.ReservationError
 import com.turkcell.rencar.domain.reservation.ReservationRepository
 import com.turkcell.rencar.domain.reservation.ReservationResult
+import com.turkcell.rencar.domain.reservation.ReservationVehicleSummary
 import com.turkcell.rencar.domain.vehicle.Vehicle
 import com.turkcell.rencar.domain.vehicle.VehicleError
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
@@ -115,6 +116,13 @@ class HomeViewModel @Inject constructor(
                     sendEffect { HomeEffect.NavigateToActiveRentalScreen(rentalId, vehicleId) }
                 }
             }
+
+            HomeIntent.ActiveReservationBannerClicked -> {
+                val vehicleId = state.value.activeReservationVehicleId
+                if (vehicleId != null) {
+                    sendEffect { HomeEffect.NavigateToCarDetail(vehicleId, state.value.myLocation) }
+                }
+            }
         }
     }
 
@@ -126,7 +134,7 @@ class HomeViewModel @Inject constructor(
             when (val result = vehicleRepository.listAvailableVehicles()) {
                 is VehicleResult.Success -> setState {
                     copy(
-                        vehicles = result.data.map { it.toMarker() },
+                        vehicles = result.data.map { it.toMarker() }.withActiveReservationMarker(),
                         isVehiclesLoading = false,
                         hasLoadedVehicles = true
                     )
@@ -134,6 +142,7 @@ class HomeViewModel @Inject constructor(
 
                 is VehicleResult.Failure -> setState {
                     copy(
+                        vehicles = listOfNotNull(activeReservationMarker),
                         isVehiclesLoading = false,
                         hasLoadedVehicles = true,
                         vehiclesErrorMessage = result.error.toMessage()
@@ -156,15 +165,17 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = reservationRepository.getActiveReservation()) {
                 is ReservationResult.Success -> {
+                    val reservation = result.data
                     setState {
                         copy(
                             isCheckingActiveReservation = false,
-                            hasCheckedActiveReservation = true
+                            hasCheckedActiveReservation = true,
+                            activeReservationVehicleId = reservation.vehicleId,
+                            activeReservationVehicleName = "${reservation.vehicle.brand} ${reservation.vehicle.model}".trim(),
+                            activeReservationMarker = reservation.vehicle.toMarker()
                         )
                     }
-                    sendEffect {
-                        HomeEffect.NavigateToActiveReservationCarDetail(result.data.vehicleId)
-                    }
+                    checkActiveRental()
                 }
 
                 is ReservationResult.Failure -> {
@@ -173,6 +184,9 @@ class HomeViewModel @Inject constructor(
                             copy(
                                 isCheckingActiveReservation = false,
                                 hasCheckedActiveReservation = true,
+                                activeReservationVehicleId = null,
+                                activeReservationVehicleName = "",
+                                activeReservationMarker = null,
                                 activeReservationErrorMessage = null
                             )
                         }
@@ -252,6 +266,26 @@ class HomeViewModel @Inject constructor(
         longitude = longitude,
         price = pricePerDay.toInt(),
         category = type
+    )
+
+    private fun List<VehicleMarker>.withActiveReservationMarker(): List<VehicleMarker> {
+        val reservationVehicleId = state.value.activeReservationVehicleId ?: return this
+        if (any { it.id == reservationVehicleId }) {
+            return map { marker ->
+                if (marker.id == reservationVehicleId) marker.copy(isReservedByMe = true) else marker
+            }
+        }
+        val marker = state.value.activeReservationMarker ?: return this
+        return this + marker
+    }
+
+    private fun ReservationVehicleSummary.toMarker() = VehicleMarker(
+        id = id,
+        latitude = latitude,
+        longitude = longitude,
+        price = pricePerMinute.toInt(),
+        category = type,
+        isReservedByMe = true
     )
 
     private fun VehicleError.toMessage(): String = when (this) {

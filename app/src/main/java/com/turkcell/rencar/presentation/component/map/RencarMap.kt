@@ -289,14 +289,27 @@ private fun updateVehicleSymbols(
 ) {
     symbolManager.deleteAll()
     vehicles.forEach { vehicle ->
-        val iconId = "vehicle_marker_${vehicle.category.name}_${vehicle.price}"
+        val iconId = if (vehicle.isReservedByMe) {
+            "vehicle_marker_reserved"
+        } else {
+            "vehicle_marker_${vehicle.category.name}_${vehicle.price}"
+        }
         if (addedIconIds.add(iconId)) {
-            val backgroundColor = vehicle.category.color(categoryColors).toArgb()
+            val backgroundColor = if (vehicle.isReservedByMe) {
+                android.graphics.Color.parseColor("#0B6BCB")
+            } else {
+                vehicle.category.color(categoryColors).toArgb()
+            }
+            val markerText = if (vehicle.isReservedByMe) {
+                "Rezerve"
+            } else {
+                "₺${vehicle.price}"
+            }
             style.addImage(
                 iconId,
                 createPriceBubbleBitmap(
                     context = context,
-                    priceText = "₺${vehicle.price}",
+                    priceText = markerText,
                     backgroundColorArgb = backgroundColor
                 )
             )

@@ -23,11 +23,17 @@ sealed class RenCarDestination(val route: String) {
     data object Profile : RenCarDestination("profile")
 
     data object CarDetail : RenCarDestination(
-        "car-detail/{$ARG_VEHICLE_ID}?$ARG_MY_LATITUDE={$ARG_MY_LATITUDE}&$ARG_MY_LONGITUDE={$ARG_MY_LONGITUDE}"
+        "car-detail/{$ARG_VEHICLE_ID}?$ARG_MY_LATITUDE={$ARG_MY_LATITUDE}&$ARG_MY_LONGITUDE={$ARG_MY_LONGITUDE}&$ARG_RENTAL_PLAN={$ARG_RENTAL_PLAN}"
     ) {
-        fun createRoute(vehicleId: String, latitude: Double?, longitude: Double?): String {
+        fun createRoute(
+            vehicleId: String,
+            latitude: Double?,
+            longitude: Double?,
+            rentalPlan: String? = null
+        ): String {
             val encodedId = Uri.encode(vehicleId)
-            return "car-detail/$encodedId?$ARG_MY_LATITUDE=${latitude ?: ""}&$ARG_MY_LONGITUDE=${longitude ?: ""}"
+            val encodedRentalPlan = Uri.encode(rentalPlan.orEmpty())
+            return "car-detail/$encodedId?$ARG_MY_LATITUDE=${latitude ?: ""}&$ARG_MY_LONGITUDE=${longitude ?: ""}&$ARG_RENTAL_PLAN=$encodedRentalPlan"
         }
     }
 
@@ -58,6 +64,7 @@ sealed class RenCarDestination(val route: String) {
         const val ARG_MY_LATITUDE = "myLatitude"
         const val ARG_MY_LONGITUDE = "myLongitude"
         const val ARG_RENTAL_ID = "rentalId"
+        const val ARG_RENTAL_PLAN = "rentalPlan"
         const val ARG_PHOTO_MODE = "photoMode"
     }
 }

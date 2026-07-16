@@ -15,7 +15,8 @@ data class VehicleMarker(
     val latitude: Double,
     val longitude: Double,
     val price: Int,
-    val category: VehicleType
+    val category: VehicleType,
+    val isReservedByMe: Boolean = false
 )
 
 // Backend'de araç segmenti (ekonomik/konfor/extra) alanı yoktur, yalnızca gövde tipi (VehicleType)

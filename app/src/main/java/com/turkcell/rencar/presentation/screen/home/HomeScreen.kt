@@ -62,7 +62,6 @@ fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToProfile: () -> Unit,
     onNavigateToCarDetail: (String, Double?, Double?) -> Unit,
-    onNavigateToActiveReservationCarDetail: (String) -> Unit,
     onNavigateToActiveRentalPhotoUpload: (rentalId: String, vehicleId: String) -> Unit,
     onNavigateToActiveRentalScreen: (rentalId: String, vehicleId: String) -> Unit,
     onNavigateToHistory: () -> Unit
@@ -118,8 +117,6 @@ fun HomeRoute(
                     effect.myLocation?.latitude,
                     effect.myLocation?.longitude
                 )
-                is HomeEffect.NavigateToActiveReservationCarDetail ->
-                    onNavigateToActiveReservationCarDetail(effect.vehicleId)
 
                 is HomeEffect.NavigateToActiveRentalPhotoUpload ->
                     onNavigateToActiveRentalPhotoUpload(effect.rentalId, effect.vehicleId)
@@ -315,6 +312,12 @@ fun HomeScreen(
                 HomeActiveRentalBanner(
                     vehicleName = state.activeRentalVehicleName,
                     onClick = { onIntent(HomeIntent.ActiveRentalBannerClicked) },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            } else if (state.activeReservationVehicleId != null) {
+                HomeActiveReservationBanner(
+                    vehicleName = state.activeReservationVehicleName,
+                    onClick = { onIntent(HomeIntent.ActiveReservationBannerClicked) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }

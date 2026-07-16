@@ -103,16 +103,6 @@ fun RenCarNavHost(
                         launchSingleTop = true
                     }
                 },
-                onNavigateToActiveReservationCarDetail = { vehicleId ->
-                    navController.navigate(
-                        RenCarDestination.CarDetail.createRoute(vehicleId, latitude = null, longitude = null)
-                    ) {
-                        popUpTo(RenCarDestination.Home.route) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
-                },
                 onNavigateToActiveRentalPhotoUpload = { rentalId, vehicleId ->
                     navController.navigate(
                         RenCarDestination.RentalPhotoUpload.createRoute(
@@ -165,6 +155,10 @@ fun RenCarNavHost(
                 navArgument(RenCarDestination.ARG_MY_LONGITUDE) {
                     type = NavType.StringType
                     defaultValue = ""
+                },
+                navArgument(RenCarDestination.ARG_RENTAL_PLAN) {
+                    type = NavType.StringType
+                    defaultValue = ""
                 }
             )
         ) {
@@ -211,20 +205,15 @@ fun RenCarNavHost(
             ReservationConfirmationRoute(
                 vehicleId = vehicleId,
                 onNavigateBack = { navController.popBackStack() },
-                onReservationCreated = { rentalId, resultVehicleId, isPreparing ->
-                    val destinationRoute = if (isPreparing) {
-                        RenCarDestination.RentalPhotoUpload.createRoute(
-                            rentalId = rentalId,
+                onReservationCreated = { resultVehicleId, rentalPlan ->
+                    navController.navigate(
+                        RenCarDestination.CarDetail.createRoute(
                             vehicleId = resultVehicleId,
-                            mode = RentalPhotoUploadMode.START_TRIP.name
+                            latitude = null,
+                            longitude = null,
+                            rentalPlan = rentalPlan.name
                         )
-                    } else {
-                        RenCarDestination.ActiveRental.createRoute(
-                            rentalId = rentalId,
-                            vehicleId = resultVehicleId
-                        )
-                    }
-                    navController.navigate(destinationRoute) {
+                    ) {
                         popUpTo(RenCarDestination.Home.route) { inclusive = false }
                         launchSingleTop = true
                     }
