@@ -68,6 +68,7 @@ import java.net.URL
 @Composable
 fun ProfileRoute(
     onNavigateToHome: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
@@ -87,6 +88,7 @@ fun ProfileRoute(
         state = state,
         onIntent = viewModel::onIntent,
         onNavigateToHome = onNavigateToHome,
+        onNavigateToHistory = onNavigateToHistory,
         modifier = modifier
     )
 }
@@ -96,6 +98,7 @@ fun ProfileScreen(
     state: ProfileState,
     onIntent: (ProfileIntent) -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -155,7 +158,12 @@ fun ProfileScreen(
         BottomNavBar(
             selectedItem = BottomNavItem.Profile,
             onItemSelected = { item ->
-                if (item == BottomNavItem.Map) onNavigateToHome()
+                when (item) {
+                    BottomNavItem.Map -> onNavigateToHome()
+                    BottomNavItem.History -> onNavigateToHistory()
+                    BottomNavItem.Wallet,
+                    BottomNavItem.Profile -> Unit
+                }
             }
         )
     }
@@ -754,7 +762,8 @@ private fun ProfileScreenPreview() {
                 hasLoaded = true
             ),
             onIntent = {},
-            onNavigateToHome = {}
+            onNavigateToHome = {},
+            onNavigateToHistory = {}
         )
     }
 }
@@ -771,7 +780,8 @@ private fun ProfileScreenDarkPreview() {
                 hasLoaded = true
             ),
             onIntent = {},
-            onNavigateToHome = {}
+            onNavigateToHome = {},
+            onNavigateToHistory = {}
         )
     }
 }
