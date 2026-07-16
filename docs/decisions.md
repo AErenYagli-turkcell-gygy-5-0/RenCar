@@ -8,6 +8,88 @@
 
 ---
 
+## 2026-07-16 - Kiralamayı Bitirme Onayı, Ödeme (Cüzdan/Kart) ve Cüzdan Ekranının Eklenmesi
+
+**Karar (bitirme onayı):** Aktif Kiralama ekranındaki "Kiralamayı Bitir" butonu artık doğrudan foto
+akışına gitmez; önce ekran-özel bir `AlertDialog` (`ProfileScreen`'deki `LogoutConfirmationDialog`
+ile aynı desen) gösterilir. `ActiveRentalIntent.FinishClicked` yalnızca
+`ActiveRentalState.showFinishConfirmDialog`'ı açar; mevcut `handleFinishClicked()` mantığı (job
+iptalleri + `NavigateToFinishPhotoUpload` effect'i) yeni `FinishConfirmed` intent'ine taşınmıştır.
+Foto akışı ve `POST /rentals/:id/finish` çağrısı (2026-07-14 kararındaki RETURN_TRIP yerel-kapı
+davranışı) hiç değişmemiştir.
+
+**Karar (Ödeme / Kiralama Özeti ekranı — yeni):** `RentalPhotoUploadViewModel.finishTrip()` artık
+başarı sonrası `NavigateHome` yerine yeni `NavigateToPayment(rentalId)` effect'ini gönderir.
+`presentation/screen/payment/` altında MVI ile yeni bir ekran eklenmiştir; ekran yalnızca
+`rentalId` nav argümanıyla açılır ve kendi verisini `GET /rentals/{id}` (yeni `getOne` ucu) ile
+tazeler — 2026-07-11 kararındaki "ID taşı, tazele" ilkesiyle tutarlıdır. Ücret dökümü backend'in
+`finish` formülüyle (`totalPrice = usageFee + startFee + serviceFee`) birebir aynı şekilde
+`usageFee = totalPrice - startFee - serviceFee` olarak türetilir; hiçbir kalem istemcide farklı
+hesaplanmaz.
+
+**Karar (Cüzdan/Kart ödeme seçimi):** Ekranda yalnızca "kart değiştir" değil, Cüzdan/Kart segment
+kontrolü sunulur. Cüzdan bakiyesi (`GET /wallet`) ve kayıtlı kartlar (`GET /cards`) paralel
+yüklenir; varsayılan seçim, bakiye tutarı karşılıyorsa Cüzdan, karşılamıyorsa (ve varsayılan bir
+kart varsa) Kart olacak şekilde belirlenir. Ödeme `POST /rentals/:id/pay` (`method=WALLET` veya
+`method=CARD`+`cardId`) ile alınır. Cüzdan bakiyesi yetersizse (`walletBalance < netAmount`) "Bakiye
+yüklemek ister misiniz?" onay diyaloğu gösterilir; "Evet" Cüzdan ekranına yönlendirir (otomatik
+tekrar deneme yoktur, kullanıcı yükleme sonrası ödemeyi elle tekrar başlatır).
+
+**Karar (Cüzdan / Ödeme Yöntemleri ekranı — yeni):** `presentation/screen/wallet/` altında yeni bir
+MVI ekranı eklenmiştir: bakiye + "Bakiye Yükle" (`POST /wallet/topup`, 10-5000 TL doğrulaması
+istemci tarafında da uygulanır), kayıtlı kartlar + "+ Ekle" (`POST /cards` — yalnızca marka + son 4
+hane + SKT; tam kart numarası/CVV alanı yoktur, backend zaten reddeder), son 20 işlem
+(`WalletTransaction` listesi) ve varsayılan olmayan her kartta "Varsayılan yap" aksiyonu
+(`PATCH /cards/{id}/default`). Ekran, mevcut dört sekmeli `BottomNavBar`'ı (Harita/Geçmiş/Cüzdan/
+Profil) Home/History ekranlarıyla aynı şekilde barındırır; navbar'daki "Cüzdan" sekmesi artık
+`BottomNavItem.Wallet` durumunda `Unit` yerine gerçek yönlendirme yapar (`HomeViewModel`,
+`HistoryViewModel` effect üzerinden; `ProfileScreen` doğrudan callback üzerinden — mevcut ekranların
+kendi desenleri korunmuştur).
+
+**Karar (API katmanı genişletmesi):** `data/remote/wallet/` ve `data/remote/cards/` altında yeni
+Retrofit servisleri + DTO'lar eklendi (`docs/api/openapi.json`'daki mevcut `/wallet`, `/wallet/topup`,
+`/cards`, `/cards/{id}/default` uçlarına birebir karşılık gelir). `RentalApiService`'e `GET
+/rentals/{id}` ve `POST /rentals/{id}/pay` eklendi; istemcinin sadeleştirilmiş
+`RentalResponseDto.kt`'si backend'in gerçek (zengin) `RentalResponseDto` şemasıyla eşleşecek şekilde
+genişletildi (`vehicle`, `startedAt`, `startFee`, `serviceFee`, `distanceKm`, `durationMinutes`,
+`paymentStatus`, `paymentMethod`, `discountAmount`) — bu alanlar backend'de zaten dönüyordu, hiçbir
+alan uydurulmadı (bkz. `docs/api/openapi.json` satır 3235-3375).
+
+**Kapsam dışı (icat edilmedi):**
+- Kart silme (`DELETE /cards/{id}`) — backend'de mevcut ancak ne kullanıcı talebinde ne mockup'ta
+  istenmediği için eklenmedi.
+- İndirim kodu giriş alanı — talep edilmedi; `discountAmount` yalnızca backend `pay` yanıtında sıfırdan
+  farklı dönerse gösterilir, ödeme öncesi girdi alanı yoktur.
+- Bakiye yükleme sonrası ödemeye otomatik dönüş/tekrar deneme — kullanıcı Cüzdan ekranından manuel
+  geri dönüp ödemeyi tekrar başlatır.
+
+**Bağımlılıklar:** Yeni bir Gradle bağımlılığı eklenmemiştir; Retrofit/Gson/Hilt mevcut düzenle
+aynen kullanılmıştır.
+
+**Etkilenen alanlar:**
+- `Rencar.html` (Aktif Kiralama onay popup'ı, Ödeme ekranı Cüzdan/Kart seçici, Cüzdan ekranı
+  "Varsayılan yap")
+- `data/remote/wallet/`, `data/remote/cards/` (yeni)
+- `domain/wallet/`, `domain/cards/` (yeni)
+- `data/repository/wallet/`, `data/repository/cards/` (yeni)
+- `data/remote/rental/dto/RentalResponseDto.kt`, yeni `PayRentalRequestDto.kt`/`PayRentalResponseDto.kt`,
+  `data/remote/rental/RentalApiService.kt`, `domain/rental/Rental.kt`, yeni
+  `PaymentStatus.kt`/`PaymentMethod.kt`/`PaymentReceipt.kt`, `domain/rental/RentalRepository.kt`,
+  `data/repository/rental/ApiRentalRepository.kt`
+- `presentation/screen/rental/active/` (`ActiveRentalState.kt`, `ActiveRentalIntent.kt`,
+  `ActiveRentalViewModel.kt`, `ActiveRentalScreen.kt`)
+- `presentation/screen/rental/photo/` (`RentalPhotoUploadEffect.kt`, `RentalPhotoUploadViewModel.kt`,
+  `RentalPhotoUploadScreen.kt`)
+- `presentation/screen/payment/` (yeni), `presentation/screen/wallet/` (yeni)
+- `presentation/navigation/RenCarDestination.kt`, `presentation/navigation/RenCarNavHost.kt`
+- `presentation/screen/home/` (`HomeEffect.kt`, `HomeViewModel.kt`, `HomeScreen.kt`)
+- `presentation/screen/history/` (`HistoryEffect.kt`, `HistoryViewModel.kt`, `HistoryScreen.kt`)
+- `presentation/screen/profile/ProfileScreen.kt`
+- `di/NetworkModule.kt`, `di/RepositoryModule.kt`
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-16 - Kiralama Geçmişi Görsel Hiyerarşisinin Güçlendirilmesi
 
 **Karar:** Geçmiş ekranının domain, repository ve MVI sözleşmeleri değiştirilmeden sunum katmanı

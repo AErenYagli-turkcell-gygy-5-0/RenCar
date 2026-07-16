@@ -137,7 +137,7 @@ class RentalPhotoUploadViewModel @Inject constructor(
         when (val result = rentalRepository.finishRental(rentalId)) {
             is RentalResult.Success -> {
                 setState { copy(isSubmitting = false) }
-                sendEffect { RentalPhotoUploadEffect.NavigateHome }
+                sendEffect { RentalPhotoUploadEffect.NavigateToPayment(rentalId) }
             }
 
             is RentalResult.Failure -> setState {

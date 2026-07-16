@@ -59,6 +59,12 @@ class CarDetailViewModelTest {
         override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> =
             RentalResult.Success(emptyList())
 
+        override suspend fun getRentalHistory(): RentalResult<List<RentalHistoryItem>> =
+            error("Not used by car detail")
+
+        override suspend fun getRentalStats(): RentalResult<RentalStats> =
+            error("Not used by car detail")
+
         override suspend fun uploadRentalPhoto(rentalId: String, side: RentalPhotoSide, imageUri: Uri): RentalResult<RentalPhotosState> =
             error("Not used by car detail")
 
@@ -75,6 +81,17 @@ class CarDetailViewModelTest {
             error("Not used by car detail")
 
         override suspend fun finishRental(rentalId: String): RentalResult<Rental> =
+            error("Not used by car detail")
+
+        override suspend fun getRentalDetail(rentalId: String): RentalResult<Rental> =
+            error("Not used by car detail")
+
+        override suspend fun payRental(
+            rentalId: String,
+            method: PaymentMethod,
+            cardId: String?,
+            discountCode: String?
+        ): RentalResult<PaymentReceipt> =
             error("Not used by car detail")
     }
 

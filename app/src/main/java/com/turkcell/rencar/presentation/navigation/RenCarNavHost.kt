@@ -14,12 +14,14 @@ import com.turkcell.rencar.presentation.screen.auth.register.RegisterRoute
 import com.turkcell.rencar.presentation.screen.cardetail.CarDetailRoute
 import com.turkcell.rencar.presentation.screen.history.HistoryRoute
 import com.turkcell.rencar.presentation.screen.home.HomeRoute
+import com.turkcell.rencar.presentation.screen.payment.PaymentRoute
 import com.turkcell.rencar.presentation.screen.profile.ProfileRoute
 import com.turkcell.rencar.presentation.screen.rental.active.ActiveRentalRoute
 import com.turkcell.rencar.presentation.screen.rental.photo.RentalPhotoUploadMode
 import com.turkcell.rencar.presentation.screen.rental.photo.RentalPhotoUploadRoute
 import com.turkcell.rencar.presentation.screen.reservation.confirmation.ReservationConfirmationRoute
 import com.turkcell.rencar.presentation.screen.splash.SplashRoute
+import com.turkcell.rencar.presentation.screen.wallet.WalletRoute
 
 @Composable
 fun RenCarNavHost(
@@ -137,6 +139,11 @@ fun RenCarNavHost(
                     navController.navigate(RenCarDestination.History.route) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToWallet = {
+                    navController.navigate(RenCarDestination.Wallet.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -148,6 +155,11 @@ fun RenCarNavHost(
                 },
                 onNavigateToProfile = {
                     navController.navigate(RenCarDestination.Profile.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToWallet = {
+                    navController.navigate(RenCarDestination.Wallet.route) {
                         launchSingleTop = true
                     }
                 }
@@ -264,8 +276,13 @@ fun RenCarNavHost(
                         launchSingleTop = true
                     }
                 },
-                onNavigateHome = {
-                    navController.popBackStack(RenCarDestination.Home.route, inclusive = false)
+                onNavigateToPayment = { paymentRentalId ->
+                    navController.navigate(
+                        RenCarDestination.Payment.createRoute(paymentRentalId)
+                    ) {
+                        popUpTo(RenCarDestination.Home.route) { inclusive = false }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -327,6 +344,55 @@ fun RenCarNavHost(
                         popUpTo(RenCarDestination.Home.route) {
                             inclusive = true
                         }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToWallet = {
+                    navController.navigate(RenCarDestination.Wallet.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = RenCarDestination.Payment.route,
+            arguments = listOf(
+                navArgument(RenCarDestination.ARG_RENTAL_ID) { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val rentalId = backStackEntry.arguments
+                ?.getString(RenCarDestination.ARG_RENTAL_ID)
+                .orEmpty()
+
+            PaymentRoute(
+                rentalId = rentalId,
+                onNavigateHome = {
+                    navController.navigate(RenCarDestination.Home.route) {
+                        popUpTo(RenCarDestination.Home.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToWallet = {
+                    navController.navigate(RenCarDestination.Wallet.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(RenCarDestination.Wallet.route) {
+            WalletRoute(
+                onNavigateToMap = {
+                    navController.popBackStack(RenCarDestination.Home.route, inclusive = false)
+                },
+                onNavigateToHistory = {
+                    navController.navigate(RenCarDestination.History.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(RenCarDestination.Profile.route) {
                         launchSingleTop = true
                     }
                 }

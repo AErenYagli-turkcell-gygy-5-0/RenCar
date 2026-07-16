@@ -2,6 +2,8 @@ package com.turkcell.rencar.data.remote.rental
 
 import com.turkcell.rencar.data.remote.rental.dto.ActiveRentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.CreateRentalRequestDto
+import com.turkcell.rencar.data.remote.rental.dto.PayRentalRequestDto
+import com.turkcell.rencar.data.remote.rental.dto.PayRentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalHistoryItemResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalPhotosStateResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalResponseDto
@@ -52,4 +54,10 @@ interface RentalApiService {
 
     @POST("rentals/{id}/finish")
     suspend fun finish(@Path("id") id: String): RentalResponseDto
+
+    @GET("rentals/{id}")
+    suspend fun getOne(@Path("id") id: String): RentalResponseDto
+
+    @POST("rentals/{id}/pay")
+    suspend fun pay(@Path("id") id: String, @Body request: PayRentalRequestDto): PayRentalResponseDto
 }

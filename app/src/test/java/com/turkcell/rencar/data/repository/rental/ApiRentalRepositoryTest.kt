@@ -5,6 +5,7 @@ import com.turkcell.rencar.data.remote.rental.dto.RentalPhotoDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalPhotosStateResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalSummaryResponseDto
+import com.turkcell.rencar.data.remote.rental.dto.RentalVehicleSummaryResponseDto
 import com.turkcell.rencar.domain.rental.RentalPhotoSide
 import com.turkcell.rencar.domain.rental.RentalPlan
 import com.turkcell.rencar.domain.rental.RentalStatus
@@ -21,11 +22,27 @@ class ApiRentalRepositoryTest {
             id = RENTAL_ID,
             userId = "user-1",
             vehicleId = VEHICLE_ID,
+            vehicle = RentalVehicleSummaryResponseDto(
+                id = VEHICLE_ID,
+                plate = "34 ABC 123",
+                brand = "Renault",
+                model = "Clio",
+                type = "HATCHBACK"
+            ),
             plan = RentalPlan.DAILY.name,
             startDate = "2026-07-10T10:00:00.000Z",
+            startedAt = "2026-07-10T10:00:00.000Z",
+            endedAt = null,
             endDate = "2026-07-11T10:00:00.000Z",
             totalPrice = 1450.0,
+            startFee = 0.0,
+            serviceFee = null,
+            distanceKm = 0.0,
+            durationMinutes = 0.0,
             status = "ACTIVE",
+            paymentStatus = "UNPAID",
+            paymentMethod = null,
+            discountAmount = 0.0,
             createdAt = "2026-07-10T10:00:00.000Z"
         ).toDomain()
 
@@ -41,11 +58,27 @@ class ApiRentalRepositoryTest {
             id = RENTAL_ID,
             userId = "user-1",
             vehicleId = VEHICLE_ID,
+            vehicle = RentalVehicleSummaryResponseDto(
+                id = VEHICLE_ID,
+                plate = "34 ABC 123",
+                brand = "Renault",
+                model = "Clio",
+                type = "HATCHBACK"
+            ),
             plan = RentalPlan.PER_MINUTE.name,
             startDate = "2026-07-10T10:00:00.000Z",
+            startedAt = "2026-07-10T10:00:00.000Z",
+            endedAt = null,
             endDate = null,
             totalPrice = null,
+            startFee = 15.0,
+            serviceFee = null,
+            distanceKm = 0.0,
+            durationMinutes = 0.0,
             status = "PREPARING",
+            paymentStatus = "UNPAID",
+            paymentMethod = null,
+            discountAmount = 0.0,
             createdAt = "2026-07-10T10:00:00.000Z"
         ).toDomain()
 
@@ -101,6 +134,9 @@ class ApiRentalRepositoryTest {
             id = RENTAL_ID,
             vehicleId = VEHICLE_ID,
             status = "ACTIVE",
+            plan = RentalPlan.PER_MINUTE.name,
+            startFee = 15.0,
+            startedAt = "2026-07-10T10:00:00.000Z",
             elapsedSeconds = 1264L,
             currentCost = 156.5,
             distanceKm = 12.4
