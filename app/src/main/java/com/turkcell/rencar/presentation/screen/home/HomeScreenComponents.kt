@@ -92,6 +92,44 @@ fun HomeRefreshMapFab(
 }
 
 @Composable
+fun HomeZoomInFab(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val iconColor = MaterialTheme.colorScheme.primary
+
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.primary,
+        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+    ) {
+        Canvas(modifier = Modifier.size(20.dp)) { drawZoomIcon(color = iconColor, includeVerticalLine = true) }
+    }
+}
+
+@Composable
+fun HomeZoomOutFab(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val iconColor = MaterialTheme.colorScheme.primary
+
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.primary,
+        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+    ) {
+        Canvas(modifier = Modifier.size(20.dp)) { drawZoomIcon(color = iconColor, includeVerticalLine = false) }
+    }
+}
+
+@Composable
 fun HomeLocationPermissionBanner(
     onGrantClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -312,6 +350,29 @@ private fun DrawScope.drawLocateMeIcon(color: Color) {
             y = center.y + (outerRadius * 1.5f * sin(angle)).toFloat()
         )
         drawLine(color = color, start = start, end = end, strokeWidth = stroke.width, cap = StrokeCap.Round)
+    }
+}
+
+private fun DrawScope.drawZoomIcon(color: Color, includeVerticalLine: Boolean) {
+    val stroke = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
+    val center = Offset(size.width / 2f, size.height / 2f)
+    val halfLength = size.minDimension * 0.32f
+
+    drawLine(
+        color = color,
+        start = Offset(center.x - halfLength, center.y),
+        end = Offset(center.x + halfLength, center.y),
+        strokeWidth = stroke.width,
+        cap = StrokeCap.Round
+    )
+    if (includeVerticalLine) {
+        drawLine(
+            color = color,
+            start = Offset(center.x, center.y - halfLength),
+            end = Offset(center.x, center.y + halfLength),
+            strokeWidth = stroke.width,
+            cap = StrokeCap.Round
+        )
     }
 }
 

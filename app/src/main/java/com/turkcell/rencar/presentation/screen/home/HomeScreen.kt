@@ -295,6 +295,21 @@ fun HomeScreen(
                     .padding(end = 16.dp, bottom = 84.dp)
             )
 
+            HomeZoomOutFab(
+                onClick = { mapController?.zoomOut() },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 152.dp)
+            )
+
+            HomeZoomInFab(
+                onClick = { mapController?.zoomIn() },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 220.dp)
+            )
+
+
             HomeLocateMeFab(
                 onClick = {
                     val location = state.myLocation

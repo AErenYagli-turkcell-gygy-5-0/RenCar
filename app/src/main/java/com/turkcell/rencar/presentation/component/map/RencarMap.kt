@@ -76,6 +76,14 @@ class RencarMapController internal constructor(
             )
         )
     }
+
+    fun zoomIn() {
+        mapLibreMap.animateCamera(CameraUpdateFactory.zoomIn())
+    }
+
+    fun zoomOut() {
+        mapLibreMap.animateCamera(CameraUpdateFactory.zoomOut())
+    }
 }
 
 @Composable
