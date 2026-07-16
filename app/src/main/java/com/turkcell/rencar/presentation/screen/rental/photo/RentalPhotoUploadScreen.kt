@@ -73,7 +73,7 @@ fun RentalPhotoUploadRoute(
     mode: RentalPhotoUploadMode,
     onNavigateBack: () -> Unit,
     onNavigateToActiveRental: (rentalId: String, vehicleId: String) -> Unit,
-    onNavigateHome: () -> Unit,
+    onNavigateToPayment: (rentalId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RentalPhotoUploadViewModel = hiltViewModel()
 ) {
@@ -89,7 +89,7 @@ fun RentalPhotoUploadRoute(
                 is RentalPhotoUploadEffect.NavigateToActiveRental ->
                     onNavigateToActiveRental(effect.rentalId, effect.vehicleId)
 
-                RentalPhotoUploadEffect.NavigateHome -> onNavigateHome()
+                is RentalPhotoUploadEffect.NavigateToPayment -> onNavigateToPayment(effect.rentalId)
             }
         }
     }

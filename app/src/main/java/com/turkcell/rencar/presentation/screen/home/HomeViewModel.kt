@@ -96,6 +96,7 @@ class HomeViewModel @Inject constructor(
                 } else when (intent.item) {
                     BottomNavItem.Profile -> sendEffect { HomeEffect.NavigateToProfile }
                     BottomNavItem.History -> sendEffect { HomeEffect.NavigateToHistory }
+                    BottomNavItem.Wallet -> sendEffect { HomeEffect.NavigateToWallet }
                     else -> setState { copy(selectedNavItem = intent.item) }
                 }
             }

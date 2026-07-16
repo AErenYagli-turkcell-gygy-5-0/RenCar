@@ -91,7 +91,19 @@ class ReservationConfirmationViewModelTest {
         var requestedEndDate: String? = null
         override suspend fun createRental(vehicleId: String, plan: RentalPlan, endDate: String?): RentalResult<Rental> {
             requestedPlan = plan; requestedEndDate = endDate
-            return RentalResult.Success(Rental(RENTAL_ID, "user-1", vehicleId, plan, "2026-07-14T10:00:00.000Z", endDate, null, "PREPARING", "2026-07-14T10:00:00.000Z"))
+            return RentalResult.Success(
+                Rental(
+                    id = RENTAL_ID,
+                    userId = "user-1",
+                    vehicleId = vehicleId,
+                    plan = plan,
+                    startDate = "2026-07-14T10:00:00.000Z",
+                    endDate = endDate,
+                    totalPrice = null,
+                    status = "PREPARING",
+                    createdAt = "2026-07-14T10:00:00.000Z"
+                )
+            )
         }
         override suspend fun getMyRentals(): RentalResult<List<RentalSummary>> = RentalResult.Success(emptyList())
         override suspend fun getRentalHistory(): RentalResult<List<RentalHistoryItem>> =
@@ -105,6 +117,13 @@ class ReservationConfirmationViewModelTest {
         override suspend fun cancelRental(rentalId: String): RentalResult<Unit> = error("Not used")
         override suspend fun getActiveRental(): RentalResult<ActiveRental> = error("Not used")
         override suspend fun finishRental(rentalId: String): RentalResult<Rental> = error("Not used")
+        override suspend fun getRentalDetail(rentalId: String): RentalResult<Rental> = error("Not used")
+        override suspend fun payRental(
+            rentalId: String,
+            method: PaymentMethod,
+            cardId: String?,
+            discountCode: String?
+        ): RentalResult<PaymentReceipt> = error("Not used")
     }
 
     private class FakeReservationRepository : ReservationRepository {

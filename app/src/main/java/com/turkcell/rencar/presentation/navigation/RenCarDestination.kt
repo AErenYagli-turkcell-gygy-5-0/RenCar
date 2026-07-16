@@ -52,6 +52,12 @@ sealed class RenCarDestination(val route: String) {
             "active-rental/${Uri.encode(rentalId)}/${Uri.encode(vehicleId)}"
     }
 
+    data object Payment : RenCarDestination("payment/{$ARG_RENTAL_ID}") {
+        fun createRoute(rentalId: String): String = "payment/${Uri.encode(rentalId)}"
+    }
+
+    data object Wallet : RenCarDestination("wallet")
+
     companion object {
         const val ARG_PHONE_NUMBER = "phoneNumber"
         const val ARG_VEHICLE_ID = "vehicleId"

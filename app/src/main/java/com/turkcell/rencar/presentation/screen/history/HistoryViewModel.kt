@@ -22,6 +22,7 @@ class HistoryViewModel @Inject constructor(
             is HistoryIntent.NavItemSelected -> when (intent.item) {
                 BottomNavItem.Map -> sendEffect { HistoryEffect.NavigateToMap }
                 BottomNavItem.Profile -> sendEffect { HistoryEffect.NavigateToProfile }
+                BottomNavItem.Wallet -> sendEffect { HistoryEffect.NavigateToWallet }
                 else -> setState { copy(selectedNavItem = intent.item) }
             }
         }

@@ -69,6 +69,7 @@ import java.net.URL
 fun ProfileRoute(
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
@@ -89,6 +90,7 @@ fun ProfileRoute(
         onIntent = viewModel::onIntent,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
+        onNavigateToWallet = onNavigateToWallet,
         modifier = modifier
     )
 }
@@ -99,6 +101,7 @@ fun ProfileScreen(
     onIntent: (ProfileIntent) -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -161,7 +164,7 @@ fun ProfileScreen(
                 when (item) {
                     BottomNavItem.Map -> onNavigateToHome()
                     BottomNavItem.History -> onNavigateToHistory()
-                    BottomNavItem.Wallet,
+                    BottomNavItem.Wallet -> onNavigateToWallet()
                     BottomNavItem.Profile -> Unit
                 }
             }
@@ -763,7 +766,8 @@ private fun ProfileScreenPreview() {
             ),
             onIntent = {},
             onNavigateToHome = {},
-            onNavigateToHistory = {}
+            onNavigateToHistory = {},
+            onNavigateToWallet = {}
         )
     }
 }
@@ -781,7 +785,8 @@ private fun ProfileScreenDarkPreview() {
             ),
             onIntent = {},
             onNavigateToHome = {},
-            onNavigateToHistory = {}
+            onNavigateToHistory = {},
+            onNavigateToWallet = {}
         )
     }
 }

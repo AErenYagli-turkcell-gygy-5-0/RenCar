@@ -5,5 +5,5 @@ import com.turkcell.rencar.presentation.core.mvi.UiEffect
 sealed interface RentalPhotoUploadEffect : UiEffect {
     data object NavigateBack : RentalPhotoUploadEffect
     data class NavigateToActiveRental(val rentalId: String, val vehicleId: String) : RentalPhotoUploadEffect
-    data object NavigateHome : RentalPhotoUploadEffect
+    data class NavigateToPayment(val rentalId: String) : RentalPhotoUploadEffect
 }

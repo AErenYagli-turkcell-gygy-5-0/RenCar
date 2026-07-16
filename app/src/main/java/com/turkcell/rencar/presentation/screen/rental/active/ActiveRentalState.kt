@@ -18,5 +18,6 @@ data class ActiveRentalState(
     val vehicleLocation: LatLng? = null,
     val isLoading: Boolean = false,
     val isFinishing: Boolean = false,
+    val showFinishConfirmDialog: Boolean = false,
     val errorMessage: String? = null
 ) : UiState

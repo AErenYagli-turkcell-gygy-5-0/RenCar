@@ -56,6 +56,7 @@ import kotlin.math.roundToInt
 fun HistoryRoute(
     onNavigateToMap: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
@@ -67,6 +68,7 @@ fun HistoryRoute(
             when (effect) {
                 HistoryEffect.NavigateToMap -> onNavigateToMap()
                 HistoryEffect.NavigateToProfile -> onNavigateToProfile()
+                HistoryEffect.NavigateToWallet -> onNavigateToWallet()
             }
         }
     }

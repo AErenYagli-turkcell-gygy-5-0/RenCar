@@ -65,7 +65,8 @@ fun HomeRoute(
     onNavigateToActiveReservationCarDetail: (String) -> Unit,
     onNavigateToActiveRentalPhotoUpload: (rentalId: String, vehicleId: String) -> Unit,
     onNavigateToActiveRentalScreen: (rentalId: String, vehicleId: String) -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToHistory: () -> Unit,
+    onNavigateToWallet: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -128,6 +129,7 @@ fun HomeRoute(
                     onNavigateToActiveRentalScreen(effect.rentalId, effect.vehicleId)
 
                 HomeEffect.NavigateToHistory -> onNavigateToHistory()
+                HomeEffect.NavigateToWallet -> onNavigateToWallet()
             }
         }
     }

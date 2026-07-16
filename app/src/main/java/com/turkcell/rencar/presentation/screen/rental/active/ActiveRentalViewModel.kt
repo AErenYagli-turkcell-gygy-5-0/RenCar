@@ -30,7 +30,9 @@ class ActiveRentalViewModel @Inject constructor(
     override fun onIntent(intent: ActiveRentalIntent) {
         when (intent) {
             is ActiveRentalIntent.ScreenStarted -> start(intent.rentalId, intent.vehicleId)
-            ActiveRentalIntent.FinishClicked -> handleFinishClicked()
+            ActiveRentalIntent.FinishClicked -> setState { copy(showFinishConfirmDialog = true) }
+            ActiveRentalIntent.FinishConfirmed -> handleFinishConfirmed()
+            ActiveRentalIntent.FinishDismissed -> setState { copy(showFinishConfirmDialog = false) }
             ActiveRentalIntent.BackClicked -> sendEffect { ActiveRentalEffect.NavigateToHome }
         }
     }
@@ -114,12 +116,12 @@ class ActiveRentalViewModel @Inject constructor(
         }
     }
 
-    private fun handleFinishClicked() {
+    private fun handleFinishConfirmed() {
         if (state.value.isFinishing) return
         pollingJob?.cancel()
         locationJob?.cancel()
         tickerJob?.cancel()
-        setState { copy(isFinishing = true) }
+        setState { copy(isFinishing = true, showFinishConfirmDialog = false) }
         sendEffect {
             ActiveRentalEffect.NavigateToFinishPhotoUpload(state.value.rentalId, state.value.vehicleId)
         }

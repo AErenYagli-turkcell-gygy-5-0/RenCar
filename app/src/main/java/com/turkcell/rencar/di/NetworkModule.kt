@@ -3,10 +3,12 @@ package com.turkcell.rencar.di
 import com.turkcell.rencar.BuildConfig
 import com.turkcell.rencar.data.remote.AuthInterceptor
 import com.turkcell.rencar.data.remote.auth.AuthApiService
+import com.turkcell.rencar.data.remote.cards.CardsApiService
 import com.turkcell.rencar.data.remote.license.LicenseApiService
 import com.turkcell.rencar.data.remote.rental.RentalApiService
 import com.turkcell.rencar.data.remote.reservation.ReservationApiService
 import com.turkcell.rencar.data.remote.vehicle.VehicleApiService
+import com.turkcell.rencar.data.remote.wallet.WalletApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -60,4 +62,14 @@ object NetworkModule {
     @Singleton
     fun provideReservationApiService(retrofit: Retrofit): ReservationApiService =
         retrofit.create(ReservationApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideWalletApiService(retrofit: Retrofit): WalletApiService =
+        retrofit.create(WalletApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideCardsApiService(retrofit: Retrofit): CardsApiService =
+        retrofit.create(CardsApiService::class.java)
 }

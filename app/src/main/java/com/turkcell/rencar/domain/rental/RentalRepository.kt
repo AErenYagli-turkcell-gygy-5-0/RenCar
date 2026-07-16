@@ -30,4 +30,13 @@ interface RentalRepository {
     suspend fun getActiveRental(): RentalResult<ActiveRental>
 
     suspend fun finishRental(rentalId: String): RentalResult<Rental>
+
+    suspend fun getRentalDetail(rentalId: String): RentalResult<Rental>
+
+    suspend fun payRental(
+        rentalId: String,
+        method: PaymentMethod,
+        cardId: String? = null,
+        discountCode: String? = null
+    ): RentalResult<PaymentReceipt>
 }

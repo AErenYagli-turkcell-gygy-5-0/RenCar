@@ -5,12 +5,17 @@ import android.net.Uri
 import com.turkcell.rencar.data.remote.rental.RentalApiService
 import com.turkcell.rencar.data.remote.rental.dto.ActiveRentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.CreateRentalRequestDto
+import com.turkcell.rencar.data.remote.rental.dto.PayRentalRequestDto
+import com.turkcell.rencar.data.remote.rental.dto.PayRentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalHistoryItemResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalPhotosStateResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalStatsResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalSummaryResponseDto
 import com.turkcell.rencar.domain.rental.ActiveRental
+import com.turkcell.rencar.domain.rental.PaymentMethod
+import com.turkcell.rencar.domain.rental.PaymentReceipt
+import com.turkcell.rencar.domain.rental.PaymentStatus
 import com.turkcell.rencar.domain.rental.Rental
 import com.turkcell.rencar.domain.rental.RentalError
 import com.turkcell.rencar.domain.rental.RentalHistoryItem
@@ -110,6 +115,24 @@ class ApiRentalRepository @Inject constructor(
         apiService.finish(id = rentalId).toDomain()
     }
 
+    override suspend fun getRentalDetail(rentalId: String): RentalResult<Rental> = runRequest {
+        apiService.getOne(id = rentalId).toDomain()
+    }
+
+    override suspend fun payRental(
+        rentalId: String,
+        method: PaymentMethod,
+        cardId: String?,
+        discountCode: String?
+    ): RentalResult<PaymentReceipt> = runRequest {
+        val request = PayRentalRequestDto(
+            method = method.name,
+            cardId = cardId,
+            discountCode = discountCode
+        )
+        apiService.pay(id = rentalId, request = request).toDomain()
+    }
+
     private suspend fun <T> runRequest(request: suspend () -> T): RentalResult<T> = try {
         RentalResult.Success(request())
     } catch (error: CancellationException) {
@@ -156,12 +179,40 @@ internal fun RentalResponseDto.toDomain() = Rental(
     id = id,
     userId = userId,
     vehicleId = vehicleId,
+    vehicleBrand = vehicle.brand,
+    vehicleModel = vehicle.model,
+    vehiclePlate = vehicle.plate,
     plan = plan.toRentalPlanOrDefault(),
     startDate = startDate,
     endDate = endDate,
     totalPrice = totalPrice,
+    startFee = startFee,
+    serviceFee = serviceFee,
+    distanceKm = distanceKm,
+    durationMinutes = durationMinutes,
     status = status,
+    paymentStatus = paymentStatus.toPaymentStatusOrDefault(),
+    paymentMethod = paymentMethod?.toPaymentMethodOrNull(),
+    discountAmount = discountAmount,
     createdAt = createdAt
+)
+
+private fun String.toPaymentStatusOrDefault(): PaymentStatus =
+    runCatching { PaymentStatus.valueOf(this) }.getOrDefault(PaymentStatus.UNPAID)
+
+private fun String.toPaymentMethodOrNull(): PaymentMethod? =
+    runCatching { PaymentMethod.valueOf(this) }.getOrNull()
+
+internal fun PayRentalResponseDto.toDomain() = PaymentReceipt(
+    rentalId = rentalId,
+    paymentStatus = paymentStatus.toPaymentStatusOrDefault(),
+    method = method.toPaymentMethodOrNull() ?: PaymentMethod.WALLET,
+    totalPrice = totalPrice,
+    discountAmount = discountAmount,
+    paidAmount = paidAmount,
+    walletBalance = walletBalance,
+    cardBrand = card?.brand,
+    cardLast4 = card?.last4
 )
 
 private fun String?.toRentalPlanOrDefault(): RentalPlan =
