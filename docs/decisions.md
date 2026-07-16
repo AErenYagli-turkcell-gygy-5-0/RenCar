@@ -8,6 +8,24 @@
 
 ---
 
+## 2026-07-16 - Kiralama Geçmişi Görsel Hiyerarşisinin Güçlendirilmesi
+
+**Karar:** Geçmiş ekranının domain, repository ve MVI sözleşmeleri değiştirilmeden sunum katmanı
+yenilendi. Mevcut aylık istatistikler iki ayrı özet kartında gösterildi; tamamlanmış kiralamalar
+`startedAt` alanıyla aylara göre gruplandı. Kartlara mevcut araç tipi rengiyle araç ikonu, plaka,
+tamamlanma rozeti, ince tema kenarlığı ve uzun araç adları için taşma kontrolü eklendi. Boş ve hata
+durumları görsel hiyerarşi ve belirgin yeniden deneme aksiyonuyla iyileştirildi.
+
+Geçmiş rota koordinatları API tarafından sağlanmadığından mini rota veya harita görseli üretilmedi.
+Yeni renk rolü ya da bağımlılık eklenmedi; mevcut Material 3 ve `RenCarExtendedColors` kullanıldı.
+
+**Etkilenen dosyalar:**
+- `presentation/screen/history/HistoryScreen.kt`
+- `app/src/main/res/values/strings.xml`
+- `docs/decisions.md`
+
+---
+
 ## 2026-07-15 - Ehliyet Yuklemede Selfie Multipart Alaninin API Sozlesmesine Eklenmesi
 
 **Karar:** Guncel `docs/api/openapi.json` sozlesmesine gore `POST /license/upload` artik

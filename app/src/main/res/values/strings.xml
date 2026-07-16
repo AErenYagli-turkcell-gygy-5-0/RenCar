@@ -218,6 +218,11 @@
     <!-- History Screen (Kiralama Geçmişi) -->
     <string name="history_title">Kiralamalarım</string>
     <string name="history_subtitle">Bu ay %1$d yolculuk · %2$s harcama</string>
+    <string name="history_overview_subtitle">Bu ayın kiralama özeti</string>
+    <string name="history_trip_count_label">Yolculuk</string>
+    <string name="history_total_spent_label">Toplam harcama</string>
+    <string name="history_completed">Tamamlandı</string>
     <string name="history_empty">Henüz tamamlanmış kiralamanız yok.</string>
+    <string name="history_empty_description">Tamamladığınız yolculuklar burada görüntülenecek.</string>
     <string name="history_duration_minutes">%1$d dk</string>
 </resources>
