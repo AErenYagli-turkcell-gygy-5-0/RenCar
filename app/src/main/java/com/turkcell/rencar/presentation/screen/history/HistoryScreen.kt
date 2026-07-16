@@ -1,6 +1,7 @@
 package com.turkcell.rencar.presentation.screen.history
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,6 +29,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +49,7 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+import java.util.Date
 import kotlin.math.roundToInt
 
 @Composable
@@ -89,15 +96,26 @@ fun HistoryScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = stringResource(
-                    R.string.history_subtitle,
-                    state.tripCount,
-                    state.totalSpent.toTryPrice()
-                ),
+                text = stringResource(R.string.history_overview_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 3.dp)
             )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                HistorySummaryCard(
+                    label = stringResource(R.string.history_trip_count_label),
+                    value = state.tripCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                HistorySummaryCard(
+                    label = stringResource(R.string.history_total_spent_label),
+                    value = state.totalSpent.toTryPrice(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         Column(modifier = Modifier.weight(1f)) {
@@ -124,16 +142,19 @@ fun HistoryScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.padding(top = 14.dp).clickable { onIntent(HistoryIntent.RetryClicked) }
+                    ) {
                     Text(
                         text = stringResource(R.string.home_vehicles_retry),
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         style = MaterialTheme.typography.labelLarge,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                            .clickable { onIntent(HistoryIntent.RetryClicked) }
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 11.dp)
                     )
+                    }
                 }
 
                 state.items.isEmpty() -> Column(
@@ -141,10 +162,25 @@ fun HistoryScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_clock_outline),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.size(42.dp)
+                    )
                     Text(
                         text = stringResource(R.string.history_empty),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 14.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.history_empty_description),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 6.dp)
                     )
                 }
 
@@ -153,8 +189,16 @@ fun HistoryScreen(
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(state.items, key = { it.id }) { item ->
-                        HistoryItemCard(item)
+                    state.items.groupBy { it.startedAt.toMonthYear() }.forEach { (month, monthItems) ->
+                        item(key = "month-$month") {
+                            Text(
+                                text = month,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                        items(monthItems, key = { it.id }) { item -> HistoryItemCard(item) }
                     }
                 }
             }
@@ -168,22 +212,45 @@ fun HistoryScreen(
 }
 
 @Composable
+private fun HistorySummaryCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = value, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(top = 4.dp))
+        }
+    }
+}
+
+@Composable
 private fun HistoryItemCard(item: RentalHistoryItem) {
     val colors = MaterialTheme.extendedColors
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)),
         color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(20.dp),
+        shadowElevation = 1.dp
     ) {
         Row(
             modifier = Modifier.padding(14.dp),
             horizontalArrangement = Arrangement.spacedBy(13.dp)
         ) {
-            Column(
+            Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .background(item.vehicleType.color(colors), RoundedCornerShape(14.dp))
-            ) {}
+                    .background(item.vehicleType.color(colors).copy(alpha = 0.16f), RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_rencar_car),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(item.vehicleType.color(colors)),
+                    modifier = Modifier.size(32.dp)
+                )
+            }
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -193,13 +260,31 @@ private fun HistoryItemCard(item: RentalHistoryItem) {
                     Text(
                         text = "${item.vehicleBrand} ${item.vehicleModel}".trim(),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = (item.totalPrice ?: 0.0).toTryPrice(),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = item.vehiclePlate, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Surface(color = colors.successContainer, shape = RoundedCornerShape(12.dp)) {
+                        Text(
+                            text = stringResource(R.string.history_completed),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.success,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
                 }
                 Text(
                     text = item.startedAt.toFormattedDate(),
@@ -250,13 +335,24 @@ private fun Double.toKmText(): String {
     return formatter.format(this)
 }
 
-private fun String.toFormattedDate(): String {
+private fun String.toDate(): Date? {
     val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
-    val date = runCatching { parser.parse(this) }.getOrNull() ?: return this
-    val formatter = SimpleDateFormat("d MMM yyyy · HH:mm", Locale("tr", "TR"))
+    return runCatching { parser.parse(this) }.getOrNull()
+}
+
+private fun String.toFormattedDate(): String {
+    val date = toDate() ?: return this
+    val formatter = SimpleDateFormat("d MMM yyyy · HH:mm", Locale.forLanguageTag("tr-TR"))
     return formatter.format(date)
+}
+
+private fun String.toMonthYear(): String {
+    val date = toDate() ?: return this
+    val locale = Locale.forLanguageTag("tr-TR")
+    return SimpleDateFormat("MMMM yyyy", locale).format(date)
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
 }
 
 @Preview(showBackground = true)
