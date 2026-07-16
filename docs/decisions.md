@@ -313,6 +313,27 @@ govdesine eklenir; `endDate` yalnizca `DAILY` planda gonderilir.
 **Gerekce:** Acilis ve servis ucreti dahil fiyat formulleri backend tarafindan yonetilmektedir.
 Sunucu quote sonucu, onay ekraninda gosterilen tahmini tutar ile yolculuk sonunda uygulanacak
 fiyatlandirmanin ayni kurallara dayanmasini saglar.
+
+### 2026-07-16 - Plan Bazli Tahmini Ucret Aciklamasi
+
+**Karar:** Rezervasyon onay ekraninda quote yanitinin `usageFee`, `startFee`, `serviceFee` ve
+`estimatedTotal` kalemleri ayri satirlarda gosterilir. Tahmini toplam etiketi `PER_MINUTE` icin
+secilen dakika, `HOURLY` icin "Ilk saat", `DAILY` icin "1 gun" olarak plan bazinda aciklanir.
+Istemci fiyat hesaplamaz; sunucunun dondurdugu kalemleri ve toplami aynen gosterir.
+
+**Gerekce:** Saatlik ve gunluk planlarda 30 dakikalik quote sorgusu sirasiyla en az bir saate ve
+en az bir gune yuvarlanir. Tum planlarda "30 dk" etiketi kullanilmasi, toplam tutarin orantili
+yarim saat ucreti oldugu izlenimini vermektedir. Plan bazli etiket ve fiyat dokumu, backend
+fiyatlandirma kurallarini degistirmeden toplam tutari kullanici icin aciklar.
+
+**Bagimliliklar:** Yeni bagimlilik eklenmemistir.
+
+**Etkilenen dosyalar:**
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/reservation/confirmation/ReservationConfirmationState.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/reservation/confirmation/ReservationConfirmationViewModel.kt`
+- `app/src/main/java/com/turkcell/rencar/presentation/screen/reservation/confirmation/ReservationConfirmationScreen.kt`
+- `app/src/main/res/values/strings.xml`
+- `app/src/test/java/com/turkcell/rencar/presentation/screen/reservation/confirmation/ReservationConfirmationViewModelTest.kt`
 ## 2026-07-13 - Aktif Rezervasyonlu Kullanicinin Arac Detayindan Baslamasi
 
 **Karar:** Home ekrani acilirken arac listesi yuklenmeden once `GET /reservations/active` ile
