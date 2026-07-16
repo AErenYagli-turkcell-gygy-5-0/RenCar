@@ -1,11 +1,13 @@
 package com.turkcell.rencar.presentation.screen.rental.active
 
 import androidx.lifecycle.viewModelScope
+import com.turkcell.rencar.domain.location.LocationRepository
 import com.turkcell.rencar.domain.rental.RentalError
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import com.turkcell.rencar.domain.vehicle.VehicleResult
+import com.turkcell.rencar.presentation.component.map.LatLng
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -17,15 +19,19 @@ import javax.inject.Inject
 @HiltViewModel
 class ActiveRentalViewModel @Inject constructor(
     private val rentalRepository: RentalRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val locationRepository: LocationRepository
 ) : MviViewModel<ActiveRentalState, ActiveRentalIntent, ActiveRentalEffect>(ActiveRentalState()) {
 
     private var pollingJob: Job? = null
+    private var locationJob: Job? = null
+    private var tickerJob: Job? = null
 
     override fun onIntent(intent: ActiveRentalIntent) {
         when (intent) {
             is ActiveRentalIntent.ScreenStarted -> start(intent.rentalId, intent.vehicleId)
             ActiveRentalIntent.FinishClicked -> handleFinishClicked()
+            ActiveRentalIntent.BackClicked -> sendEffect { ActiveRentalEffect.NavigateToHome }
         }
     }
 
@@ -37,6 +43,8 @@ class ActiveRentalViewModel @Inject constructor(
         }
         loadVehicle(vehicleId)
         startPolling()
+        startLocationTracking()
+        startTicking()
     }
 
     private fun loadVehicle(vehicleId: String) {
@@ -69,6 +77,9 @@ class ActiveRentalViewModel @Inject constructor(
             is RentalResult.Success -> setState {
                 copy(
                     isLoading = false,
+                    plan = result.data.plan,
+                    startFee = result.data.startFee,
+                    startedAt = result.data.startedAt,
                     elapsedSeconds = result.data.elapsedSeconds,
                     currentCost = result.data.currentCost,
                     distanceKm = result.data.distanceKm,
@@ -82,9 +93,32 @@ class ActiveRentalViewModel @Inject constructor(
         }
     }
 
+    // Saniye sayacı 5 saniyelik REST polling'den bağımsız olarak akıcı ilerlesin diye eklendi;
+    // her poll yanıtı elapsedSeconds'ı sunucu değeriyle üzerine yazdığından sapma birikmez.
+    private fun startTicking() {
+        tickerJob?.cancel()
+        tickerJob = viewModelScope.launch {
+            while (isActive) {
+                delay(TICK_INTERVAL_MS)
+                setState { copy(elapsedSeconds = elapsedSeconds + 1) }
+            }
+        }
+    }
+
+    private fun startLocationTracking() {
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
+            locationRepository.observeMyVehicleLocation().collect { location ->
+                setState { copy(vehicleLocation = LatLng(location.latitude, location.longitude)) }
+            }
+        }
+    }
+
     private fun handleFinishClicked() {
         if (state.value.isFinishing) return
         pollingJob?.cancel()
+        locationJob?.cancel()
+        tickerJob?.cancel()
         setState { copy(isFinishing = true) }
         sendEffect {
             ActiveRentalEffect.NavigateToFinishPhotoUpload(state.value.rentalId, state.value.vehicleId)
@@ -93,6 +127,8 @@ class ActiveRentalViewModel @Inject constructor(
 
     override fun onCleared() {
         pollingJob?.cancel()
+        locationJob?.cancel()
+        tickerJob?.cancel()
         super.onCleared()
     }
 
@@ -108,6 +144,7 @@ class ActiveRentalViewModel @Inject constructor(
 
     private companion object {
         const val POLL_INTERVAL_MS = 5_000L
+        const val TICK_INTERVAL_MS = 1_000L
         const val INVALID_REQUEST_MESSAGE = "Bilgiler alınamadı. Lütfen tekrar deneyin."
         const val UNAUTHORIZED_MESSAGE = "Oturumunuz sona ermiş. Lütfen tekrar giriş yapın."
         const val FORBIDDEN_MESSAGE = "Bu kiralama size ait değil."

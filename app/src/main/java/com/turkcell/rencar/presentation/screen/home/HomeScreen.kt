@@ -64,7 +64,8 @@ fun HomeRoute(
     onNavigateToCarDetail: (String, Double?, Double?) -> Unit,
     onNavigateToActiveReservationCarDetail: (String) -> Unit,
     onNavigateToActiveRentalPhotoUpload: (rentalId: String, vehicleId: String) -> Unit,
-    onNavigateToActiveRentalScreen: (rentalId: String, vehicleId: String) -> Unit
+    onNavigateToActiveRentalScreen: (rentalId: String, vehicleId: String) -> Unit,
+    onNavigateToHistory: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -125,6 +126,8 @@ fun HomeRoute(
 
                 is HomeEffect.NavigateToActiveRentalScreen ->
                     onNavigateToActiveRentalScreen(effect.rentalId, effect.vehicleId)
+
+                HomeEffect.NavigateToHistory -> onNavigateToHistory()
             }
         }
     }
@@ -308,6 +311,14 @@ fun HomeScreen(
         }
 
         Column(modifier = Modifier.fillMaxWidth()) {
+            if (state.activeRentalId != null) {
+                HomeActiveRentalBanner(
+                    vehicleName = state.activeRentalVehicleName,
+                    onClick = { onIntent(HomeIntent.ActiveRentalBannerClicked) },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+
             if (state.permissionDenied == true) {
                 HomeLocationPermissionBanner(
                     onGrantClick = { onIntent(HomeIntent.RequestLocationPermissionClicked) },

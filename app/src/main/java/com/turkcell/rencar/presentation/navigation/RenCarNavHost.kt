@@ -12,6 +12,7 @@ import com.turkcell.rencar.presentation.screen.auth.login.LoginRoute
 import com.turkcell.rencar.presentation.screen.auth.otp.OtpRoute
 import com.turkcell.rencar.presentation.screen.auth.register.RegisterRoute
 import com.turkcell.rencar.presentation.screen.cardetail.CarDetailRoute
+import com.turkcell.rencar.presentation.screen.history.HistoryRoute
 import com.turkcell.rencar.presentation.screen.home.HomeRoute
 import com.turkcell.rencar.presentation.screen.profile.ProfileRoute
 import com.turkcell.rencar.presentation.screen.rental.active.ActiveRentalRoute
@@ -129,6 +130,24 @@ fun RenCarNavHost(
                         RenCarDestination.ActiveRental.createRoute(rentalId, vehicleId)
                     ) {
                         popUpTo(RenCarDestination.Home.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToHistory = {
+                    navController.navigate(RenCarDestination.History.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(RenCarDestination.History.route) {
+            HistoryRoute(
+                onNavigateToMap = {
+                    navController.popBackStack(RenCarDestination.Home.route, inclusive = false)
+                },
+                onNavigateToProfile = {
+                    navController.navigate(RenCarDestination.Profile.route) {
                         launchSingleTop = true
                     }
                 }
@@ -276,6 +295,12 @@ fun RenCarNavHost(
                             mode = RentalPhotoUploadMode.RETURN_TRIP.name
                         )
                     ) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(RenCarDestination.Home.route) {
+                        popUpTo(RenCarDestination.Home.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 }

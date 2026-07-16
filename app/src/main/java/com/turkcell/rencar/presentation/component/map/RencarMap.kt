@@ -22,9 +22,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.turkcell.rencar.R
 import com.turkcell.rencar.presentation.theme.RenCarExtendedColors
 import com.turkcell.rencar.presentation.theme.extendedColors
 import org.maplibre.android.MapLibre
@@ -42,6 +44,7 @@ import com.google.gson.JsonPrimitive
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
@@ -53,6 +56,9 @@ const val DEFAULT_ZOOM = 14.0
 
 private const val SOURCE_ME = "me"
 private const val LAYER_ME = "me-layer"
+private const val SOURCE_VEHICLE = "vehicle"
+private const val LAYER_VEHICLE = "vehicle-layer"
+private const val IMAGE_VEHICLE_ICON = "vehicle_icon"
 
 /**
  * RencarMap tarafından geri verilen, harita kamerasını dışarıdan kontrol etmeye yarayan basit bir tutamaç.
@@ -78,6 +84,7 @@ fun RencarMap(
     initialCenter: LatLng = DEFAULT_CENTER,
     initialZoom: Double = DEFAULT_ZOOM,
     myLocation: LatLng?,
+    vehicleLocation: LatLng? = null,
     vehicles: List<VehicleMarker> = emptyList(),
     onControllerReady: (RencarMapController) -> Unit = {},
     onVehicleClick: (String) -> Unit = {}
@@ -89,6 +96,7 @@ fun RencarMap(
     val statusBarInsetPx = WindowInsets.statusBars.getTop(density)
 
     val currentMyLocation = rememberUpdatedState(myLocation)
+    val currentVehicleLocation = rememberUpdatedState(vehicleLocation)
     val currentVehicles = rememberUpdatedState(vehicles)
     val currentCategoryColors = rememberUpdatedState(categoryColors)
     val currentOnControllerReady = rememberUpdatedState(onControllerReady)
@@ -96,6 +104,7 @@ fun RencarMap(
 
     val mapView = remember { MapView(context.also { MapLibre.getInstance(it) }) }
     val meSourceState = remember { mutableStateOf<GeoJsonSource?>(null) }
+    val vehicleSourceState = remember { mutableStateOf<GeoJsonSource?>(null) }
     val styleState = remember { mutableStateOf<Style?>(null) }
     val symbolManagerState = remember { mutableStateOf<SymbolManager?>(null) }
     val mapLibreMapState = remember { mutableStateOf<MapLibreMap?>(null) }
@@ -157,6 +166,20 @@ fun RencarMap(
                     )
                     updateMeSource(meSource, currentMyLocation.value)
                     meSourceState.value = meSource
+
+                    val vehicleSource = GeoJsonSource(SOURCE_VEHICLE)
+                    style.addSource(vehicleSource)
+                    style.addImage(IMAGE_VEHICLE_ICON, createVehicleIconBitmap(context))
+                    style.addLayer(
+                        SymbolLayer(LAYER_VEHICLE, SOURCE_VEHICLE).withProperties(
+                            PropertyFactory.iconImage(IMAGE_VEHICLE_ICON),
+                            PropertyFactory.iconAllowOverlap(true),
+                            PropertyFactory.iconIgnorePlacement(true)
+                        )
+                    )
+                    updateVehicleLocationSource(vehicleSource, currentVehicleLocation.value)
+                    vehicleSourceState.value = vehicleSource
+
                     styleState.value = style
 
                     val symbolManager = SymbolManager(mapView, mapLibreMap, style)
@@ -188,6 +211,7 @@ fun RencarMap(
         },
         update = {
             meSourceState.value?.let { updateMeSource(it, myLocation) }
+            vehicleSourceState.value?.let { updateVehicleLocationSource(it, vehicleLocation) }
 
             val style = styleState.value
             val symbolManager = symbolManagerState.value
@@ -211,6 +235,48 @@ private fun updateMeSource(source: GeoJsonSource, location: LatLng?) {
     } else {
         source.setGeoJson(Feature.fromGeometry(Point.fromLngLat(location.longitude, location.latitude)))
     }
+}
+
+private fun updateVehicleLocationSource(source: GeoJsonSource, location: LatLng?) {
+    if (location == null) {
+        source.setGeoJson(FeatureCollection.fromFeatures(emptyArray()))
+    } else {
+        source.setGeoJson(Feature.fromGeometry(Point.fromLngLat(location.longitude, location.latitude)))
+    }
+}
+
+// Aktif Kiralama ekranındaki canlı araç konumu için, mevcut ic_rencar_car.xml (Splash'te de
+// kullanılan) beyaza boyanıp mavi dairesel bir arka plan üzerine çizilerek tek bir bitmap ikonu
+// üretilir; createPriceBubbleBitmap ile aynı Canvas/Bitmap deseni, yeni bir görsel varlık eklenmez.
+private fun createVehicleIconBitmap(context: Context): Bitmap {
+    val density = context.resources.displayMetrics.density
+    val diameter = (52f * density).toInt().coerceAtLeast(1)
+    val strokeWidth = 3f * density
+
+    val bitmap = Bitmap.createBitmap(diameter, diameter, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val radius = diameter / 2f
+
+    val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.parseColor("#0B6BCB")
+    }
+    canvas.drawCircle(radius, radius, radius - strokeWidth / 2f, backgroundPaint)
+
+    val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        this.strokeWidth = strokeWidth
+    }
+    canvas.drawCircle(radius, radius, radius - strokeWidth / 2f, strokePaint)
+
+    ContextCompat.getDrawable(context, R.drawable.ic_rencar_car)?.mutate()?.let { drawable ->
+        drawable.setTint(android.graphics.Color.WHITE)
+        val iconMargin = (diameter * 0.27f).toInt()
+        drawable.setBounds(iconMargin, iconMargin, diameter - iconMargin, diameter - iconMargin)
+        drawable.draw(canvas)
+    }
+
+    return bitmap
 }
 
 private fun updateVehicleSymbols(

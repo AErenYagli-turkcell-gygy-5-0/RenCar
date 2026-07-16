@@ -8,6 +8,141 @@
 
 ---
 
+## 2026-07-14 - Aktif Kiralama Ekranı Yeniden Tasarımı, Harita Takibi ve Ana Sayfa Bildirim Çipi
+
+**Karar (ekran yeniden tasarımı):** Kullanıcının paylaştığı ekran görüntüsüne (`img.png`) göre
+`ActiveRentalScreen.kt` yeniden düzenlendi: üstte geri oku + "Aktif Yolculuk" başlığı, araç bilgi
+kartı (marka/model, plaka, plan etiketi — Dakikalık/Saatlik/Günlük), kart şeklinde (tam ekran
+olmayan, 220dp yükseklikte, yuvarlak köşeli) harita, "Geçen süre" kartı (artık başlangıç saatiyle
+birlikte), Anlık Ücret/Mesafe kartları, başlangıç ücreti bilgi notu ve alt butonlar. Eski
+`StatusPill` (üstteki "Kiralama aktif · X" rozeti) kaldırıldı; aynı metin artık yalnızca Ana
+Sayfa'daki yeni bildirim çipinde kullanılıyor (`active_rental_status_active_with_vehicle` string'i
+yeniden kullanıldı, `active_rental_status_active` (araçsız varyant) artık kullanılmadığından
+kaldırıldı).
+
+**Karar (Anlık Ücret incelemesi — hata değil, eksik açıklama):** `GET /rentals/active` yanıtındaki
+`currentCost` alanı sözleşme gereği zaten "kullanım + açılış ücreti + servis ücreti" toplamıdır
+(`openapi.json`, `ActiveRentalResponseDto.currentCost` açıklaması); istemci bunu birebir doğru
+gösteriyordu, bir hesaplama hatası tespit edilmedi. Ancak ekranda bu tutarın neden bir taban
+değerden (açılış ücretinden) başladığını açıklayan bilgi hiç yoktu. Backend'in zaten döndürdüğü ama
+istemcinin sadeleştirilmiş DTO'sunda eksik olan `startFee`, `plan`, `startedAt` alanları
+(`ActiveRentalResponseDto.kt`, `domain/rental/ActiveRental.kt`, `ApiRentalRepository.kt` içine)
+eklendi ve ekrana **kullanıcı onaylı** bir bilgi notu kondu: "Anlık ücrete ₺{başlangıç ücreti}
+başlangıç ücreti dahildir; kesin tutar kiralama bitince hesaplanır." Mockup'taki "...bitince çıkar"
+ifadesi kullanılmadı çünkü `finish` formülünde (`kullanım + açılış ücreti + servis ücreti`) açılış
+ücreti bitişte tutardan düşülmüyor, toplamın kalıcı bir parçası olarak kalıyor; yanlış mali çağrışım
+kurulmaması için kullanıcıyla netleştirilip bu şekilde onaylandı.
+
+**Karar (saniye sayacı):** `ActiveRentalViewModel`'e, mevcut 5 saniyelik REST polling'in (ücret/
+mesafe için) yanına bağımsız bir `tickerJob` eklendi: her saniye `elapsedSeconds + 1` yapılır; her
+poll yanıtı geldiğinde `elapsedSeconds` sunucu değeriyle üzerine yazılmaya devam ettiğinden sapma
+birikmez. Ücret/mesafe hâlâ yalnızca 5 saniyede bir tazelenir (bunlar sunucu tarafı hesap
+gerektirir; saniyede bir ağ isteği atmak israf olurdu) — kullanıcının talebi yalnızca süre
+sayacının akıcı ilerlemesiydi.
+
+**Karar (harita: araç ikonu + sürekli merkezleme):** `RencarMap.kt`'ye, mevcut `myLocation` (mavi
+nokta, Ana Sayfa'daki "benim konumum" göstergesi — **değiştirilmedi**) parametresinden bağımsız
+yeni bir `vehicleLocation: LatLng?` parametresi eklendi. `SOURCE_ME`/`LAYER_ME` ile birebir aynı
+desende ayrı bir `GeoJsonSource` + `SymbolLayer` kullanılır; ikon, projede zaten var olan (Splash'te
+kullanılan) `res/drawable/ic_rencar_car.xml` beyaza boyanıp mavi dairesel arka plan üzerine
+çizilerek üretilir (`createPriceBubbleBitmap` ile aynı Canvas/Bitmap deseni) — yeni bir görsel
+varlık eklenmedi. `ActiveRentalScreen.kt`, konum her güncellendiğinde (Ana Sayfa'daki "yalnız ilk
+seferde ortala" deseninin aksine) `mapController.animateTo(location)` çağırarak kamerayı aracın
+üstünde tutar; mavi ikon ekranda sabit kalır.
+
+**Karar (geri tuşu ve Ana Sayfa bildirim çipi — kullanıcı onayı, önceki kararın kısmi revizyonu):**
+Üstteki geri oku artık her zaman Ana Sayfa'ya döner (`ActiveRentalEffect.NavigateToHome` →
+`RenCarNavHost`'ta `navigate(Home) { popUpTo(Home, inclusive=true) }`); kiralama arka planda ACTIVE
+kalmaya devam eder (ViewModel job'ları iptal edilmez sadece ekran değişir; yeniden girildiğinde
+`start()` zaten kaldığı yerden devam ettirir). Bu, 2026-07-14 tarihli "Aktif Kiralaması Olan
+Kullanıcının da Kaldığı Yerden Devam Etmesi" kararını **yalnızca ACTIVE durumu için** revize eder:
+`HomeViewModel.checkActiveRental()`'ın ACTIVE dalı artık otomatik yönlendirme yerine
+`HomeState.activeRentalId/activeRentalVehicleId/activeRentalVehicleName` alanlarını doldurup Ana
+Sayfa'yı normal şekilde göstermeye devam eder; Ana Sayfa'da `HomeActiveRentalBanner` (mevcut
+`active_rental_status_active_with_vehicle` metniyle) gösterilir, dokununca **mevcut**
+`HomeEffect.NavigateToActiveRentalScreen` effect'i tetiklenir. **PREPARING dalı değişmedi** — foto
+akışı tamamlanmadan kiralama başlamadığından Ana Sayfa'da gezinmenin bir anlamı yok, otomatik
+yönlendirme aynen korundu.
+
+**Bağımlılıklar:** Yeni bir Gradle bağımlılığı eklenmedi; mevcut `ic_rencar_car.xml` yeniden
+kullanıldı.
+
+**Etkilenen alanlar:**
+- `data/remote/rental/dto/ActiveRentalResponseDto.kt`, `domain/rental/ActiveRental.kt`,
+  `data/repository/rental/ApiRentalRepository.kt`
+- `presentation/screen/rental/active/` (tüm dosyalar)
+- `presentation/component/map/RencarMap.kt`
+- `presentation/navigation/RenCarNavHost.kt`
+- `presentation/screen/home/` (`HomeState.kt`, `HomeIntent.kt`, `HomeViewModel.kt`,
+  `HomeScreenComponents.kt`, `HomeScreen.kt`)
+- `app/src/main/res/values/strings.xml`
+
+---
+
+## 2026-07-14 - Aktif Kiralama Ekranında Canlı Konum (Socket.IO) ve Kiralama Geçmişi Ekranı
+
+**Karar (canlı konum):** Kullanıcının paylaştığı backend sözleşmesi doğrultusunda (`Socket.IO`
+namespace `/ws/locations`, `my-vehicle` event'i — yalnız CUSTOMER'ın aktif kiralamasındaki aracın
+konumu, `{ ts, vehicle: { vehicleId, latitude, longitude, ... } }`) yeni bir `domain/location/`
+sınırı eklendi (`VehicleLocation.kt`, `LocationRepository.kt`). `data/remote/location/
+LocationSocketClient.kt`, `io.socket:socket.io-client` kütüphanesiyle bu namespace'e
+`SessionTokenHolder.accessToken`'ı `auth.token` olarak göndererek bağlanır ve yalnızca
+`"my-vehicle"` event'ini `callbackFlow` ile `Flow<VehicleLocation>`'a çevirir. `vehicle-positions`
+event'i (yalnız ADMIN, tüm filo) kapsam dışıdır — uygulamada admin arayüzü yok.
+
+`ActiveRentalViewModel`, mevcut `pollingJob` (REST `GET /rentals/active`) deseninin yanına ikinci,
+bağımsız bir `locationJob` ekler; ikisi ayrı kaynaklardan beslenir (biri süre/ücret için REST
+polling, diğeri konum için socket) ve `onCleared()`'da birlikte iptal edilir.
+
+**Karar (harita gösterimi — kullanıcı onayı):** `RencarMap.kt` bileşeni hiç değiştirilmedi.
+Aracın canlı konumu, bileşenin zaten sahip olduğu iki gösterim türünden **`myLocation` (mavi
+"konumum" noktası)** ile gösterilir; fiyat balonu (`vehicles`) parametresi kullanılmaz. Bu,
+2026-07-14 tarihli "Kiralama Başlatma..." kararında kapsam dışı bırakılan "Aktif Kiralama
+ekranında canlı harita/rota gösterimi" maddesini tamamlar; mockup'taki özel araç pin'i ve
+kesikli rota çizgisi icat edilmedi (agents.md §2.2).
+
+**Bilinen sınırlama (token yenileme):** Projede reaktif/otomatik token yenileme mekanizması hiç
+yok (bkz. 2026-07-13 kararındaki "Kapsam sınırı" — `AuthInterceptor` yalnızca header ekler).
+Bu nedenle socket bağlantısında da `connect_error` durumunda yeniden deneme/refresh akışı
+eklenmedi; token süresi dolarsa bağlantı sessizce kapanır, kullanıcı ekranı yeniden açtığında
+(`ScreenStarted`) taze token ile tekrar bağlanılır. Yeni bağımlılık: `io.socket:socket.io-client:2.1.1`.
+
+**Karar (Kiralama Geçmişi ekranı):** `Rencar.html` "09 Kiralama Geçmişi" mockup'ına dayanan yeni
+`presentation/screen/history/` ekranı eklendi; ana ekrandaki daha önce hiçbir rotaya bağlı olmayan
+"Geçmiş" alt navigasyon sekmesi (`BottomNavItem.History`) artık bu ekrana yönlendiriyor
+(`HomeViewModel.NavItemSelected` → `HomeEffect.NavigateToHistory`).
+
+`docs/api/openapi.json`'daki güncel `RentalResponseDto` şemasının, uygulamanın o an kullandığı
+sadeleştirilmiş DTO'dan (`data/remote/rental/dto/RentalResponseDto.kt`) çok daha zengin olduğu
+tespit edildi: `vehicle` (plate/brand/model/type özeti), `distanceKm`, `durationMinutes`,
+`totalPrice`, `status`, `startedAt` alanlarını içeriyor. Bu, Geçmiş ekranının ihtiyaç duyduğu her
+şeyi karşıladığından hiçbir alan uydurulmadı. `HomeViewModel`'in aktif kiralama kontrolü için
+kullandığı mevcut `getMyRentals()`/`RentalSummaryResponseDto` (yalnız id/vehicleId/status)
+dokunulmadan bırakıldı; aynı `GET /rentals` uç noktasına, Geçmiş ekranı için ayrı ve daha zengin
+bir DTO ile ikinci bir Retrofit metodu (`listMineDetailed()`) eklendi. `GET /rentals/stats`
+(`RentalRepository.getRentalStats()`) ayın özetini ("Bu ay N yolculuk · ₺X harcama" başlığı) besler.
+`RentalRepository.getRentalHistory()` yalnızca `status == COMPLETED` kayıtları döndürür (kullanıcı
+isteği: bir kiralama bitirildiğinde kaydı Geçmiş'te tutulsun).
+
+**Karar (kart görseli — kullanıcı onayı):** Mockup'taki dekoratif "mini rota haritası" eskizi
+uydurulmadı — backend geçmiş bir yolculuğun GPS rotasını/izini döndürmüyor, yalnızca toplam
+`distanceKm`/`durationMinutes` sayısal olarak dönüyor. Bunun yerine mevcut `VehicleType.color()`
+palet mantığıyla (RencarMap'teki aynı kategori renkleri) renklendirilmiş basit bir ikon kullanıldı.
+
+**Etkilenen alanlar:**
+- `domain/location/`, `data/remote/location/`, `data/repository/location/` (yeni)
+- `domain/rental/` (`RentalHistoryItem.kt`, `RentalStats.kt` yeni; `RentalRepository.kt` genişletildi)
+- `data/remote/rental/` (yeni DTO'lar, `RentalApiService.kt`), `data/repository/rental/ApiRentalRepository.kt`
+- `presentation/screen/history/` (yeni)
+- `presentation/screen/rental/active/` (`ActiveRentalState.kt`, `ActiveRentalViewModel.kt`, `ActiveRentalScreen.kt`)
+- `presentation/screen/home/` (`HomeEffect.kt`, `HomeViewModel.kt`, `HomeScreen.kt`)
+- `presentation/navigation/RenCarDestination.kt`, `presentation/navigation/RenCarNavHost.kt`
+- `di/RepositoryModule.kt`
+- `gradle/libs.versions.toml`, `app/build.gradle.kts` (yeni bağımlılık: `io.socket:socket.io-client`)
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-14 - Aktif Kiralaması Olan Kullanıcının da Kaldığı Yerden Devam Etmesi
 
 **Karar:** 2026-07-13 kararı yalnızca "aktif rezervasyon" (`GET /reservations/active`) durumunu

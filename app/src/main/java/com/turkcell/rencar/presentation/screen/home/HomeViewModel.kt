@@ -93,10 +93,10 @@ class HomeViewModel @Inject constructor(
                 val locationGranted = state.value.permissionDenied == false
                 if (!locationGranted) {
                     Unit
-                } else if (intent.item == BottomNavItem.Profile) {
-                    sendEffect { HomeEffect.NavigateToProfile }
-                } else {
-                    setState { copy(selectedNavItem = intent.item) }
+                } else when (intent.item) {
+                    BottomNavItem.Profile -> sendEffect { HomeEffect.NavigateToProfile }
+                    BottomNavItem.History -> sendEffect { HomeEffect.NavigateToHistory }
+                    else -> setState { copy(selectedNavItem = intent.item) }
                 }
             }
 
@@ -105,6 +105,14 @@ class HomeViewModel @Inject constructor(
                 val locationGranted = state.value.permissionDenied == false
                 if (locationGranted) {
                     sendEffect { HomeEffect.NavigateToCarDetail(intent.vehicleId, state.value.myLocation) }
+                }
+            }
+
+            HomeIntent.ActiveRentalBannerClicked -> {
+                val rentalId = state.value.activeRentalId
+                val vehicleId = state.value.activeRentalVehicleId
+                if (rentalId != null && vehicleId != null) {
+                    sendEffect { HomeEffect.NavigateToActiveRentalScreen(rentalId, vehicleId) }
                 }
             }
         }
@@ -203,8 +211,15 @@ class HomeViewModel @Inject constructor(
                             HomeEffect.NavigateToActiveRentalPhotoUpload(match.id, match.vehicleId)
                         }
 
-                        RentalStatus.ACTIVE -> sendEffect {
-                            HomeEffect.NavigateToActiveRentalScreen(match.id, match.vehicleId)
+                        // ACTIVE kiralama artık Home'u zorla terk ettirmez; kullanıcı geri tuşuyla
+                        // Aktif Kiralama ekranından döndüğünde de aynı bilgi çipini görür (bkz.
+                        // docs/decisions.md).
+                        RentalStatus.ACTIVE -> {
+                            setState {
+                                copy(activeRentalId = match.id, activeRentalVehicleId = match.vehicleId)
+                            }
+                            loadActiveRentalVehicleName(match.vehicleId)
+                            loadVehicles()
                         }
 
                         else -> loadVehicles()
@@ -215,6 +230,18 @@ class HomeViewModel @Inject constructor(
                     setState { copy(isCheckingActiveRental = false, hasCheckedActiveRental = true) }
                     loadVehicles()
                 }
+            }
+        }
+    }
+
+    private fun loadActiveRentalVehicleName(vehicleId: String) {
+        viewModelScope.launch {
+            when (val result = vehicleRepository.getVehicle(vehicleId)) {
+                is VehicleResult.Success -> setState {
+                    copy(activeRentalVehicleName = "${result.data.brand} ${result.data.model}".trim())
+                }
+
+                is VehicleResult.Failure -> Unit
             }
         }
     }

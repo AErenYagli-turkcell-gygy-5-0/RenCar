@@ -1,7 +1,6 @@
 package com.turkcell.rencar.presentation.screen.rental.active
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,11 +11,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -24,9 +27,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,15 +43,21 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
+import com.turkcell.rencar.domain.rental.RentalPlan
+import com.turkcell.rencar.presentation.component.map.RencarMap
+import com.turkcell.rencar.presentation.component.map.RencarMapController
 import com.turkcell.rencar.presentation.theme.RenCarTheme
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 @Composable
 fun ActiveRentalRoute(
     rentalId: String,
     vehicleId: String,
     onNavigateToFinishPhotoUpload: (rentalId: String, vehicleId: String) -> Unit,
+    onNavigateToHome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ActiveRentalViewModel = hiltViewModel()
 ) {
@@ -57,6 +71,8 @@ fun ActiveRentalRoute(
             when (effect) {
                 is ActiveRentalEffect.NavigateToFinishPhotoUpload ->
                     onNavigateToFinishPhotoUpload(effect.rentalId, effect.vehicleId)
+
+                ActiveRentalEffect.NavigateToHome -> onNavigateToHome()
             }
         }
     }
@@ -74,48 +90,128 @@ fun ActiveRentalScreen(
     onIntent: (ActiveRentalIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    var mapController by remember { mutableStateOf<RencarMapController?>(null) }
+
+    LaunchedEffect(state.vehicleLocation, mapController) {
+        val location = state.vehicleLocation
+        val controller = mapController
+        if (location != null && controller != null) {
+            controller.animateTo(location)
+        }
+    }
+
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(top = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            StatusPill(vehicleName = state.vehicleName)
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { onIntent(ActiveRentalIntent.BackClicked) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_back),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Column {
+                Text(
+                    text = stringResource(R.string.active_rental_title),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = stringResource(R.string.active_rental_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         Column(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                .padding(horizontal = 22.dp, vertical = 24.dp)
+                .padding(horizontal = 18.dp)
         ) {
-            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = stringResource(R.string.active_rental_elapsed_label),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            VehicleInfoCard(
+                vehicleName = state.vehicleName,
+                plate = state.plate,
+                plan = state.plan
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp)
+                    .height(220.dp)
+                    .clip(RoundedCornerShape(24.dp))
+            ) {
+                RencarMap(
+                    modifier = Modifier.fillMaxSize(),
+                    myLocation = null,
+                    vehicleLocation = state.vehicleLocation,
+                    onControllerReady = { mapController = it }
                 )
-                Text(
-                    text = state.elapsedSeconds.toClockText(),
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 44.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.active_rental_elapsed_label),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = state.elapsedSeconds.toClockText(),
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 40.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (state.startedAt.isNotBlank()) {
+                        Text(
+                            text = stringResource(
+                                R.string.active_rental_start_label,
+                                state.startedAt.toFormattedDateTime()
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
             }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 18.dp),
+                    .padding(top = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(11.dp)
             ) {
                 StatCard(
@@ -132,6 +228,28 @@ fun ActiveRentalScreen(
                 )
             }
 
+            if (state.startFee > 0.0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_info_outline),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.active_rental_start_fee_note, state.startFee.toTryPrice()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             state.errorMessage?.let { error ->
                 Text(
                     text = error,
@@ -140,37 +258,37 @@ fun ActiveRentalScreen(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
+        }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(11.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            OutlinedButton(
+                onClick = {},
+                enabled = false,
+                modifier = Modifier.weight(1f).height(54.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                OutlinedButton(
-                    onClick = {},
-                    enabled = false,
-                    modifier = Modifier.weight(1f).height(54.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text(text = stringResource(R.string.active_rental_lock_unlock), fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = { onIntent(ActiveRentalIntent.FinishClicked) },
-                    enabled = !state.isFinishing,
-                    modifier = Modifier.weight(1f).height(54.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    if (state.isFinishing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.height(20.dp),
-                            color = MaterialTheme.colorScheme.onError,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(text = stringResource(R.string.active_rental_finish_action), fontWeight = FontWeight.Bold)
-                    }
+                Text(text = stringResource(R.string.active_rental_lock_unlock), fontWeight = FontWeight.Bold)
+            }
+            Button(
+                onClick = { onIntent(ActiveRentalIntent.FinishClicked) },
+                enabled = !state.isFinishing,
+                modifier = Modifier.weight(1f).height(54.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                if (state.isFinishing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.height(20.dp),
+                        color = MaterialTheme.colorScheme.onError,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(text = stringResource(R.string.active_rental_finish_action), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -178,30 +296,50 @@ fun ActiveRentalScreen(
 }
 
 @Composable
-private fun StatusPill(vehicleName: String) {
-    Row(
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.inverseSurface, RoundedCornerShape(30.dp))
-            .padding(horizontal = 18.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+private fun VehicleInfoCard(vehicleName: String, plate: String, plan: RentalPlan?) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .height(8.dp)
-                .background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(50))
-                .border(0.dp, Color.Transparent)
-                .padding(4.dp)
-        )
-        Text(
-            text = if (vehicleName.isNotBlank()) {
-                stringResource(R.string.active_rental_status_active_with_vehicle, vehicleName)
-            } else {
-                stringResource(R.string.active_rental_status_active)
-            },
-            color = MaterialTheme.colorScheme.inverseOnSurface,
-            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-        )
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(13.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_rencar_car),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Column {
+                Text(
+                    text = vehicleName,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                val details = listOfNotNull(
+                    plate.takeIf { it.isNotBlank() },
+                    plan?.toLabel()
+                ).joinToString(separator = " · ")
+                if (details.isNotBlank()) {
+                    Text(
+                        text = details,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -230,6 +368,13 @@ private fun StatCard(label: String, value: String, valueColor: Color, modifier: 
     }
 }
 
+@Composable
+private fun RentalPlan.toLabel(): String = when (this) {
+    RentalPlan.PER_MINUTE -> stringResource(R.string.active_rental_plan_per_minute)
+    RentalPlan.HOURLY -> stringResource(R.string.active_rental_plan_hourly)
+    RentalPlan.DAILY -> stringResource(R.string.active_rental_plan_daily)
+}
+
 private fun Long.toClockText(): String {
     val hours = this / 3600
     val minutes = (this % 3600) / 60
@@ -253,6 +398,15 @@ private fun Double.toKmText(): String {
     return formatter.format(this)
 }
 
+private fun String.toFormattedDateTime(): String {
+    val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val date = runCatching { parser.parse(this) }.getOrNull() ?: return this
+    val formatter = SimpleDateFormat("d MMM yyyy HH:mm", Locale("tr", "TR"))
+    return formatter.format(date)
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun ActiveRentalPreview() {
@@ -260,6 +414,10 @@ private fun ActiveRentalPreview() {
         ActiveRentalScreen(
             state = ActiveRentalState(
                 vehicleName = "Renault Clio",
+                plate = "34 HCM306",
+                plan = RentalPlan.PER_MINUTE,
+                startFee = 15.0,
+                startedAt = "2026-07-14T15:55:00.000Z",
                 elapsedSeconds = 1458,
                 currentCost = 108.0,
                 distanceKm = 12.4

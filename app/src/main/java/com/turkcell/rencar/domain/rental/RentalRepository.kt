@@ -11,6 +11,10 @@ interface RentalRepository {
 
     suspend fun getMyRentals(): RentalResult<List<RentalSummary>>
 
+    suspend fun getRentalHistory(): RentalResult<List<RentalHistoryItem>>
+
+    suspend fun getRentalStats(): RentalResult<RentalStats>
+
     suspend fun uploadRentalPhoto(
         rentalId: String,
         side: RentalPhotoSide,
