@@ -99,6 +99,11 @@
     <string name="home_location_permission_permanently_denied_confirm">Ayarları Aç</string>
     <string name="home_location_permission_permanently_denied_dismiss">Kapat</string>
     <string name="home_vehicles_retry">Tekrar dene</string>
+    <string name="home_active_reservation_title">Rezerve ettiğin araç</string>
+    <string name="home_active_reservation_vehicle_fallback">Rezerve araç</string>
+    <string name="home_active_reservation_remaining">Kalan %1$s</string>
+    <string name="home_active_reservation_price">₺%1$s/dk</string>
+    <string name="home_active_reservation_detail_action">Detaya Git</string>
 
     <!-- Car Detail Screen -->
     <string name="car_detail_status_available">MÜSAİT</string>
@@ -111,6 +116,7 @@
     <string name="car_detail_price_per_day">Günlük %1$s</string>
     <string name="car_detail_reserve_button">Rezerve Et</string>
     <string name="car_detail_unlock_button">Kilidi Aç</string>
+    <string name="car_detail_cancel_reservation_button">Rezervasyonu İptal Et</string>
     <string name="car_detail_specs_title">Araç Özellikleri</string>
     <string name="car_detail_spec_seats_value">%1$d kişi</string>
     <string name="car_detail_spec_fuel_label">Yakıt</string>
@@ -167,6 +173,8 @@
     <string name="reservation_fuel">Yakıt %%%1$d</string>
     <string name="reservation_free_hold">Ücretsiz rezervasyon</string>
     <string name="reservation_free_hold_duration">15 dk</string>
+    <string name="reservation_start_flow_label">Kiralama başlangıcı</string>
+    <string name="reservation_start_flow_value">Kilidi Aç ile başlar</string>
     <string name="reservation_start_fee">Başlangıç ücreti</string>
     <string name="reservation_usage_fee">Kullanım ücreti</string>
     <string name="reservation_service_fee">Servis ücreti</string>

@@ -9,12 +9,14 @@ import com.turkcell.rencar.data.repository.rental.ApiRentalRepository
 import com.turkcell.rencar.data.repository.reservation.ApiReservationRepository
 import com.turkcell.rencar.data.repository.vehicle.ApiVehicleRepository
 import com.turkcell.rencar.data.repository.wallet.ApiWalletRepository
+import com.turkcell.rencar.data.session.SharedPreferencesReservationPlanStore
 import com.turkcell.rencar.domain.auth.AuthRepository
 import com.turkcell.rencar.domain.cards.CardRepository
 import com.turkcell.rencar.domain.license.LicenseRepository
 import com.turkcell.rencar.domain.location.LocationRepository
 import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
 import com.turkcell.rencar.domain.rental.RentalRepository
+import com.turkcell.rencar.domain.reservation.ReservationPlanStore
 import com.turkcell.rencar.domain.reservation.ReservationRepository
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
 import com.turkcell.rencar.domain.wallet.WalletRepository
@@ -55,6 +57,12 @@ abstract class RepositoryModule {
     abstract fun bindReservationRepository(
         implementation: ApiReservationRepository
     ): ReservationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReservationPlanStore(
+        implementation: SharedPreferencesReservationPlanStore
+    ): ReservationPlanStore
 
     @Binds
     @Singleton
