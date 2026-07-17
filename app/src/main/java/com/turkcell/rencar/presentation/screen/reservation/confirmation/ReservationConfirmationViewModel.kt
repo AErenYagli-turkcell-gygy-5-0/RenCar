@@ -1,11 +1,9 @@
 package com.turkcell.rencar.presentation.screen.reservation.confirmation
 
 import androidx.lifecycle.viewModelScope
-import com.turkcell.rencar.domain.rental.RentalError
 import com.turkcell.rencar.domain.rental.RentalPlan
-import com.turkcell.rencar.domain.rental.RentalRepository
-import com.turkcell.rencar.domain.rental.RentalResult
 import com.turkcell.rencar.domain.reservation.ReservationError
+import com.turkcell.rencar.domain.reservation.ReservationPlanStore
 import com.turkcell.rencar.domain.reservation.ReservationRepository
 import com.turkcell.rencar.domain.reservation.ReservationResult
 import com.turkcell.rencar.domain.vehicle.VehicleError
@@ -14,17 +12,13 @@ import com.turkcell.rencar.domain.vehicle.VehicleResult
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
-import java.util.TimeZone
 import javax.inject.Inject
 
 @HiltViewModel
 class ReservationConfirmationViewModel @Inject constructor(
     private val vehicleRepository: VehicleRepository,
-    private val rentalRepository: RentalRepository,
-    private val reservationRepository: ReservationRepository
+    private val reservationRepository: ReservationRepository,
+    private val reservationPlanStore: ReservationPlanStore
 ) : MviViewModel<ReservationConfirmationState, ReservationConfirmationIntent, ReservationConfirmationEffect>(
     ReservationConfirmationState()
 ) {
@@ -73,6 +67,7 @@ class ReservationConfirmationViewModel @Inject constructor(
                     }
                     loadQuote(state.value.selectedPlan)
                 }
+
                 is VehicleResult.Failure -> setState {
                     copy(isLoading = false, hasLoaded = false, error = result.error.toPresentationError())
                 }
@@ -106,6 +101,7 @@ class ReservationConfirmationViewModel @Inject constructor(
                         )
                     }
                 }
+
                 is VehicleResult.Failure -> if (state.value.selectedPlan == plan) {
                     setState {
                         copy(isQuoteLoading = false, hasQuote = false, error = result.error.toPresentationError())
@@ -121,29 +117,15 @@ class ReservationConfirmationViewModel @Inject constructor(
         setState { copy(isSubmitting = true, error = null) }
         viewModelScope.launch {
             when (val result = reservationRepository.createReservation(currentState.vehicleId)) {
-                is ReservationResult.Success -> completeRental(currentState)
+                is ReservationResult.Success -> {
+                    reservationPlanStore.savePlan(result.data.vehicleId, currentState.selectedPlan)
+                    setState { copy(isSubmitting = false) }
+                    sendEffect { ReservationConfirmationEffect.ReservationCreated(result.data.vehicleId) }
+                }
+
                 is ReservationResult.Failure -> setState {
                     copy(isSubmitting = false, error = result.error.toPresentationError())
                 }
-            }
-        }
-    }
-
-    private suspend fun completeRental(currentState: ReservationConfirmationState) {
-        val endDate = if (currentState.selectedPlan == RentalPlan.DAILY) oneDayFromNowIsoUtc() else null
-        when (val result = rentalRepository.createRental(currentState.vehicleId, currentState.selectedPlan, endDate)) {
-            is RentalResult.Success -> {
-                setState { copy(isSubmitting = false) }
-                sendEffect {
-                    ReservationConfirmationEffect.ReservationCreated(
-                        rentalId = result.data.id,
-                        vehicleId = currentState.vehicleId,
-                        isPreparing = result.data.status == RENTAL_STATUS_PREPARING
-                    )
-                }
-            }
-            is RentalResult.Failure -> setState {
-                copy(isSubmitting = false, error = result.error.toPresentationError())
             }
         }
     }
@@ -156,16 +138,6 @@ class ReservationConfirmationViewModel @Inject constructor(
         VehicleError.Unexpected -> ReservationConfirmationError.UNEXPECTED
     }
 
-    private fun RentalError.toPresentationError() = when (this) {
-        RentalError.InvalidRequest -> ReservationConfirmationError.INVALID_REQUEST
-        RentalError.Unauthorized -> ReservationConfirmationError.UNAUTHORIZED
-        RentalError.Forbidden -> ReservationConfirmationError.FORBIDDEN
-        RentalError.NotFound -> ReservationConfirmationError.VEHICLE_NOT_FOUND
-        RentalError.Conflict -> ReservationConfirmationError.RESERVATION_CONFLICT
-        RentalError.Network -> ReservationConfirmationError.NETWORK
-        RentalError.Unexpected -> ReservationConfirmationError.UNEXPECTED
-    }
-
     private fun ReservationError.toPresentationError() = when (this) {
         ReservationError.InvalidRequest -> ReservationConfirmationError.INVALID_REQUEST
         ReservationError.Unauthorized -> ReservationConfirmationError.UNAUTHORIZED
@@ -174,17 +146,5 @@ class ReservationConfirmationViewModel @Inject constructor(
         ReservationError.Conflict -> ReservationConfirmationError.RESERVATION_CONFLICT
         ReservationError.Network -> ReservationConfirmationError.NETWORK
         ReservationError.Unexpected -> ReservationConfirmationError.UNEXPECTED
-    }
-
-    private fun oneDayFromNowIsoUtc(): String {
-        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { add(Calendar.DAY_OF_YEAR, 1) }
-        return SimpleDateFormat(ISO_DATE_PATTERN, Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }.format(calendar.time)
-    }
-
-    private companion object {
-        const val ISO_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-        const val RENTAL_STATUS_PREPARING = "PREPARING"
     }
 }
