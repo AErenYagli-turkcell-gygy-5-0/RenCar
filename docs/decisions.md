@@ -8,6 +8,51 @@
 
 ---
 
+## 2026-07-17 - Rezervasyon Sonrası Kiralama Akışının Kilidi Aç Aksiyonuna Taşınması
+
+**Karar:** Rezervasyon onay ekranındaki "Rezervasyonu Tamamla" aksiyonu artık yalnızca
+`POST /reservations` çağırır; hemen ardından `POST /rentals` çağrılmaz ve fotoğraf ekranına otomatik
+geçilmez. Başarılı rezervasyon sonrası kullanıcı, rezerve edilen aracın `CarDetail` ekranına
+yönlendirilir. Bu ekranda "Kilidi Aç" aktif hale gelir; kullanıcı bu butona bastığında
+`POST /rentals` çağrılır ve sonuç `PREPARING` ise araç teslim fotoğrafı, `ACTIVE` ise aktif kiralama
+ekranı açılır.
+
+**Home davranışı:** `GET /reservations/active` aktif rezervasyon döndürürse Home artık kullanıcıyı
+otomatik CarDetail ekranına atmaz. Bunun yerine "En Yakın Aracı Bul" alanında rezerve araç kartı
+gösterilir; karttaki "Detaya Git" aksiyonu mevcut CarDetail rotasına yönlendirir. Home ekrana geri
+döndüğünde aktif rezervasyon durumu yeniden sorgulanır; böylece rezervasyon oluşturduktan sonra
+mevcut Home ViewModel state'i uygulama yeniden başlatılmadan güncellenir.
+
+**CarDetail davranışı:** Araç detay endpoint'i rezerve aracı doğrudan `RESERVED` durumuyla
+döndürürse de `GET /reservations/active` ile doğrulama yapılır. Aktif rezervasyon aynı araca aitse
+"Rezerve Et" pasif, "Kilidi Aç" aktif kalır; araç detay endpoint'inin 404 dönmesine bağlı kalınmaz.
+Aktif rezervasyonlu CarDetail ekranında ayrıca "Rezervasyonu İptal Et" aksiyonu gösterilir. Bu
+aksiyon `DELETE /reservations/{id}` çağırır; başarı sonrası aktif rezervasyon state'i ve yerel plan
+kaydı temizlenir.
+
+**Plan seçimi:** Rezervasyon onay ekranındaki dakikalık/saatlik/günlük plan seçimi ve quote dökümü
+korunmuştur. `POST /reservations` başarılı olduğunda seçilen plan, aktif rezervasyonun aracı için
+yerel `ReservationPlanStore` (`SharedPreferences`) içine kaydedilir. CarDetail'te "Kilidi Aç"
+aksiyonu bu planı okuyarak `POST /rentals` çağırır; kiralama başarıyla oluşturulunca yerel plan kaydı
+temizlenir. Yerel plan bulunamazsa istemci `PER_MINUTE` fallback kullanır.
+
+**Sözleşme sınırı:** Aktif rezervasyon yanıtı plan alanı taşımadığı için plan bilgisi backend'den
+geri okunamaz; aynı cihazdaki yerel kayıtla korunur. Fiziksel kilit aç/kapa endpoint'i
+bulunmadığından "Kilidi Aç" yalnızca kiralama/fotoğraf akışını başlatan uygulama aksiyonudur.
+
+**Bağımlılıklar:** Yeni bir Gradle bağımlılığı eklenmemiştir.
+
+**Etkilenen alanlar:**
+- `presentation/screen/reservation/confirmation/`
+- `presentation/screen/cardetail/`
+- `presentation/screen/home/`
+- `domain/reservation/ReservationPlanStore.kt`, `data/session/SharedPreferencesReservationPlanStore.kt`
+- `di/RepositoryModule.kt`
+- `presentation/navigation/RenCarNavHost.kt`
+- `app/src/main/res/values/strings.xml`
+
+---
+
 ## 2026-07-16 - Kiralamayı Bitirme Onayı, Ödeme (Cüzdan/Kart) ve Cüzdan Ekranının Eklenmesi
 
 **Karar (bitirme onayı):** Aktif Kiralama ekranındaki "Kiralamayı Bitir" butonu artık doğrudan foto
