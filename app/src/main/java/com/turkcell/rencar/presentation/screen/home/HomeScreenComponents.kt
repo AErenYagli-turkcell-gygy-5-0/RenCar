@@ -41,6 +41,7 @@ import com.turkcell.rencar.R
 import com.turkcell.rencar.domain.vehicle.VehicleType
 import com.turkcell.rencar.presentation.component.map.color
 import com.turkcell.rencar.presentation.theme.extendedColors
+import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -331,6 +332,78 @@ fun HomeNearbyInfoCard(
         }
     }
 }
+
+@Composable
+fun HomeActiveReservationCard(
+    vehicleName: String,
+    plate: String,
+    remainingSeconds: Int,
+    pricePerMinute: Double,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 20.dp, vertical = 18.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.home_active_reservation_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = if (vehicleName.isNotBlank()) {
+                vehicleName
+            } else {
+                stringResource(R.string.home_active_reservation_vehicle_fallback)
+            },
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        Text(
+            text = listOf(
+                plate,
+                stringResource(R.string.home_active_reservation_remaining, remainingSeconds.toMinuteSecondText()),
+                stringResource(R.string.home_active_reservation_price, pricePerMinute.toHomePrice())
+            ).filter { it.isNotBlank() }.joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(
+                text = stringResource(R.string.home_active_reservation_detail_action),
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
+    }
+}
+
+private fun Int.toMinuteSecondText(): String {
+    val safeSeconds = coerceAtLeast(0)
+    val minutes = safeSeconds / 60
+    val seconds = safeSeconds % 60
+    return String.format(Locale.US, "%02d:%02d", minutes, seconds)
+}
+
+private fun Double.toHomePrice(): String =
+    String.format(Locale.forLanguageTag("tr-TR"), "%.2f", this)
 
 private fun DrawScope.drawLocateMeIcon(color: Color) {
     val stroke = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
