@@ -30,6 +30,8 @@ class HomeViewModel @Inject constructor(
             HomeIntent.ScreenStarted -> {
                 if (!state.value.hasCheckedActiveReservation) {
                     checkActiveReservation()
+                } else if (state.value.activeReservationVehicleId != null) {
+                    Unit
                 } else if (!state.value.hasCheckedActiveRental && state.value.activeReservationErrorMessage == null) {
                     checkActiveRental()
                 } else if (!state.value.hasLoadedVehicles && state.value.activeReservationErrorMessage == null) {
@@ -38,7 +40,7 @@ class HomeViewModel @Inject constructor(
             }
 
             HomeIntent.RetryVehiclesClicked -> {
-                if (state.value.activeReservationErrorMessage != null) {
+                if (state.value.activeReservationErrorMessage != null || state.value.activeReservationVehicleId != null) {
                     checkActiveReservation()
                 } else {
                     loadVehicles()
@@ -46,7 +48,7 @@ class HomeViewModel @Inject constructor(
             }
 
             HomeIntent.RefreshMapClicked -> {
-                if (state.value.activeReservationErrorMessage != null) {
+                if (state.value.activeReservationErrorMessage != null || state.value.activeReservationVehicleId != null) {
                     checkActiveReservation()
                 } else {
                     loadVehicles()
@@ -109,6 +111,14 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
+            HomeIntent.ActiveReservationCardClicked -> {
+                state.value.activeReservationVehicleId?.let { vehicleId ->
+                    sendEffect { HomeEffect.NavigateToActiveReservationCarDetail(vehicleId) }
+                }
+            }
+
+            HomeIntent.ScreenResumed -> checkActiveReservation()
+
             HomeIntent.ActiveRentalBannerClicked -> {
                 val rentalId = state.value.activeRentalId
                 val vehicleId = state.value.activeRentalVehicleId
@@ -160,11 +170,15 @@ class HomeViewModel @Inject constructor(
                     setState {
                         copy(
                             isCheckingActiveReservation = false,
-                            hasCheckedActiveReservation = true
+                            hasCheckedActiveReservation = true,
+                            hasLoadedVehicles = true,
+                            vehicles = emptyList(),
+                            activeReservationVehicleId = result.data.vehicleId,
+                            activeReservationVehicleName = "${result.data.vehicle.brand} ${result.data.vehicle.model}".trim(),
+                            activeReservationPlate = result.data.vehicle.plate,
+                            activeReservationRemainingSeconds = result.data.remainingSeconds,
+                            activeReservationPricePerMinute = result.data.vehicle.pricePerMinute
                         )
-                    }
-                    sendEffect {
-                        HomeEffect.NavigateToActiveReservationCarDetail(result.data.vehicleId)
                     }
                 }
 
@@ -174,7 +188,12 @@ class HomeViewModel @Inject constructor(
                             copy(
                                 isCheckingActiveReservation = false,
                                 hasCheckedActiveReservation = true,
-                                activeReservationErrorMessage = null
+                                activeReservationErrorMessage = null,
+                                activeReservationVehicleId = null,
+                                activeReservationVehicleName = "",
+                                activeReservationPlate = "",
+                                activeReservationRemainingSeconds = 0,
+                                activeReservationPricePerMinute = 0.0
                             )
                         }
                         checkActiveRental()

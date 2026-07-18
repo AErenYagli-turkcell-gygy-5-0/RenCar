@@ -403,20 +403,43 @@ private fun CarDetailContent(
             .padding(top = 18.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(11.dp)
     ) {
-        OutlinedButton(
-            onClick = { onIntent(CarDetailIntent.ReserveClicked) },
-            enabled = !state.isActiveReservationVehicle,
-            modifier = Modifier.height(56.dp),
-            shape = RoundedCornerShape(18.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.car_detail_reserve_button),
-                fontWeight = FontWeight.Bold
-            )
+        if (state.isActiveReservationVehicle && state.activeReservationId != null) {
+            OutlinedButton(
+                onClick = { onIntent(CarDetailIntent.CancelReservationClicked) },
+                enabled = !state.isCancelReservationSubmitting && !state.isUnlockSubmitting,
+                modifier = Modifier.height(56.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                if (state.isCancelReservationSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.car_detail_cancel_reservation_button),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        } else {
+            OutlinedButton(
+                onClick = { onIntent(CarDetailIntent.ReserveClicked) },
+                enabled = !state.isCancelReservationSubmitting,
+                modifier = Modifier.height(56.dp),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.car_detail_reserve_button),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
         Button(
             onClick = { onIntent(CarDetailIntent.UnlockClicked) },
-            enabled = state.canUnlock,
+            enabled = state.canUnlock && !state.isUnlockSubmitting && !state.isCancelReservationSubmitting,
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp)
@@ -429,11 +452,37 @@ private fun CarDetailContent(
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text(
-                text = stringResource(R.string.car_detail_unlock_button),
-                fontWeight = FontWeight.Bold
-            )
+            if (state.isUnlockSubmitting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(22.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.car_detail_unlock_button),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
+    }
+
+    state.unlockErrorMessage?.let { message ->
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+    }
+
+    state.cancelReservationErrorMessage?.let { message ->
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
     }
 }
 

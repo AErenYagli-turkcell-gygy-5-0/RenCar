@@ -103,6 +103,7 @@ fun HomeRoute(
                 if (granted && currentPermissionDenied.value != false) {
                     viewModel.onIntent(HomeIntent.LocationPermissionResult(granted = true, canRequestAgain = true))
                 }
+                viewModel.onIntent(HomeIntent.ScreenResumed)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -343,14 +344,24 @@ fun HomeScreen(
                 )
             }
 
-            HomeNearbyInfoCard(
-                nearbyCount = filteredVehicles.size,
-                locationLabel = state.locationLabel,
-                distanceLabel = state.distanceLabel,
-                selectedCategory = state.selectedCategory,
-                onCategorySelected = { onIntent(HomeIntent.CategorySelected(it)) },
-                onFindNearestClicked = { onIntent(HomeIntent.FindNearestClicked) }
-            )
+            if (state.activeReservationVehicleId != null) {
+                HomeActiveReservationCard(
+                    vehicleName = state.activeReservationVehicleName,
+                    plate = state.activeReservationPlate,
+                    remainingSeconds = state.activeReservationRemainingSeconds,
+                    pricePerMinute = state.activeReservationPricePerMinute,
+                    onClick = { onIntent(HomeIntent.ActiveReservationCardClicked) }
+                )
+            } else {
+                HomeNearbyInfoCard(
+                    nearbyCount = filteredVehicles.size,
+                    locationLabel = state.locationLabel,
+                    distanceLabel = state.distanceLabel,
+                    selectedCategory = state.selectedCategory,
+                    onCategorySelected = { onIntent(HomeIntent.CategorySelected(it)) },
+                    onFindNearestClicked = { onIntent(HomeIntent.FindNearestClicked) }
+                )
+            }
 
             (state.activeReservationErrorMessage ?: state.vehiclesErrorMessage)?.let { message ->
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {

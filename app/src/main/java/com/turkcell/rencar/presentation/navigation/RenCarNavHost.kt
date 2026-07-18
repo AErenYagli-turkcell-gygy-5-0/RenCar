@@ -110,7 +110,7 @@ fun RenCarNavHost(
                         RenCarDestination.CarDetail.createRoute(vehicleId, latitude = null, longitude = null)
                     ) {
                         popUpTo(RenCarDestination.Home.route) {
-                            inclusive = true
+                            inclusive = false
                         }
                         launchSingleTop = true
                     }
@@ -223,20 +223,14 @@ fun RenCarNavHost(
             ReservationConfirmationRoute(
                 vehicleId = vehicleId,
                 onNavigateBack = { navController.popBackStack() },
-                onReservationCreated = { rentalId, resultVehicleId, isPreparing ->
-                    val destinationRoute = if (isPreparing) {
-                        RenCarDestination.RentalPhotoUpload.createRoute(
-                            rentalId = rentalId,
+                onReservationCreated = { resultVehicleId ->
+                    navController.navigate(
+                        RenCarDestination.CarDetail.createRoute(
                             vehicleId = resultVehicleId,
-                            mode = RentalPhotoUploadMode.START_TRIP.name
+                            latitude = null,
+                            longitude = null
                         )
-                    } else {
-                        RenCarDestination.ActiveRental.createRoute(
-                            rentalId = rentalId,
-                            vehicleId = resultVehicleId
-                        )
-                    }
-                    navController.navigate(destinationRoute) {
+                    ) {
                         popUpTo(RenCarDestination.Home.route) { inclusive = false }
                         launchSingleTop = true
                     }

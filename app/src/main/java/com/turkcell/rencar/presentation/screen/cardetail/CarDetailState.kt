@@ -28,10 +28,15 @@ data class CarDetailState(
     val vehicleLongitude: Double = 0.0,
     val hasFullVehicleDetails: Boolean = false,
     val isActiveReservationVehicle: Boolean = false,
+    val activeReservationId: String? = null,
     val isLoading: Boolean = false,
     val hasLoaded: Boolean = false,
     val errorMessage: String? = null,
     val canUnlock: Boolean = false,
     val unlockRentalId: String? = null,
-    val unlockRentalStatus: RentalStatus? = null
+    val unlockRentalStatus: RentalStatus? = null,
+    val isUnlockSubmitting: Boolean = false,
+    val unlockErrorMessage: String? = null,
+    val isCancelReservationSubmitting: Boolean = false,
+    val cancelReservationErrorMessage: String? = null
 ) : UiState
