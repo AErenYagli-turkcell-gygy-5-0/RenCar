@@ -118,7 +118,7 @@ app/src/main/java/com/turkcell/rencar/
         component/      // Ortak/yeniden kullanılabilir Compose bileşenleri (ör. harita)
         core/mvi/        // Paylaşılan MVI soyutlamaları
         navigation/      // RenCarDestination, RenCarNavHost
-        screen/          // Her biir kendi MVI dosya setine sahip özellik ekranları
+        screen/          // Her biri kendi MVI dosya setine sahip özellik ekranları
         theme/           // Material 3 tema ve renk sistemi
 docs/
     api/openapi.json               // Backend API sözleşmesi
