@@ -5,9 +5,11 @@ import com.turkcell.rencar.domain.cards.CardBrand
 import com.turkcell.rencar.domain.cards.CardError
 import com.turkcell.rencar.domain.cards.CardRepository
 import com.turkcell.rencar.domain.cards.CardResult
+import com.turkcell.rencar.domain.wallet.CardPaymentTransactionStore
 import com.turkcell.rencar.domain.wallet.WalletError
 import com.turkcell.rencar.domain.wallet.WalletRepository
 import com.turkcell.rencar.domain.wallet.WalletResult
+import com.turkcell.rencar.domain.wallet.WalletTransaction
 import com.turkcell.rencar.presentation.component.navigation.BottomNavItem
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,10 +19,9 @@ import javax.inject.Inject
 @HiltViewModel
 class WalletViewModel @Inject constructor(
     private val walletRepository: WalletRepository,
-    private val cardRepository: CardRepository
+    private val cardRepository: CardRepository,
+    private val cardPaymentTransactionStore: CardPaymentTransactionStore
 ) : MviViewModel<WalletState, WalletIntent, WalletEffect>(WalletState()) {
-
-    private var hasLoaded = false
 
     override fun onIntent(intent: WalletIntent) {
         when (intent) {
@@ -69,8 +70,6 @@ class WalletViewModel @Inject constructor(
     }
 
     private fun start() {
-        if (hasLoaded) return
-        hasLoaded = true
         setState { copy(isLoading = true, errorMessage = null) }
         loadWallet()
         loadCards()
@@ -80,7 +79,11 @@ class WalletViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = walletRepository.getWallet()) {
                 is WalletResult.Success -> setState {
-                    copy(isLoading = false, balance = result.data.balance, transactions = result.data.transactions)
+                    copy(
+                        isLoading = false,
+                        balance = result.data.balance,
+                        transactions = mergeTransactions(result.data.transactions)
+                    )
                 }
 
                 is WalletResult.Failure -> setState {
@@ -114,7 +117,7 @@ class WalletViewModel @Inject constructor(
                         isTopUpSubmitting = false,
                         showTopUpDialog = false,
                         balance = result.data.balance,
-                        transactions = result.data.transactions
+                        transactions = mergeTransactions(result.data.transactions)
                     )
                 }
 
@@ -192,6 +195,17 @@ class WalletViewModel @Inject constructor(
         }
     }
 
+    private fun mergeTransactions(
+        backendTransactions: List<WalletTransaction>
+    ): List<WalletTransaction> =
+        (backendTransactions + cardPaymentTransactionStore.getTransactions())
+            .distinctBy { it.deduplicationKey() }
+            .sortedByDescending(WalletTransaction::createdAt)
+            .take(MAX_VISIBLE_TRANSACTIONS)
+
+    private fun WalletTransaction.deduplicationKey(): String =
+        rentalId?.let { "rental:$it" } ?: "transaction:$id"
+
     private fun WalletError.toMessage(): String = when (this) {
         WalletError.InvalidRequest -> INVALID_REQUEST_MESSAGE
         WalletError.Unauthorized -> UNAUTHORIZED_MESSAGE
@@ -219,6 +233,7 @@ class WalletViewModel @Inject constructor(
         const val CARD_MIN_MONTH = 1
         const val CARD_MAX_MONTH = 12
         const val CARD_MIN_YEAR = 2000
+        const val MAX_VISIBLE_TRANSACTIONS = 20
         const val TOPUP_RANGE_MESSAGE = "Tutar 10 ile 5000 TL arasında olmalı."
         const val CARD_LAST4_MESSAGE = "Kartın son 4 hanesini girin."
         const val CARD_EXP_MONTH_MESSAGE = "Son kullanma ayı 1-12 arasında olmalı."
