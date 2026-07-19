@@ -231,7 +231,8 @@ class CarDetailViewModelTest {
             rentalId: String,
             method: PaymentMethod,
             cardId: String?,
-            discountCode: String?
+            discountCode: String?,
+            iyzicoPaymentId: String?
         ): RentalResult<PaymentReceipt> =
             error("Not used by car detail")
     }
