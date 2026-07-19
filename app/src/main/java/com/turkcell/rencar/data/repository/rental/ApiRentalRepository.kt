@@ -123,14 +123,18 @@ class ApiRentalRepository @Inject constructor(
         rentalId: String,
         method: PaymentMethod,
         cardId: String?,
-        discountCode: String?
+        discountCode: String?,
+        iyzicoPaymentId: String?
     ): RentalResult<PaymentReceipt> = runRequest {
-        val request = PayRentalRequestDto(
-            method = method.name,
-            cardId = cardId,
-            discountCode = discountCode
-        )
-        apiService.pay(id = rentalId, request = request).toDomain()
+        apiService.pay(
+            id = rentalId,
+            request = buildPayRentalRequest(
+                method = method,
+                cardId = cardId,
+                discountCode = discountCode,
+                iyzicoPaymentId = iyzicoPaymentId
+            )
+        ).toDomain()
     }
 
     private suspend fun <T> runRequest(request: suspend () -> T): RentalResult<T> = try {
@@ -174,6 +178,18 @@ class ApiRentalRepository @Inject constructor(
         const val COMPLETED_STATUS = "COMPLETED"
     }
 }
+
+internal fun buildPayRentalRequest(
+    method: PaymentMethod,
+    cardId: String?,
+    discountCode: String?,
+    iyzicoPaymentId: String?
+) = PayRentalRequestDto(
+    method = method.name,
+    cardId = if (method == PaymentMethod.CARD) cardId else null,
+    discountCode = if (method == PaymentMethod.IYZICO) null else discountCode,
+    iyzicoPaymentId = if (method == PaymentMethod.IYZICO) iyzicoPaymentId else null
+)
 
 internal fun RentalResponseDto.toDomain() = Rental(
     id = id,

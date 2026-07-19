@@ -37,6 +37,7 @@ interface RentalRepository {
         rentalId: String,
         method: PaymentMethod,
         cardId: String? = null,
-        discountCode: String? = null
+        discountCode: String? = null,
+        iyzicoPaymentId: String? = null
     ): RentalResult<PaymentReceipt>
 }
