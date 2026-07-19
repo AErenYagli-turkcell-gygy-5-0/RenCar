@@ -30,6 +30,10 @@ data class PaymentState(
     val addCardExpYearInput: String = "",
     val isAddCardSubmitting: Boolean = false,
     val addCardErrorMessage: String? = null,
+    val iyzicoCheckoutToken: String? = null,
+    val iyzicoPaymentPageUrl: String? = null,
+    val showIyzicoWebView: Boolean = false,
+    val isIyzicoResultChecking: Boolean = false,
     val isLoading: Boolean = false,
     val isPaying: Boolean = false,
     val errorMessage: String? = null
