@@ -6,6 +6,7 @@ import com.turkcell.rencar.data.remote.rental.dto.RentalPhotosStateResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalSummaryResponseDto
 import com.turkcell.rencar.data.remote.rental.dto.RentalVehicleSummaryResponseDto
+import com.turkcell.rencar.domain.rental.PaymentMethod
 import com.turkcell.rencar.domain.rental.RentalPhotoSide
 import com.turkcell.rencar.domain.rental.RentalPlan
 import com.turkcell.rencar.domain.rental.RentalStatus
@@ -147,6 +148,21 @@ class ApiRentalRepositoryTest {
         assertEquals(1264L, activeRental.elapsedSeconds)
         assertEquals(156.5, activeRental.currentCost, 0.0)
         assertEquals(12.4, activeRental.distanceKm, 0.0)
+    }
+
+    @Test
+    fun `iyzico payment request keeps payment id and drops card and discount`() {
+        val request = buildPayRentalRequest(
+            method = PaymentMethod.IYZICO,
+            cardId = "card-1",
+            discountCode = "ILKSURUS",
+            iyzicoPaymentId = "36677190"
+        )
+
+        assertEquals("IYZICO", request.method)
+        assertNull(request.cardId)
+        assertNull(request.discountCode)
+        assertEquals("36677190", request.iyzicoPaymentId)
     }
 
     private companion object {
