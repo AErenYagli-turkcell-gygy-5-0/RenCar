@@ -4,6 +4,7 @@ import com.turkcell.rencar.BuildConfig
 import com.turkcell.rencar.data.remote.AuthInterceptor
 import com.turkcell.rencar.data.remote.auth.AuthApiService
 import com.turkcell.rencar.data.remote.cards.CardsApiService
+import com.turkcell.rencar.data.remote.iyzico.IyzicoApiService
 import com.turkcell.rencar.data.remote.license.LicenseApiService
 import com.turkcell.rencar.data.remote.rental.RentalApiService
 import com.turkcell.rencar.data.remote.reservation.ReservationApiService
@@ -72,4 +73,9 @@ object NetworkModule {
     @Singleton
     fun provideCardsApiService(retrofit: Retrofit): CardsApiService =
         retrofit.create(CardsApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideIyzicoApiService(retrofit: Retrofit): IyzicoApiService =
+        retrofit.create(IyzicoApiService::class.java)
 }
