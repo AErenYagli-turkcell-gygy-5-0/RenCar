@@ -6,6 +6,31 @@
 
 # Mimari Kararlar
 
+## 2026-07-18 - Kart Odemelerinin Cuzdan Son Islemlerinde Yerel Gosterimi
+
+**Karar:** `POST /rentals/{id}/pay` cagrisinin basarili `CARD` yaniti, cuzdan bakiyesini
+degistirmeden yerel bir `WalletTransaction` olarak kaydedilir. Backend `GET /wallet` yanitinda kart
+odemeleri icin hareket garantisi vermedigi icin bu kayit `CardPaymentTransactionStore` soyutlamasi
+arkasinda `SharedPreferences` ile saklanir. Cuzdan verisi yuklenirken backend hareketleriyle
+birlestirilir, `createdAt` alanina gore yeniden eskiye siralanir ve son 20 hareket gosterilir.
+
+**Tekrarlama kontrolu:** Ayni `rentalId` icin tek hareket tutulur. Backend ileride kart odemesini de
+`GET /wallet` icinde dondurmeye baslarsa birlestirme sirasinda backend kaydi tercih edilerek yerel
+kopya gosterilmez.
+
+**Sinir:** Yerel kart odemesi kaydi cihaz ve uygulama verisiyle sinirlidir; baska cihazlara
+senkronize olmaz ve uygulama verisi temizlenirse kaybolur. Kalici ve cihazlar arasi bir islem
+gecmisi icin backend sozlesmesinin kart odemelerini de dondurecek sekilde genisletilmesi gerekir.
+
+**Bagimliliklar:** Yeni bir Gradle bagimliligi eklenmemistir.
+
+**Etkilenen alanlar:**
+- `domain/wallet/CardPaymentTransactionStore.kt`
+- `data/session/SharedPreferencesCardPaymentTransactionStore.kt`
+- `di/RepositoryModule.kt`
+- `presentation/screen/payment/PaymentViewModel.kt`
+- `presentation/screen/wallet/WalletViewModel.kt`
+
 ---
 
 ## 2026-07-17 - Rezervasyon Sonrası Kiralama Akışının Kilidi Aç Aksiyonuna Taşınması

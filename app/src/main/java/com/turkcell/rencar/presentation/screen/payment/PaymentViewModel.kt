@@ -10,18 +10,27 @@ import com.turkcell.rencar.domain.rental.PaymentStatus
 import com.turkcell.rencar.domain.rental.RentalError
 import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
+import com.turkcell.rencar.domain.wallet.CardPaymentTransactionStore
 import com.turkcell.rencar.domain.wallet.WalletRepository
 import com.turkcell.rencar.domain.wallet.WalletResult
+import com.turkcell.rencar.domain.wallet.WalletTransaction
+import com.turkcell.rencar.domain.wallet.WalletTransactionType
 import com.turkcell.rencar.presentation.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import javax.inject.Inject
+import kotlin.math.abs
 
 @HiltViewModel
 class PaymentViewModel @Inject constructor(
     private val rentalRepository: RentalRepository,
     private val walletRepository: WalletRepository,
-    private val cardRepository: CardRepository
+    private val cardRepository: CardRepository,
+    private val cardPaymentTransactionStore: CardPaymentTransactionStore
 ) : MviViewModel<PaymentState, PaymentIntent, PaymentEffect>(PaymentState()) {
 
     override fun onIntent(intent: PaymentIntent) {
@@ -154,6 +163,19 @@ class PaymentViewModel @Inject constructor(
                 )
             ) {
                 is RentalResult.Success -> {
+                    val receipt = result.data
+                    if (receipt.method == PaymentMethod.CARD) {
+                        cardPaymentTransactionStore.saveTransaction(
+                            WalletTransaction(
+                                id = "card-${receipt.rentalId}",
+                                type = WalletTransactionType.RENTAL_PAYMENT,
+                                amount = -abs(receipt.paidAmount),
+                                rentalId = receipt.rentalId,
+                                description = CARD_PAYMENT_DESCRIPTION,
+                                createdAt = currentUtcTimestamp()
+                            )
+                        )
+                    }
                     setState { copy(isPaying = false, isPaid = true) }
                     sendEffect { PaymentEffect.NavigateHome }
                 }
@@ -210,6 +232,11 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
+    private fun currentUtcTimestamp(): String =
+        SimpleDateFormat(UTC_TIMESTAMP_PATTERN, Locale.US).apply {
+            timeZone = TimeZone.getTimeZone(UTC_TIME_ZONE)
+        }.format(Date())
+
     private fun CardError.toMessage(): String = when (this) {
         CardError.InvalidRequest -> INVALID_REQUEST_MESSAGE
         CardError.Unauthorized -> UNAUTHORIZED_MESSAGE
@@ -235,6 +262,9 @@ class PaymentViewModel @Inject constructor(
         const val CARD_MIN_MONTH = 1
         const val CARD_MAX_MONTH = 12
         const val CARD_MIN_YEAR = 2000
+        const val CARD_PAYMENT_DESCRIPTION = "Kart ile yolculuk ödemesi"
+        const val UTC_TIMESTAMP_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        const val UTC_TIME_ZONE = "UTC"
         const val CARD_LAST4_MESSAGE = "Kartın son 4 hanesini girin."
         const val CARD_EXP_MONTH_MESSAGE = "Son kullanma ayı 1-12 arasında olmalı."
         const val CARD_EXP_YEAR_MESSAGE = "Son kullanma yılını girin."

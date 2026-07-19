@@ -132,7 +132,7 @@ fun ProfileScreen(
                     onClick = { onIntent(ProfileIntent.LicenseStatusClicked) }
                 )
                 Spacer(modifier = Modifier.height(14.dp))
-                ProfileMenuCard()
+                ProfileMenuCard(onPaymentMethodsClick = onNavigateToWallet)
                 Spacer(modifier = Modifier.height(14.dp))
                 LogoutButton(
                     isLoading = state.isLoggingOut,
@@ -481,7 +481,9 @@ private suspend fun loadRemoteImage(imageUrl: String): RemoteImageState =
     }
 
 @Composable
-private fun ProfileMenuCard() {
+private fun ProfileMenuCard(
+    onPaymentMethodsClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -490,7 +492,12 @@ private fun ProfileMenuCard() {
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        ProfileMenuRow(ProfileIconType.Card, stringResource(R.string.profile_payment_methods), showDivider = true)
+        ProfileMenuRow(
+            iconType = ProfileIconType.Card,
+            label = stringResource(R.string.profile_payment_methods),
+            showDivider = true,
+            onClick = onPaymentMethodsClick
+        )
         ProfileMenuRow(ProfileIconType.Settings, stringResource(R.string.profile_settings), showDivider = true)
         ProfileMenuRow(ProfileIconType.Help, stringResource(R.string.profile_help_support), showDivider = true)
         ProfileMenuRow(ProfileIconType.Invite, stringResource(R.string.profile_invite_earn), showDivider = false)
@@ -501,13 +508,21 @@ private fun ProfileMenuCard() {
 private fun ProfileMenuRow(
     iconType: ProfileIconType,
     label: String,
-    showDivider: Boolean
+    showDivider: Boolean,
+    onClick: (() -> Unit)? = null
 ) {
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(48.dp)
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(onClick = onClick)
+                    } else {
+                        Modifier
+                    }
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProfileIcon(
