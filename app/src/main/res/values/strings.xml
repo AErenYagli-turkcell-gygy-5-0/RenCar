@@ -256,6 +256,11 @@
     <string name="payment_total_label">Toplam</string>
     <string name="payment_method_wallet">Cüzdan</string>
     <string name="payment_method_card">Kart</string>
+    <string name="payment_method_iyzico">Iyzico</string>
+    <string name="payment_iyzico_title">Iyzico ortak ödeme sayfası</string>
+    <string name="payment_iyzico_description">Kart bilgilerinizi RenCar yerine Iyzico sayfasında girerek ödeme yapın.</string>
+    <string name="payment_iyzico_close_action">Kapat</string>
+    <string name="payment_iyzico_check_action">Ödemeyi Kontrol Et</string>
     <string name="payment_wallet_balance_label">Rencar bakiyesi · %1$s</string>
     <string name="payment_wallet_sufficient">Yeterli bakiye</string>
     <string name="payment_wallet_insufficient">Yetersiz bakiye</string>
