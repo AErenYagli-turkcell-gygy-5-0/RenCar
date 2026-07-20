@@ -7,6 +7,7 @@ sealed interface ProfileIntent : UiIntent {
     data object RetryClicked : ProfileIntent
     data object LicenseStatusClicked : ProfileIntent
     data object LicensePreviewDismissed : ProfileIntent
+    data object InviteClicked : ProfileIntent
     data object LogoutClicked : ProfileIntent
     data object LogoutConfirmed : ProfileIntent
     data object LogoutConfirmationDismissed : ProfileIntent

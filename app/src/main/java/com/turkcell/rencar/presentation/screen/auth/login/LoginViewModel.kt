@@ -69,6 +69,7 @@ class LoginViewModel @Inject constructor(
         AuthError.Network -> NETWORK_ERROR_MESSAGE
         AuthError.EmailAlreadyRegistered,
         AuthError.InvalidOtp,
+        AuthError.InvalidReferralCode,
         AuthError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
     }
 

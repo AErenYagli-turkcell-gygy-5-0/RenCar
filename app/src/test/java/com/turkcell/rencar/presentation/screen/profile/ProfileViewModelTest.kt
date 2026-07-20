@@ -165,6 +165,7 @@ class ProfileViewModelTest {
                 phone = "+905320000000",
                 fullName = "Deniz Yilmaz",
                 role = "CUSTOMER",
+                referralCode = "REN-K7M2XQ",
                 createdAt = "2026-07-07T10:00:00.000Z",
                 updatedAt = "2026-07-07T10:00:00.000Z"
             )

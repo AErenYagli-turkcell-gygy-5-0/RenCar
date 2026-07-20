@@ -6,6 +6,7 @@ data class UserResponseDto(
     val phone: String?,
     val fullName: String,
     val role: String,
+    val referralCode: String?,
     val createdAt: String,
     val updatedAt: String
 )

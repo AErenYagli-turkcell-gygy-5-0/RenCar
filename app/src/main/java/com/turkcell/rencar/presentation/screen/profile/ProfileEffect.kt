@@ -4,4 +4,5 @@ import com.turkcell.rencar.presentation.core.mvi.UiEffect
 
 sealed interface ProfileEffect : UiEffect {
     data object NavigateToLogin : ProfileEffect
+    data object NavigateToReferral : ProfileEffect
 }

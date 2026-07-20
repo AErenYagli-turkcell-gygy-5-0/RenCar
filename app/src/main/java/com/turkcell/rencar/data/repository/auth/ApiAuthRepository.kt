@@ -27,10 +27,10 @@ class ApiAuthRepository @Inject constructor(
     override suspend fun register(request: RegisterRequest): AuthResult<RegisteredUser> =
         runRequest(
             httpError = { code ->
-                if (code == HTTP_CONFLICT) {
-                    AuthError.EmailAlreadyRegistered
-                } else {
-                    AuthError.Unexpected
+                when (code) {
+                    HTTP_CONFLICT -> AuthError.EmailAlreadyRegistered
+                    HTTP_BAD_REQUEST -> AuthError.InvalidReferralCode
+                    else -> AuthError.Unexpected
                 }
             }
         ) {
@@ -39,7 +39,8 @@ class ApiAuthRepository @Inject constructor(
                     email = request.email,
                     password = request.password,
                     fullName = request.fullName,
-                    phone = request.phone
+                    phone = request.phone,
+                    referralCode = request.referralCode
                 )
             )
             response.user.toDomain()
@@ -130,6 +131,7 @@ class ApiAuthRepository @Inject constructor(
         phone = phone.orEmpty(),
         fullName = fullName,
         role = role,
+        referralCode = referralCode,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -144,6 +146,7 @@ class ApiAuthRepository @Inject constructor(
     }
 
     private companion object {
+        const val HTTP_BAD_REQUEST = 400
         const val HTTP_UNAUTHORIZED = 401
         const val HTTP_CONFLICT = 409
     }

@@ -58,6 +58,8 @@ sealed class RenCarDestination(val route: String) {
 
     data object Wallet : RenCarDestination("wallet")
 
+    data object Referral : RenCarDestination("referral")
+
     companion object {
         const val ARG_PHONE_NUMBER = "phoneNumber"
         const val ARG_VEHICLE_ID = "vehicleId"

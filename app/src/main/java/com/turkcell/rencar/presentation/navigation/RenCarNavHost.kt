@@ -16,6 +16,7 @@ import com.turkcell.rencar.presentation.screen.history.HistoryRoute
 import com.turkcell.rencar.presentation.screen.home.HomeRoute
 import com.turkcell.rencar.presentation.screen.payment.PaymentRoute
 import com.turkcell.rencar.presentation.screen.profile.ProfileRoute
+import com.turkcell.rencar.presentation.screen.referral.ReferralRoute
 import com.turkcell.rencar.presentation.screen.rental.active.ActiveRentalRoute
 import com.turkcell.rencar.presentation.screen.rental.photo.RentalPhotoUploadMode
 import com.turkcell.rencar.presentation.screen.rental.photo.RentalPhotoUploadRoute
@@ -345,7 +346,18 @@ fun RenCarNavHost(
                     navController.navigate(RenCarDestination.Wallet.route) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToReferral = {
+                    navController.navigate(RenCarDestination.Referral.route) {
+                        launchSingleTop = true
+                    }
                 }
+            )
+        }
+
+        composable(RenCarDestination.Referral.route) {
+            ReferralRoute(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

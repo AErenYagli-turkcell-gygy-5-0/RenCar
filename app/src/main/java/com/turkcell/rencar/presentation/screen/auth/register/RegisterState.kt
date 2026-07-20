@@ -7,6 +7,7 @@ data class RegisterState(
     val password: String = "",
     val fullName: String = "",
     val phoneNumber: String = "",
+    val referralCode: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) : UiState

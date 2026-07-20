@@ -9,5 +9,6 @@ sealed interface RegisterIntent : UiIntent {
     data class PasswordChanged(val value: String) : RegisterIntent
     data class FullNameChanged(val value: String) : RegisterIntent
     data class PhoneNumberChanged(val value: String) : RegisterIntent
+    data class ReferralCodeChanged(val value: String) : RegisterIntent
     data object CreateAccountClicked : RegisterIntent
 }
