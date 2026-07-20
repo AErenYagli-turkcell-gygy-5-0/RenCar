@@ -137,7 +137,43 @@ class CarDetailViewModelTest {
     }
 
     @Test
-    fun `active reservation cancel calls repository and clears reservation state`() = runTest {
+    fun `cancel reservation clicked opens confirm dialog without calling repository`() = runTest {
+        val reservationRepository = FakeReservationRepository()
+        val viewModel = createViewModel(
+            vehicleRepository = FakeVehicleRepository(vehicleResult = VehicleResult.Failure(VehicleError.NotFound)),
+            reservationRepository = reservationRepository
+        )
+
+        viewModel.onIntent(CarDetailIntent.ScreenStarted)
+        advanceUntilIdle()
+        viewModel.onIntent(CarDetailIntent.CancelReservationClicked)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.showCancelReservationConfirmDialog)
+        assertNull(reservationRepository.cancelledReservationId)
+    }
+
+    @Test
+    fun `cancel reservation dismissed closes confirm dialog without calling repository`() = runTest {
+        val reservationRepository = FakeReservationRepository()
+        val viewModel = createViewModel(
+            vehicleRepository = FakeVehicleRepository(vehicleResult = VehicleResult.Failure(VehicleError.NotFound)),
+            reservationRepository = reservationRepository
+        )
+
+        viewModel.onIntent(CarDetailIntent.ScreenStarted)
+        advanceUntilIdle()
+        viewModel.onIntent(CarDetailIntent.CancelReservationClicked)
+        advanceUntilIdle()
+        viewModel.onIntent(CarDetailIntent.CancelReservationDismissed)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.showCancelReservationConfirmDialog)
+        assertNull(reservationRepository.cancelledReservationId)
+    }
+
+    @Test
+    fun `active reservation cancel confirmed calls repository and clears reservation state`() = runTest {
         val reservationRepository = FakeReservationRepository()
         val reservationPlanStore = FakeReservationPlanStore(RentalPlan.HOURLY)
         val viewModel = createViewModel(
@@ -150,12 +186,15 @@ class CarDetailViewModelTest {
         advanceUntilIdle()
         viewModel.onIntent(CarDetailIntent.CancelReservationClicked)
         advanceUntilIdle()
+        viewModel.onIntent(CarDetailIntent.CancelReservationConfirmed)
+        advanceUntilIdle()
 
         assertEquals(RESERVATION_ID, reservationRepository.cancelledReservationId)
         assertTrue(reservationPlanStore.wasCleared)
         assertFalse(viewModel.state.value.isActiveReservationVehicle)
         assertFalse(viewModel.state.value.canUnlock)
         assertNull(viewModel.state.value.activeReservationId)
+        assertFalse(viewModel.state.value.showCancelReservationConfirmDialog)
     }
 
     private fun createViewModel(

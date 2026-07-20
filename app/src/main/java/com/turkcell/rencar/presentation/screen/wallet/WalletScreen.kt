@@ -45,6 +45,7 @@ import com.turkcell.rencar.domain.cards.CardBrand
 import com.turkcell.rencar.domain.wallet.WalletTransaction
 import com.turkcell.rencar.domain.wallet.WalletTransactionType
 import com.turkcell.rencar.presentation.component.card.CardBrandBadge
+import com.turkcell.rencar.presentation.component.dialog.ConfirmDialog
 import com.turkcell.rencar.presentation.component.navigation.BottomNavBar
 import java.text.NumberFormat
 import java.util.Locale
@@ -317,38 +318,21 @@ private fun DeleteCardConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(R.string.wallet_delete_card_dialog_title), fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                Text(text = stringResource(R.string.wallet_delete_card_dialog_message))
-                errorMessage?.let { error ->
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm, enabled = !isDeleting) {
-                if (isDeleting) {
-                    CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(
-                        text = stringResource(R.string.wallet_delete_card_confirm_action),
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.wallet_delete_card_cancel_action))
+    ConfirmDialog(
+        title = stringResource(R.string.wallet_delete_card_dialog_title),
+        message = stringResource(R.string.wallet_delete_card_dialog_message),
+        confirmText = stringResource(R.string.wallet_delete_card_confirm_action),
+        dismissText = stringResource(R.string.wallet_delete_card_cancel_action),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        isConfirmLoading = isDeleting,
+        extraContent = errorMessage?.let { error ->
+            {
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     )

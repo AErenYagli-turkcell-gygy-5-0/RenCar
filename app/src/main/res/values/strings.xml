@@ -117,6 +117,10 @@
     <string name="car_detail_reserve_button">Rezerve Et</string>
     <string name="car_detail_unlock_button">Kilidi Aç</string>
     <string name="car_detail_cancel_reservation_button">Rezervasyonu İptal Et</string>
+    <string name="car_detail_cancel_reservation_confirm_title">Rezervasyon iptal edilsin mi?</string>
+    <string name="car_detail_cancel_reservation_confirm_message">Onay verirsen bu araca ait rezervasyonun iptal edilecek.</string>
+    <string name="car_detail_cancel_reservation_confirm_action">Rezervasyonu İptal Et</string>
+    <string name="car_detail_cancel_reservation_dismiss_action">Vazgeç</string>
     <string name="car_detail_specs_title">Araç Özellikleri</string>
     <string name="car_detail_spec_seats_value">%1$d kişi</string>
     <string name="car_detail_spec_fuel_label">Yakıt</string>

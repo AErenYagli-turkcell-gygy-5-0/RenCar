@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
+import com.turkcell.rencar.presentation.component.dialog.ConfirmDialog
 import com.turkcell.rencar.presentation.component.map.DEFAULT_CENTER
 import com.turkcell.rencar.presentation.component.map.LatLng
 import com.turkcell.rencar.domain.vehicle.Transmission
@@ -181,6 +182,18 @@ fun CarDetailScreen(
                 )
             }
         }
+    }
+
+    if (state.showCancelReservationConfirmDialog) {
+        ConfirmDialog(
+            title = stringResource(R.string.car_detail_cancel_reservation_confirm_title),
+            message = stringResource(R.string.car_detail_cancel_reservation_confirm_message),
+            confirmText = stringResource(R.string.car_detail_cancel_reservation_confirm_action),
+            dismissText = stringResource(R.string.car_detail_cancel_reservation_dismiss_action),
+            onConfirm = { onIntent(CarDetailIntent.CancelReservationConfirmed) },
+            onDismiss = { onIntent(CarDetailIntent.CancelReservationDismissed) },
+            isConfirmLoading = state.isCancelReservationSubmitting
+        )
     }
 }
 

@@ -9,4 +9,6 @@ sealed interface CarDetailIntent : UiIntent {
     data object ReserveClicked : CarDetailIntent
     data object UnlockClicked : CarDetailIntent
     data object CancelReservationClicked : CarDetailIntent
+    data object CancelReservationConfirmed : CarDetailIntent
+    data object CancelReservationDismissed : CarDetailIntent
 }

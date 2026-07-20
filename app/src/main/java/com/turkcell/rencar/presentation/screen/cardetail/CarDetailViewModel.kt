@@ -51,7 +51,9 @@ class CarDetailViewModel @Inject constructor(
             CarDetailIntent.BackClicked -> sendEffect { CarDetailEffect.NavigateBack }
             CarDetailIntent.ReserveClicked -> navigateToReservationConfirmation()
             CarDetailIntent.UnlockClicked -> handleUnlockClicked()
-            CarDetailIntent.CancelReservationClicked -> handleCancelReservationClicked()
+            CarDetailIntent.CancelReservationClicked -> setState { copy(showCancelReservationConfirmDialog = true) }
+            CarDetailIntent.CancelReservationConfirmed -> handleCancelReservationConfirmed()
+            CarDetailIntent.CancelReservationDismissed -> setState { copy(showCancelReservationConfirmDialog = false) }
         }
     }
 
@@ -110,12 +112,18 @@ class CarDetailViewModel @Inject constructor(
         }
     }
 
-    private fun handleCancelReservationClicked() {
+    private fun handleCancelReservationConfirmed() {
         val currentState = state.value
         val reservationId = currentState.activeReservationId ?: return
         if (currentState.isCancelReservationSubmitting) return
 
-        setState { copy(isCancelReservationSubmitting = true, cancelReservationErrorMessage = null) }
+        setState {
+            copy(
+                isCancelReservationSubmitting = true,
+                cancelReservationErrorMessage = null,
+                showCancelReservationConfirmDialog = false
+            )
+        }
         viewModelScope.launch {
             when (val result = reservationRepository.cancelReservation(reservationId)) {
                 is ReservationResult.Success -> {
