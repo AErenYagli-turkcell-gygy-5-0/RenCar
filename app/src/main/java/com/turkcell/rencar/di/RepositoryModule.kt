@@ -2,6 +2,7 @@ package com.turkcell.rencar.di
 
 import com.turkcell.rencar.data.repository.auth.ApiAuthRepository
 import com.turkcell.rencar.data.repository.cards.ApiCardRepository
+import com.turkcell.rencar.data.repository.iyzico.ApiIyzicoRepository
 import com.turkcell.rencar.data.repository.license.ApiLicenseRepository
 import com.turkcell.rencar.data.repository.location.ApiLocationRepository
 import com.turkcell.rencar.data.repository.profile.FileProfilePhotoRepository
@@ -13,6 +14,7 @@ import com.turkcell.rencar.data.session.SharedPreferencesCardPaymentTransactionS
 import com.turkcell.rencar.data.session.SharedPreferencesReservationPlanStore
 import com.turkcell.rencar.domain.auth.AuthRepository
 import com.turkcell.rencar.domain.cards.CardRepository
+import com.turkcell.rencar.domain.iyzico.IyzicoRepository
 import com.turkcell.rencar.domain.license.LicenseRepository
 import com.turkcell.rencar.domain.location.LocationRepository
 import com.turkcell.rencar.domain.profile.ProfilePhotoRepository
@@ -83,4 +85,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCardRepository(implementation: ApiCardRepository): CardRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindIyzicoRepository(implementation: ApiIyzicoRepository): IyzicoRepository
 }

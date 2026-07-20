@@ -1,5 +1,7 @@
 package com.turkcell.rencar.presentation.screen.payment
 
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
@@ -87,12 +90,13 @@ fun PaymentScreen(
     onIntent: (PaymentIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -217,6 +221,10 @@ fun PaymentScreen(
                     onAddCardClicked = { onIntent(PaymentIntent.AddCardClicked) },
                     modifier = Modifier.padding(top = 10.dp)
                 )
+
+                PaymentMethod.IYZICO -> IyzicoMethodRow(
+                    modifier = Modifier.padding(top = 10.dp)
+                )
             }
 
             state.errorMessage?.let { error ->
@@ -235,7 +243,9 @@ fun PaymentScreen(
                 .padding(horizontal = 18.dp, vertical = 16.dp)
         ) {
             val payButtonEnabled = !state.isPaying && !state.isPaid &&
-                (state.selectedMethod == PaymentMethod.WALLET || state.selectedCardId != null)
+                (state.selectedMethod == PaymentMethod.WALLET ||
+                    state.selectedMethod == PaymentMethod.IYZICO ||
+                    state.selectedCardId != null)
 
             Button(
                 onClick = { onIntent(PaymentIntent.PayClicked) },
@@ -255,6 +265,7 @@ fun PaymentScreen(
                     val methodLabel = when (state.selectedMethod) {
                         PaymentMethod.WALLET -> stringResource(R.string.payment_method_wallet)
                         PaymentMethod.CARD -> stringResource(R.string.payment_method_card)
+                        PaymentMethod.IYZICO -> stringResource(R.string.payment_method_iyzico)
                     }
                     Text(
                         text = stringResource(R.string.payment_pay_action, methodLabel, state.netAmount.toTryPrice()),
@@ -262,6 +273,16 @@ fun PaymentScreen(
                     )
                 }
             }
+        }
+        }
+
+        if (state.showIyzicoWebView && !state.iyzicoPaymentPageUrl.isNullOrBlank()) {
+            IyzicoWebViewOverlay(
+                url = state.iyzicoPaymentPageUrl,
+                isChecking = state.isIyzicoResultChecking,
+                onCheckPaymentClicked = { onIntent(PaymentIntent.IyzicoPaymentCheckClicked) },
+                onDismiss = { onIntent(PaymentIntent.IyzicoWebViewDismissed) }
+            )
         }
     }
 
@@ -310,6 +331,12 @@ private fun PaymentMethodSelector(
             label = stringResource(R.string.payment_method_card),
             selected = selectedMethod == PaymentMethod.CARD,
             onClick = { onMethodSelected(PaymentMethod.CARD) },
+            modifier = Modifier.weight(1f)
+        )
+        MethodOption(
+            label = stringResource(R.string.payment_method_iyzico),
+            selected = selectedMethod == PaymentMethod.IYZICO,
+            onClick = { onMethodSelected(PaymentMethod.IYZICO) },
             modifier = Modifier.weight(1f)
         )
     }
@@ -433,6 +460,94 @@ private fun CardMethodRow(
             TextButton(onClick = onAddCardClicked) {
                 Text(text = stringResource(R.string.payment_add_card_action))
             }
+        }
+    }
+}
+
+@Composable
+private fun IyzicoMethodRow(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = stringResource(R.string.payment_iyzico_title),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            )
+            Text(
+                text = stringResource(R.string.payment_iyzico_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun IyzicoWebViewOverlay(
+    url: String,
+    isChecking: Boolean,
+    onCheckPaymentClicked: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(text = stringResource(R.string.payment_iyzico_close_action))
+                }
+                Button(
+                    onClick = onCheckPaymentClicked,
+                    enabled = !isChecking,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    if (isChecking) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.height(18.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.payment_iyzico_check_action),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            AndroidView(
+                factory = { context ->
+                    WebView(context).apply {
+                        webViewClient = WebViewClient()
+                        settings.javaScriptEnabled = true
+                        loadUrl(url)
+                    }
+                },
+                update = { webView ->
+                    if (webView.url != url) {
+                        webView.loadUrl(url)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
         }
     }
 }

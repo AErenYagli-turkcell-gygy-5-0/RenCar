@@ -18,6 +18,8 @@ sealed interface PaymentIntent : UiIntent {
     data object AddCardConfirmClicked : PaymentIntent
     data object AddCardDismissed : PaymentIntent
     data object PayClicked : PaymentIntent
+    data object IyzicoWebViewDismissed : PaymentIntent
+    data object IyzicoPaymentCheckClicked : PaymentIntent
     data object TopUpConfirmed : PaymentIntent
     data object TopUpDismissed : PaymentIntent
 }

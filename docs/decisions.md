@@ -6,6 +6,33 @@
 
 # Mimari Kararlar
 
+## 2026-07-19 - Iyzico Checkout Form ile Kiralama Odemesi
+
+**Karar:** Mobil uygulamada Iyzico entegrasyonu, kart bilgisini uygulama icinde toplamadan backend'in
+mevcut Checkout Form uclari uzerinden yapilir. Odeme ekranina ucuncu yontem olarak `IYZICO` eklendi;
+kullanici bu yontemi sectiginde istemci `POST /iyzico/checkout-form/initialize` cagrisini
+`price=netAmount`, `basketId=rental-<rentalId>`, aciklama ve tek cekim `[1]` ile baslatir. Donen
+`paymentPageUrl` uygulama ici WebView'da acilir. Kullanici odeme sonrasinda "Odemeyi Kontrol Et"
+aksiyonuyla `GET /iyzico/checkout-form/result/{token}` sonucunu sorgular; yalniz
+`paymentStatus=SUCCESS` ve dolu `paymentId` durumunda `POST /rentals/{id}/pay` istegi
+`method=IYZICO` ve `iyzicoPaymentId` ile gonderilir.
+
+**Guvenlik siniri:** Iyzico API anahtari ve guvenlik anahtari Android uygulamasina eklenmez.
+Anahtarlarin backend ortam degiskenlerinde tanimli olmasi gerekir; backend `503` dondururse istemci
+bunu kullaniciya odeme servisinin hazir olmadigi hata mesaji olarak gosterir.
+
+**Kapsam disi:** Direct kart odemesi, 3DS initialize akisi, admin iptal/iade ekranlari ve taksit
+secici bu karara dahil degildir. Iyzico yonteminde `discountCode` gonderilmez; canli API sozlesmesi
+bu yontemde indirim kodunu kullanilamaz olarak tanimlar.
+
+**Etkilenen alanlar:**
+- `data/remote/iyzico/`, `data/repository/iyzico/`, `domain/iyzico/`
+- `domain/rental/PaymentMethod.kt`, `RentalRepository.kt`, `PayRentalRequestDto.kt`
+- `presentation/screen/payment/`
+- `di/NetworkModule.kt`, `di/RepositoryModule.kt`
+
+---
+
 ## 2026-07-18 - Kart Odemelerinin Cuzdan Son Islemlerinde Yerel Gosterimi
 
 **Karar:** `POST /rentals/{id}/pay` cagrisinin basarili `CARD` yaniti, cuzdan bakiyesini
