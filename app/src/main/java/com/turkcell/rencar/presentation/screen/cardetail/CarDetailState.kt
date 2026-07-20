@@ -38,5 +38,6 @@ data class CarDetailState(
     val isUnlockSubmitting: Boolean = false,
     val unlockErrorMessage: String? = null,
     val isCancelReservationSubmitting: Boolean = false,
-    val cancelReservationErrorMessage: String? = null
+    val cancelReservationErrorMessage: String? = null,
+    val showCancelReservationConfirmDialog: Boolean = false
 ) : UiState

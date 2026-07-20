@@ -6,6 +6,38 @@
 
 # Mimari Kararlar
 
+## 2026-07-20 - Onay Diyaloglarinin Ortak Bilesene Tasinmasi ve Rezervasyon Iptalinde Onay Eklenmesi
+
+**Karar:** `presentation/component/dialog/ConfirmDialog.kt` altinda ortak, yeniden kullanilabilir bir
+onay diyaloğu composable'ı eklendi (renkli daire arka planlı uyarı ikonu, dolgulu tehlikeli aksiyon
+butonu, tema renkleriyle tutarlı stil). Daha önce her ekranın kendi `AlertDialog`'unu tanımladığı üç
+onay diyaloğu (`ProfileScreen` çıkış onayı, `ActiveRentalScreen` kiralama bitirme onayı,
+`WalletScreen` kart silme onayı) bu ortak bileşene taşındı; ViewModel/Intent/Effect mantığı
+değişmedi, yalnızca sunum katmanı yenilendi.
+
+**Karar (Rezervasyon İptal onayı):** `CarDetailScreen` içindeki "Rezervasyonu İptal Et" butonu daha
+önce hiçbir onay istemeden doğrudan `DELETE /reservations/{id}` çağırıyordu. Artık buton yalnızca
+`CarDetailState.showCancelReservationConfirmDialog` bayrağını açan `CancelReservationClicked`
+intent'ini gönderiyor; asıl iptal çağrısı, mevcut `ActiveRentalScreen`/`ProfileScreen` desenindeki
+gibi yeni `CancelReservationConfirmed` intent'ine taşındı, `CancelReservationDismissed` diyaloğu
+kapatır. Bu, `agents.md` §2.4 gereği referans MVI desenleriyle (state bayrağı + Confirmed/Dismissed
+intent çifti) tutarlıdır.
+
+**Bağımlılıklar:** Yeni bir Gradle bağımlılığı eklenmemiştir; ikon mevcut Canvas/DrawScope çizim
+deseniyle (`presentation/component/navigation/RenCarIcons.kt` ile aynı yaklaşım) üretilmiştir.
+
+**Etkilenen alanlar:**
+- `presentation/component/dialog/ConfirmDialog.kt` (yeni)
+- `presentation/screen/cardetail/` (`CarDetailState.kt`, `CarDetailIntent.kt`,
+  `CarDetailViewModel.kt`, `CarDetailScreen.kt`)
+- `presentation/screen/rental/active/ActiveRentalScreen.kt`
+- `presentation/screen/profile/ProfileScreen.kt`
+- `presentation/screen/wallet/WalletScreen.kt`
+- `app/src/main/res/values/strings.xml`
+- `app/src/test/java/com/turkcell/rencar/presentation/screen/cardetail/CarDetailViewModelTest.kt`
+
+---
+
 ## 2026-07-19 - Iyzico Checkout Form ile Kiralama Odemesi
 
 **Karar:** Mobil uygulamada Iyzico entegrasyonu, kart bilgisini uygulama icinde toplamadan backend'in

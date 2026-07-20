@@ -57,6 +57,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.turkcell.rencar.R
 import com.turkcell.rencar.domain.license.LicenseReviewStatus
+import com.turkcell.rencar.presentation.component.dialog.ConfirmDialog
 import com.turkcell.rencar.presentation.component.navigation.BottomNavBar
 import com.turkcell.rencar.presentation.component.navigation.BottomNavItem
 import com.turkcell.rencar.presentation.theme.RenCarTheme
@@ -602,37 +603,13 @@ private fun LogoutConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.profile_logout_confirm_title),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-            )
-        },
-        text = {
-            Text(
-                text = stringResource(R.string.profile_logout_confirm_message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    text = stringResource(R.string.profile_logout_confirm_action),
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.profile_logout_cancel_action))
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        titleContentColor = MaterialTheme.colorScheme.onSurface
+    ConfirmDialog(
+        title = stringResource(R.string.profile_logout_confirm_title),
+        message = stringResource(R.string.profile_logout_confirm_message),
+        confirmText = stringResource(R.string.profile_logout_confirm_action),
+        dismissText = stringResource(R.string.profile_logout_cancel_action),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 
