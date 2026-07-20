@@ -311,7 +311,7 @@
     <string name="wallet_delete_card_confirm_action">Sil</string>
     <string name="wallet_delete_card_cancel_action">Vazgeç</string>
     <string name="wallet_topup_dialog_title">Bakiye Yükle</string>
-    <string name="wallet_topup_amount_label">Tutar (10-5000 TL)</string>
+    <string name="wallet_topup_amount_label">Tutar (10–5000 TL)</string>
     <string name="wallet_topup_confirm_action">Yükle</string>
     <string name="wallet_topup_cancel_action">Vazgeç</string>
     <string name="wallet_add_card_dialog_title">Kart Ekle</string>
