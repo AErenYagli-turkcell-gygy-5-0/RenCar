@@ -38,7 +38,7 @@ import java.io.IOException
 import javax.inject.Inject
 
 class ApiRentalRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val apiService: RentalApiService
 ) : RentalRepository {
 

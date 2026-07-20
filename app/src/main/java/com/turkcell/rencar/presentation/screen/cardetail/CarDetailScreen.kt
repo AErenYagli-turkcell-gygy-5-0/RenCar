@@ -546,9 +546,9 @@ private fun StatCard(
     drawIcon: DrawScope.(color: Color) -> Unit,
     label: String,
     value: String,
+    modifier: Modifier = Modifier,
     progressFraction: Float? = null,
-    progressColor: Color? = null,
-    modifier: Modifier = Modifier
+    progressColor: Color? = null
 ) {
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     Column(

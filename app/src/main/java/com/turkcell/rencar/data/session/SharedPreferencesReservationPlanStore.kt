@@ -1,6 +1,7 @@
 package com.turkcell.rencar.data.session
 
 import android.content.Context
+import androidx.core.content.edit
 import com.turkcell.rencar.domain.rental.RentalPlan
 import com.turkcell.rencar.domain.reservation.ReservationPlanStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,7 +17,7 @@ class SharedPreferencesReservationPlanStore @Inject constructor(
 
     override fun savePlan(vehicleId: String, plan: RentalPlan) {
         if (vehicleId.isBlank()) return
-        preferences.edit().putString(vehicleId.toPlanKey(), plan.name).apply()
+        preferences.edit { putString(vehicleId.toPlanKey(), plan.name) }
     }
 
     override fun getPlan(vehicleId: String): RentalPlan? {
@@ -27,7 +28,7 @@ class SharedPreferencesReservationPlanStore @Inject constructor(
 
     override fun clearPlan(vehicleId: String) {
         if (vehicleId.isBlank()) return
-        preferences.edit().remove(vehicleId.toPlanKey()).apply()
+        preferences.edit { remove(vehicleId.toPlanKey()) }
     }
 
     private fun String.toPlanKey(): String = "$PLAN_KEY_PREFIX$this"

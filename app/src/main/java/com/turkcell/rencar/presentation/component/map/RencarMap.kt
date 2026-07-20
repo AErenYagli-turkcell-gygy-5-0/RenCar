@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -116,7 +118,7 @@ fun RencarMap(
     val styleState = remember { mutableStateOf<Style?>(null) }
     val symbolManagerState = remember { mutableStateOf<SymbolManager?>(null) }
     val mapLibreMapState = remember { mutableStateOf<MapLibreMap?>(null) }
-    val addedIconIds = remember { mutableStateOf(mutableSetOf<String>()) }
+    val addedIconIds = remember { mutableSetOf<String>() }
 
     LaunchedEffect(mapLibreMapState.value, statusBarInsetPx) {
         val map = mapLibreMapState.value ?: return@LaunchedEffect
@@ -209,7 +211,7 @@ fun RencarMap(
                         symbolManager = symbolManager,
                         vehicles = currentVehicles.value,
                         categoryColors = currentCategoryColors.value,
-                        addedIconIds = addedIconIds.value
+                        addedIconIds = addedIconIds
                     )
                 }
 
@@ -230,7 +232,7 @@ fun RencarMap(
                     symbolManager = symbolManager,
                     vehicles = vehicles,
                     categoryColors = categoryColors,
-                    addedIconIds = addedIconIds.value
+                    addedIconIds = addedIconIds
                 )
             }
         }
@@ -261,12 +263,12 @@ private fun createVehicleIconBitmap(context: Context): Bitmap {
     val diameter = (52f * density).toInt().coerceAtLeast(1)
     val strokeWidth = 3f * density
 
-    val bitmap = Bitmap.createBitmap(diameter, diameter, Bitmap.Config.ARGB_8888)
+    val bitmap = createBitmap(diameter, diameter)
     val canvas = Canvas(bitmap)
     val radius = diameter / 2f
 
     val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.parseColor("#0B6BCB")
+        color = "#0B6BCB".toColorInt()
     }
     canvas.drawCircle(radius, radius, radius - strokeWidth / 2f, backgroundPaint)
 
@@ -348,7 +350,7 @@ private fun createPriceBubbleBitmap(
     val width = (paddingStart + contentWidth + paddingEnd).toInt().coerceAtLeast(1)
     val height = (textHeight + paddingVertical * 2).toInt().coerceAtLeast(1)
 
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val bitmap = createBitmap(width, height)
     val canvas = Canvas(bitmap)
 
     val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

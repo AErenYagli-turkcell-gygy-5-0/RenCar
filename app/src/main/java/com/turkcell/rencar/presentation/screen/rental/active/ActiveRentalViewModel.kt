@@ -131,7 +131,6 @@ class ActiveRentalViewModel @Inject constructor(
         pollingJob?.cancel()
         locationJob?.cancel()
         tickerJob?.cancel()
-        super.onCleared()
     }
 
     private fun RentalError.toMessage(): String = when (this) {
