@@ -114,6 +114,7 @@ class OtpViewModel @Inject constructor(
         AuthError.Unauthorized -> UNAUTHORIZED_MESSAGE
         AuthError.Network -> NETWORK_ERROR_MESSAGE
         AuthError.EmailAlreadyRegistered,
+        AuthError.InvalidReferralCode,
         AuthError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
     }
 

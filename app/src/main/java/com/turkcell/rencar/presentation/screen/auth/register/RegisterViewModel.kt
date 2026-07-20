@@ -29,6 +29,9 @@ class RegisterViewModel @Inject constructor(
                 copy(fullName = intent.value, errorMessage = null)
             }
             is RegisterIntent.PhoneNumberChanged -> handlePhoneNumberChanged(intent.value)
+            is RegisterIntent.ReferralCodeChanged -> setState {
+                copy(referralCode = intent.value, errorMessage = null)
+            }
             RegisterIntent.CreateAccountClicked -> handleCreateAccount()
         }
     }
@@ -67,7 +70,8 @@ class RegisterViewModel @Inject constructor(
                     email = currentState.email.trim(),
                     password = currentState.password,
                     fullName = currentState.fullName.trim(),
-                    phone = normalizedPhone
+                    phone = normalizedPhone,
+                    referralCode = currentState.referralCode.trim().takeIf(String::isNotBlank)
                 )
             )
 
@@ -110,6 +114,7 @@ class RegisterViewModel @Inject constructor(
 
     private fun AuthError.toMessage(): String = when (this) {
         AuthError.EmailAlreadyRegistered -> EMAIL_ALREADY_REGISTERED_MESSAGE
+        AuthError.InvalidReferralCode -> INVALID_REFERRAL_CODE_MESSAGE
         AuthError.Unauthorized -> UNAUTHORIZED_MESSAGE
         AuthError.Network -> NETWORK_ERROR_MESSAGE
         AuthError.UserNotFound,
@@ -126,6 +131,7 @@ class RegisterViewModel @Inject constructor(
         const val INVALID_PASSWORD_MESSAGE = "Şifre en az 6 karakter olmalıdır."
         const val INVALID_PHONE_MESSAGE = "Telefon numarası 10 haneli olmalıdır."
         const val EMAIL_ALREADY_REGISTERED_MESSAGE = "Bu e-posta adresi zaten kayıtlı."
+        const val INVALID_REFERRAL_CODE_MESSAGE = "Girdiğiniz davet kodu geçersiz."
         const val UNAUTHORIZED_MESSAGE = "Oturumunuz sona ermiş. Lütfen tekrar giriş yapın."
         const val NETWORK_ERROR_MESSAGE = "İnternet bağlantınızı kontrol edip tekrar deneyin."
         const val UNEXPECTED_ERROR_MESSAGE = "Bir hata oluştu. Lütfen tekrar deneyin."

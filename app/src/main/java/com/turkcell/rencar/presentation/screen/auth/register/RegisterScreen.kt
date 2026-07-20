@@ -231,6 +231,16 @@ fun RegisterScreen(
                     }
                 }
 
+                RegisterTextField(
+                    label = stringResource(R.string.register_referral_code_label),
+                    value = state.referralCode,
+                    enabled = !state.isLoading,
+                    keyboardType = KeyboardType.Text,
+                    placeholder = stringResource(R.string.register_referral_code_placeholder),
+                    onValueChange = { onIntent(RegisterIntent.ReferralCodeChanged(it)) },
+                    modifier = Modifier.padding(top = 18.dp)
+                )
+
                 state.errorMessage?.let { errorMessage ->
                     Text(
                         text = errorMessage,
@@ -320,6 +330,7 @@ private fun RegisterTextField(
     keyboardType: KeyboardType,
     modifier: Modifier = Modifier,
     isPassword: Boolean = false,
+    placeholder: String? = null,
     onValueChange: (String) -> Unit,
 ) {
     Text(
@@ -356,7 +367,17 @@ private fun RegisterTextField(
                 color = MaterialTheme.colorScheme.onSurface
             ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            decorationBox = { innerTextField ->
+                if (value.isEmpty() && placeholder != null) {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
+                innerTextField()
+            }
         )
     }
 }

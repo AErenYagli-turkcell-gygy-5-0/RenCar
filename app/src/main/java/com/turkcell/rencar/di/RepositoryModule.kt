@@ -10,7 +10,6 @@ import com.turkcell.rencar.data.repository.rental.ApiRentalRepository
 import com.turkcell.rencar.data.repository.reservation.ApiReservationRepository
 import com.turkcell.rencar.data.repository.vehicle.ApiVehicleRepository
 import com.turkcell.rencar.data.repository.wallet.ApiWalletRepository
-import com.turkcell.rencar.data.session.SharedPreferencesCardPaymentTransactionStore
 import com.turkcell.rencar.data.session.SharedPreferencesReservationPlanStore
 import com.turkcell.rencar.domain.auth.AuthRepository
 import com.turkcell.rencar.domain.cards.CardRepository
@@ -22,7 +21,6 @@ import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.reservation.ReservationPlanStore
 import com.turkcell.rencar.domain.reservation.ReservationRepository
 import com.turkcell.rencar.domain.vehicle.VehicleRepository
-import com.turkcell.rencar.domain.wallet.CardPaymentTransactionStore
 import com.turkcell.rencar.domain.wallet.WalletRepository
 import dagger.Binds
 import dagger.Module
@@ -67,12 +65,6 @@ abstract class RepositoryModule {
     abstract fun bindReservationPlanStore(
         implementation: SharedPreferencesReservationPlanStore
     ): ReservationPlanStore
-
-    @Binds
-    @Singleton
-    abstract fun bindCardPaymentTransactionStore(
-        implementation: SharedPreferencesCardPaymentTransactionStore
-    ): CardPaymentTransactionStore
 
     @Binds
     @Singleton

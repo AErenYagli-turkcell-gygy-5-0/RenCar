@@ -83,6 +83,7 @@ class ApiAuthRepositoryTest {
                     phone = "+905551112233",
                     fullName = "Ahmet Yılmaz",
                     role = "PENDING",
+                    referralCode = null,
                     createdAt = "2026-07-03T10:00:00.000Z",
                     updatedAt = "2026-07-03T10:00:00.000Z"
                 )
@@ -229,6 +230,7 @@ class ApiAuthRepositoryTest {
                     phone = "",
                     fullName = "Ahmet Yılmaz",
                     role = "CUSTOMER",
+                    referralCode = null,
                     createdAt = "2026-07-03T10:00:00.000Z",
                     updatedAt = "2026-07-04T10:00:00.000Z"
                 )

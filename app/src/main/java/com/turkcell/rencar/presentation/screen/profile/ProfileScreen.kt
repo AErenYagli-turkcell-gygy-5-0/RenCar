@@ -72,6 +72,7 @@ fun ProfileRoute(
     onNavigateToHistory: () -> Unit,
     onNavigateToWallet: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    onNavigateToReferral: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -82,6 +83,7 @@ fun ProfileRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 ProfileEffect.NavigateToLogin -> onNavigateToLogin()
+                ProfileEffect.NavigateToReferral -> onNavigateToReferral()
             }
         }
     }
@@ -133,7 +135,10 @@ fun ProfileScreen(
                     onClick = { onIntent(ProfileIntent.LicenseStatusClicked) }
                 )
                 Spacer(modifier = Modifier.height(14.dp))
-                ProfileMenuCard(onPaymentMethodsClick = onNavigateToWallet)
+                ProfileMenuCard(
+                    onPaymentMethodsClick = onNavigateToWallet,
+                    onInviteClick = { onIntent(ProfileIntent.InviteClicked) }
+                )
                 Spacer(modifier = Modifier.height(14.dp))
                 LogoutButton(
                     isLoading = state.isLoggingOut,
@@ -483,7 +488,8 @@ private suspend fun loadRemoteImage(imageUrl: String): RemoteImageState =
 
 @Composable
 private fun ProfileMenuCard(
-    onPaymentMethodsClick: () -> Unit
+    onPaymentMethodsClick: () -> Unit,
+    onInviteClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -501,7 +507,12 @@ private fun ProfileMenuCard(
         )
         ProfileMenuRow(ProfileIconType.Settings, stringResource(R.string.profile_settings), showDivider = true)
         ProfileMenuRow(ProfileIconType.Help, stringResource(R.string.profile_help_support), showDivider = true)
-        ProfileMenuRow(ProfileIconType.Invite, stringResource(R.string.profile_invite_earn), showDivider = false)
+        ProfileMenuRow(
+            iconType = ProfileIconType.Invite,
+            label = stringResource(R.string.profile_invite_earn),
+            showDivider = false,
+            onClick = onInviteClick
+        )
     }
 }
 

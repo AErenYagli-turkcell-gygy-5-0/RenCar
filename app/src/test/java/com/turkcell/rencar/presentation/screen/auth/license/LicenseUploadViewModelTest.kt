@@ -143,6 +143,7 @@ class LicenseUploadViewModelTest {
                         phone = "+905320000000",
                         fullName = "Test User",
                         role = "CUSTOMER",
+                        referralCode = null,
                         createdAt = "2026-07-04T10:00:00.000Z",
                         updatedAt = "2026-07-04T10:00:00.000Z"
                     ),
@@ -159,6 +160,7 @@ class LicenseUploadViewModelTest {
                     phone = "+905320000000",
                     fullName = "Test User",
                     role = "PENDING",
+                    referralCode = null,
                     createdAt = "2026-07-04T10:00:00.000Z",
                     updatedAt = "2026-07-04T10:00:00.000Z"
                 )

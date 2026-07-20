@@ -40,6 +40,7 @@ class ProfileViewModel @Inject constructor(
                 setState { copy(showLogoutConfirmation = false) }
 
             ProfileIntent.LogoutConfirmed -> logout()
+            ProfileIntent.InviteClicked -> sendEffect { ProfileEffect.NavigateToReferral }
         }
     }
 
@@ -133,6 +134,7 @@ class ProfileViewModel @Inject constructor(
         AuthError.EmailAlreadyRegistered,
         AuthError.UserNotFound,
         AuthError.InvalidOtp,
+        AuthError.InvalidReferralCode,
         AuthError.Unexpected -> UNEXPECTED_ERROR_MESSAGE
 
         AuthError.Unauthorized -> UNAUTHORIZED_MESSAGE

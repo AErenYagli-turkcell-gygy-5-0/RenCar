@@ -103,6 +103,7 @@ class RegisterViewModelTest {
                 phone = "+905320000000",
                 fullName = "Ahmet Yılmaz",
                 role = "PENDING",
+                referralCode = null,
                 createdAt = "2026-07-04T10:00:00.000Z",
                 updatedAt = "2026-07-04T10:00:00.000Z"
             )

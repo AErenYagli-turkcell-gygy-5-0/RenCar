@@ -22,11 +22,9 @@ import com.turkcell.rencar.domain.rental.RentalRepository
 import com.turkcell.rencar.domain.rental.RentalResult
 import com.turkcell.rencar.domain.rental.RentalStats
 import com.turkcell.rencar.domain.rental.RentalSummary
-import com.turkcell.rencar.domain.wallet.CardPaymentTransactionStore
 import com.turkcell.rencar.domain.wallet.Wallet
 import com.turkcell.rencar.domain.wallet.WalletRepository
 import com.turkcell.rencar.domain.wallet.WalletResult
-import com.turkcell.rencar.domain.wallet.WalletTransaction
 import com.turkcell.rencar.test.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -114,8 +112,7 @@ class PaymentViewModelTest {
         rentalRepository = rentalRepository,
         walletRepository = FakeWalletRepository(),
         cardRepository = FakeCardRepository(),
-        iyzicoRepository = iyzicoRepository,
-        cardPaymentTransactionStore = FakeCardPaymentTransactionStore()
+        iyzicoRepository = iyzicoRepository
     )
 
     private class FakeIyzicoRepository(
@@ -247,12 +244,6 @@ class PaymentViewModelTest {
 
         override suspend fun deleteCard(cardId: String): CardResult<Unit> =
             error("Not used")
-    }
-
-    private class FakeCardPaymentTransactionStore : CardPaymentTransactionStore {
-        override fun getTransactions(): List<WalletTransaction> = emptyList()
-
-        override fun saveTransaction(transaction: WalletTransaction) = Unit
     }
 
     private companion object {

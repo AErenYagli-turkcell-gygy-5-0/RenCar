@@ -37,6 +37,8 @@
     <string name="register_email_label">E-posta</string>
     <string name="register_password_label">Şifre</string>
     <string name="register_phone_label">Telefon Numarası</string>
+    <string name="register_referral_code_label">Davet kodu (opsiyonel)</string>
+    <string name="register_referral_code_placeholder">REN-XXXXXX</string>
     <string name="register_submit_loading">Hesap oluşturuluyor…</string>
     <string name="register_submit_default">Hesap Oluştur</string>
     <string name="register_login_prompt_prefix">Zaten hesabın var mı? </string>
@@ -148,16 +150,16 @@
     <string name="profile_license_pending_badge">Beklemede</string>
     <string name="profile_license_rejected_badge">Reddedildi</string>
     <string name="profile_license_missing_badge">Eksik</string>
-    <string name="profile_license_preview_title">Ehliyet fotoğrafları</string>
+    <string name="profile_license_preview_title">Ehliyet Fotoğrafları</string>
     <string name="profile_license_front_image">Ön yüz</string>
     <string name="profile_license_back_image">Arka yüz</string>
     <string name="profile_license_preview_empty">Ehliyet fotoğrafı bulunamadı. Lütfen daha sonra tekrar deneyin.</string>
     <string name="profile_license_preview_load_error">Fotoğraf yüklenemedi.</string>
     <string name="profile_license_preview_close">Kapat</string>
-    <string name="profile_payment_methods">Ödeme yöntemleri</string>
+    <string name="profile_payment_methods">Ödeme Yöntemleri</string>
     <string name="profile_settings">Ayarlar</string>
-    <string name="profile_help_support">Yardım &amp; destek</string>
-    <string name="profile_invite_earn">Davet et · ₺50 kazan</string>
+    <string name="profile_help_support">Yardım &amp; Destek</string>
+    <string name="profile_invite_earn">Davet Et · ₺50 Kazan</string>
     <string name="profile_logout">Çıkış yap</string>
     <string name="profile_logout_loading">Çıkış yapılıyor…</string>
     <string name="profile_logout_confirm_title">Çıkış yapılsın mı?</string>
@@ -165,9 +167,22 @@
     <string name="profile_logout_confirm_action">Çıkış yap</string>
     <string name="profile_logout_cancel_action">Vazgeç</string>
     <string name="profile_retry">Tekrar dene</string>
+
+    <!-- Referral Screen -->
+    <string name="referral_title">Davet Et · ₺50 Kazan</string>
+    <string name="referral_subtitle">Arkadaşını Davet Et; ilk yolculuğunu tamamladığında 50 TL cüzdanına eklensin.</string>
+    <string name="referral_code_loading">Yükleniyor…</string>
+    <string name="referral_code_label">Davet Kodu</string>
+    <string name="referral_share_action">Kodu Paylaş</string>
+    <string name="referral_share_title">Davet Kodunu Paylaş</string>
+    <string name="referral_share_message">RenCar\'a Benimle Katıl! Kayıt olurken davet kodumu kullan: %1$s</string>
+    <string name="referral_history_title">Kazandığın Bonuslar</string>
+    <string name="referral_history_empty">Henüz kazanılan bir bonus yok.</string>
+    <string name="referral_retry">Tekrar Dene</string>
+
     <!-- Reservation Confirmation Screen -->
     <string name="reservation_confirmation_title">Rezervasyon Onayı</string>
-    <string name="reservation_rental_plan">Kiralama planı</string>
+    <string name="reservation_rental_plan">Kiralama Planı</string>
     <string name="reservation_daily">Günlük</string>
     <string name="reservation_per_minute">Dakikalık</string>
     <string name="reservation_hourly">Saatlik</string>
@@ -175,24 +190,24 @@
     <string name="reservation_price_per_hour">%1$s/sa</string>
     <string name="reservation_seats">%1$d kişi</string>
     <string name="reservation_fuel">Yakıt %%%1$d</string>
-    <string name="reservation_free_hold">Ücretsiz rezervasyon</string>
+    <string name="reservation_free_hold">Ücretsiz Rezervasyon</string>
     <string name="reservation_free_hold_duration">15 dk</string>
-    <string name="reservation_start_flow_label">Kiralama başlangıcı</string>
+    <string name="reservation_start_flow_label">Kiralama Başlangıcı</string>
     <string name="reservation_start_flow_value">Kilidi Aç ile başlar</string>
-    <string name="reservation_start_fee">Başlangıç ücreti</string>
-    <string name="reservation_usage_fee">Kullanım ücreti</string>
-    <string name="reservation_service_fee">Servis ücreti</string>
+    <string name="reservation_start_fee">Başlangıç Ücreti</string>
+    <string name="reservation_usage_fee">Kullanım Ücreti</string>
+    <string name="reservation_service_fee">Servis Ücreti</string>
     <string name="reservation_estimated_minutes">%1$d dakika için tahmini toplam</string>
     <string name="reservation_estimated_first_hour">İlk saat için tahmini toplam</string>
     <string name="reservation_estimated_one_day">1 gün için tahmini toplam</string>
     <string name="reservation_calculating">Hesaplanıyor…</string>
     <string name="reservation_price_per_day">%1$s/gün</string>
-    <string name="reservation_daily_fee">Günlük ücret</string>
-    <string name="reservation_estimated_total">Tahmini toplam</string>
+    <string name="reservation_daily_fee">Günlük Ücret</string>
+    <string name="reservation_estimated_total">Tahmini Toplam</string>
     <string name="reservation_estimated_price">~%1$s</string>
     <string name="reservation_terms_confirmation">Kullanım şartlarını ve kasko/sigorta koşullarını okudum, onaylıyorum.</string>
     <string name="reservation_complete">Rezervasyonu Tamamla</string>
-    <string name="reservation_retry">Tekrar dene</string>
+    <string name="reservation_retry">Tekrar Dene</string>
     <string name="reservation_error_vehicle_not_found">Araç bulunamadı veya artık müsait değil.</string>
     <string name="reservation_error_conflict">Araç artık müsait olmayabilir veya aktif bir kiralamanız bulunabilir.</string>
     <string name="reservation_error_unauthorized">Oturumunuz sona ermiş. Lütfen tekrar giriş yapın.</string>
@@ -214,9 +229,9 @@
     <string name="rental_photo_start_action">Kiralamayı Başlat</string>
     <string name="rental_photo_finish_action">Kiralamayı Bitir</string>
     <string name="rental_photo_action_with_remaining">%1$s · %2$d foto kaldı</string>
-    <string name="rental_photo_source_title">Fotoğraf ekle</string>
-    <string name="rental_photo_source_camera">Kamerayla çek</string>
-    <string name="rental_photo_source_gallery">Galeriden seç</string>
+    <string name="rental_photo_source_title">Fotoğraf Ekle</string>
+    <string name="rental_photo_source_camera">Kamerayla Çek</string>
+    <string name="rental_photo_source_gallery">Galeriden Seç</string>
     <string name="rental_photo_source_cancel">Vazgeç</string>
     <!-- Active Rental Screen (Aktif Kiralama) -->
     <string name="active_rental_status_active_with_vehicle">Kiralama aktif · %1$s</string>
@@ -227,8 +242,8 @@
     <string name="active_rental_plan_per_minute">Dakikalık</string>
     <string name="active_rental_plan_hourly">Saatlik</string>
     <string name="active_rental_plan_daily">Günlük</string>
-    <string name="active_rental_elapsed_label">Geçen süre</string>
-    <string name="active_rental_current_cost_label">Anlık ücret</string>
+    <string name="active_rental_elapsed_label">Geçen Süre</string>
+    <string name="active_rental_current_cost_label">Anlık Ücret</string>
     <string name="active_rental_distance_label">Mesafe</string>
     <string name="active_rental_distance_km">%1$s km</string>
     <string name="active_rental_lock_unlock">Kilitle / Aç</string>
