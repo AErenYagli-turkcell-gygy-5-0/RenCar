@@ -415,7 +415,7 @@ private fun String.toFormattedDateTime(): String {
         timeZone = TimeZone.getTimeZone("UTC")
     }
     val date = runCatching { parser.parse(this) }.getOrNull() ?: return this
-    val formatter = SimpleDateFormat("d MMM yyyy HH:mm", Locale("tr", "TR"))
+    val formatter = SimpleDateFormat("d MMM yyyy HH:mm", Locale.forLanguageTag("tr-TR"))
     return formatter.format(date)
 }
 

@@ -20,7 +20,7 @@ import java.io.IOException
 import javax.inject.Inject
 
 class ApiLicenseRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val apiService: LicenseApiService
 ) : LicenseRepository {
 
